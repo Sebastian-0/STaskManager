@@ -1,0 +1,56 @@
+import com.github.spotbugs.SpotBugsTask
+
+plugins {
+    id 'java'
+    id 'com.github.spotbugs' version '1.6.8'
+}
+
+group 'sebastian-0.taskmanager'
+version '0.5-SNAPSHOT'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "com.github.oshi:oshi-core:3.12.0"
+    compile "net.java.dev.jna:jna:5.2.0"
+    compile "net.java.dev.jna:jna-platform:5.2.0"
+    compile "org.slf4j:slf4j-api:1.7.25"
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+task copyToLib( type: Copy ) {
+    into "$buildDir/libs/lib"
+    from configurations.runtime
+}
+
+task copyTextures( type: Copy ) {
+    into "$buildDir/libs/textures"
+    from "$projectDir/textures"
+    include "*.png"
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class':'taskmanager.ui.TaskManager',
+                   'Class-Path': configurations.runtime.files.collect { "lib/$it.name" }.join(' ')
+    }
+    dependsOn copyToLib, copyTextures
+}
+
+spotbugs {
+    ignoreFailures = true
+//    effort = 'max'
+    showProgress = true
+}
+
+tasks.withType(SpotBugsTask) {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
