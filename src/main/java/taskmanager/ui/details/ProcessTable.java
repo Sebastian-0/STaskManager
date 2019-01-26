@@ -28,6 +28,7 @@ public class ProcessTable extends JTable {
 	public enum Columns {
 		FileName("Process name", 180, new Process.FileNameComparator()),
 		Pid("PID", 65, new Process.IdComparator()),
+		DeathTime("Death time", 100, new Process.DeadTimestampsComparator()),
 		UserName("User name", 75, new Process.UserNameComparator()),
 		Cpu("CPU", 75, new Process.CpuUsageComparator()),
 		PrivateWorkingSet("Memory", 100, new Process.PrivateWorkingSetComparator()),
@@ -60,6 +61,8 @@ public class ProcessTable extends JTable {
 		}
 	}
 
+	private List<Columns> visibleColumns;
+
 	private SystemInformation systemInformation;
 	private ProcessDetailsCallback processCallback;
 
@@ -89,6 +92,19 @@ public class ProcessTable extends JTable {
 
 		setAutoResizeMode(AUTO_RESIZE_OFF);
 
+		visibleColumns = new ArrayList<>(); // TODO The order of these must (probably?) be the same as in the enum, fix that?
+		visibleColumns.add(Columns.FileName);
+		visibleColumns.add(Columns.Pid); // TODO Can't disable PID
+		if (showDeadProcesses) {
+			visibleColumns.add(Columns.DeathTime); // TODO Can't disable Death Time
+		}
+		visibleColumns.add(Columns.UserName);
+		visibleColumns.add(Columns.Cpu);
+		visibleColumns.add(Columns.PrivateWorkingSet);
+		visibleColumns.add(Columns.CommandLine);
+		visibleColumns.add(Columns.Description);
+
+
 		tableModel = new CustomTableModel();
 		tableModel.columns = loadHeaders();
 		tableModel.fullData = new Object[0][tableModel.columns.length];
@@ -101,6 +117,9 @@ public class ProcessTable extends JTable {
 		cellRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
 		getColumnModel().getColumn(headers[Columns.Cpu.ordinal()].index).setCellRenderer(cellRenderer);
 		getColumnModel().getColumn(headers[Columns.PrivateWorkingSet.ordinal()].index).setCellRenderer(cellRenderer);
+		if (showDeadProcesses) {
+			getColumnModel().getColumn(headers[Columns.DeathTime.ordinal()].index).setCellRenderer(cellRenderer);
+		}
 		setIntercellSpacing(new Dimension(1, 0));
 
 		getColumnModel().addColumnModelListener(columnListener);
@@ -151,7 +170,7 @@ public class ProcessTable extends JTable {
 	}
 
 	private String[] loadHeaders() {
-		String defaultValue = IntStream.range(0, Columns.values().length).mapToObj(Integer::toString).collect(Collectors.joining(";"));
+		String defaultValue = IntStream.range(0, visibleColumns.size()).mapToObj(Integer::toString).collect(Collectors.joining(";"));
 		String orderAsString = Config.get(Config.KEY_LAST_COLUMN_ORDER, defaultValue);
 		if (showDeadProcesses) {
 			orderAsString = Config.get(Config.KEY_LAST_DEAD_COLUMN_ORDER, defaultValue);
@@ -160,15 +179,19 @@ public class ProcessTable extends JTable {
 				.flatMapToInt(v -> IntStream.of(Integer.parseInt(v)))
 				.toArray();
 
+		ColumnHeader[] tmp = new ColumnHeader[visibleColumns.size()];
 		Columns[] values = Columns.values();
 		headers = new ColumnHeader[values.length];
-		for (int i = 0; i < values.length; i++) {
+		for (int i = 0, idx = 0; i < headers.length; i++) {
 			Columns value = values[i];
-			headers[value.ordinal()] = new ColumnHeader(value, columnOrder[i]);
+			if (visibleColumns.contains(value)) {
+				ColumnHeader header = new ColumnHeader(value, columnOrder[idx]);
+				headers[i] = header;
+				tmp[idx] = header;
+				idx++;
+			}
 		}
 
-		ColumnHeader[] tmp = new ColumnHeader[headers.length];
-		System.arraycopy(headers, 0, tmp, 0, headers.length);
 		Arrays.sort(tmp);
 
 		String[] columns = new String[tmp.length];
@@ -180,7 +203,7 @@ public class ProcessTable extends JTable {
 	}
 
 	private void loadPreviousColumnSizes() {
-		String defaultValue = Arrays.stream(Columns.values()).map(c->Integer.toString(c.defaultWidth)).collect(Collectors.joining(";"));
+		String defaultValue = visibleColumns.stream().map(c->Integer.toString(c.defaultWidth)).collect(Collectors.joining(";"));
 		String widthsAsString = Config.get(Config.KEY_LAST_COLUMN_WIDTHS, defaultValue);
 		if (showDeadProcesses) {
 			widthsAsString = Config.get(Config.KEY_LAST_DEAD_COLUMN_WIDTHS, defaultValue);
@@ -188,8 +211,10 @@ public class ProcessTable extends JTable {
 		int[] widths = Arrays.stream(widthsAsString.split(";"))
 				.flatMapToInt(v -> IntStream.of(Integer.parseInt(v)))
 				.toArray();
-		for (int i = 0; i < widths.length; i++) {
-			getColumnModel().getColumn(headers[i].index).setPreferredWidth(widths[i]);
+		for (int i = 0, idx = 0; i < headers.length; i++) {
+			if (headers[i] != null) {
+				getColumnModel().getColumn(headers[i].index).setPreferredWidth(widths[idx++]);
+			}
 		}
 	}
 
@@ -197,7 +222,7 @@ public class ProcessTable extends JTable {
 		int selectedColumn = Integer.parseInt(Config.get(Config.KEY_LAST_COLUMN_SELECTION, "" + Columns.Pid.ordinal()));
 		boolean selectionInverted = Boolean.parseBoolean(Config.get(Config.KEY_LAST_SELECTION_INVERTED));
 		if (showDeadProcesses) {
-			selectedColumn = Integer.parseInt(Config.get(Config.KEY_LAST_DEAD_COLUMN_SELECTION, "" + Columns.Pid.ordinal()));
+			selectedColumn = Integer.parseInt(Config.get(Config.KEY_LAST_DEAD_COLUMN_SELECTION, "" + Columns.DeathTime.ordinal()));
 			selectionInverted = Boolean.parseBoolean(Config.get(Config.KEY_LAST_DEAD_SELECTION_INVERTED));
 		}
 		headers[selectedColumn].isSelected = true;
@@ -227,25 +252,28 @@ public class ProcessTable extends JTable {
 
 			for (int i = 0; i < processes.size(); i++) {
 				Process process = processes.get(i);
-				tableModel.fullData[i][headers[Columns.FileName.ordinal()].index] = process.fileName;
-				tableModel.fullData[i][headers[Columns.Pid.ordinal()].index] = process.id;
-				tableModel.fullData[i][headers[Columns.UserName.ordinal()].index] = process.userName;
+				trySetData(Columns.FileName, i, process.fileName);
+				trySetData(Columns.Pid, i, process.id);
+				trySetData(Columns.UserName, i, process.userName);
+				trySetData(Columns.DeathTime, i, String.format("%.1f s", (System.currentTimeMillis() - process.deathTimestamp) / 1000f));
+				trySetColor(Columns.DeathTime, i, selectColorDeath((System.currentTimeMillis() - process.deathTimestamp) / 1000f));
 				if (showDeadProcesses) {
-					tableModel.fullData[i][headers[Columns.Cpu.ordinal()].index] = "--.- %";
-					tableModel.fullColor[i][headers[Columns.Cpu.ordinal()].index] = selectColorCpu(0);
-					tableModel.fullData[i][headers[Columns.PrivateWorkingSet.ordinal()].index] = "--- --- K";
-					tableModel.fullColor[i][headers[Columns.PrivateWorkingSet.ordinal()].index] = selectColorMemory(0);
+					trySetData(Columns.Cpu, i, "--.- %");
+					trySetColor(Columns.Cpu, i, selectColorCpu(0));
+					trySetData(Columns.PrivateWorkingSet, i, "--- --- K");
+					trySetColor(Columns.PrivateWorkingSet, i, selectColorMemory(0));
 				} else {
-					tableModel.fullData[i][headers[Columns.Cpu.ordinal()].index] = dfCpu.format(process.cpuUsage.newest() * 100) + " %";
-					if (process.id == 0)
-						tableModel.fullColor[i][headers[Columns.Cpu.ordinal()].index] = selectColorCpu(0);
-					else
-						tableModel.fullColor[i][headers[Columns.Cpu.ordinal()].index] = selectColorCpu(process.cpuUsage.newest());
-					tableModel.fullData[i][headers[Columns.PrivateWorkingSet.ordinal()].index] = dfMemory.format(process.privateWorkingSet.newest() / 1024) + " K";
-					tableModel.fullColor[i][headers[Columns.PrivateWorkingSet.ordinal()].index] = selectColorMemory(process.privateWorkingSet.newest() / (double) systemInformation.physicalMemoryTotal);
+					trySetData(Columns.Cpu, i, dfCpu.format(process.cpuUsage.newest() * 100) + " %");
+					if (process.id == 0) {
+						trySetColor(Columns.Cpu, i, selectColorCpu(0));
+					} else {
+						trySetColor(Columns.Cpu, i, selectColorCpu(process.cpuUsage.newest()));
+					}
+					trySetData(Columns.PrivateWorkingSet, i, dfMemory.format(process.privateWorkingSet.newest() / 1024) + " K");
+					trySetColor(Columns.PrivateWorkingSet, i, selectColorMemory(process.privateWorkingSet.newest() / (double) systemInformation.physicalMemoryTotal));
 				}
-				tableModel.fullData[i][headers[Columns.CommandLine.ordinal()].index] = process.commandLine;
-				tableModel.fullData[i][headers[Columns.Description.ordinal()].index] = process.description;
+				trySetData(Columns.CommandLine, i, process.commandLine);
+				trySetData(Columns.Description, i, process.description);
 			}
 
 			filter();
@@ -277,6 +305,20 @@ public class ProcessTable extends JTable {
 		clearSelection();
 	}
 
+	private void trySetData(Columns column, int row, Object data) {
+		ColumnHeader header = headers[column.ordinal()];
+		if (header != null) {
+			tableModel.fullData[row][header.index] = data;
+		}
+	}
+
+	private void trySetColor(Columns column, int row, Color color) {
+		ColumnHeader header = headers[column.ordinal()];
+		if (header != null) {
+			tableModel.fullColor[row][header.index] = color;
+		}
+	}
+
 	private Color selectColorCpu(double fraction) {
 		if (fraction > 0.8)
 			return Load.Extreme.color;
@@ -305,6 +347,21 @@ public class ProcessTable extends JTable {
 		return Load.None.color;
 	}
 
+	private Color selectColorDeath(float seconds) {
+		float fraction = seconds / Integer.parseInt(Config.get(Config.KEY_DEAD_PROCESS_KEEP_TIME));
+		if (fraction > 0.83)
+			return Load.Extreme.color;
+		if (fraction > 0.67)
+			return Load.VeryLarge.color;
+		if (fraction > 0.5)
+			return Load.Large.color;
+		if (fraction > 0.33)
+			return Load.Medium.color;
+		if (fraction > 0.17)
+			return Load.Small.color;
+		return Load.None.color;
+	}
+
 
 	public class CustomTableHeader extends JTableHeader {
 		public CustomTableHeader(TableColumnModel model) {
@@ -316,9 +373,11 @@ public class ProcessTable extends JTable {
 			super.setDraggedColumn(aColumn);
 			isMovingColumn = aColumn != null;
 			if (!isMovingColumn) {
-				String[] order = new String[headers.length];
+				List<String> order = new ArrayList<>();
 				for (int i = 0; i < headers.length; i++) {
-					order[i] = "" + getColumnIndex(headers[i].header);
+					if (headers[i] != null) {
+						order.add(Integer.toString(getColumnIndex(headers[i].header)));
+					}
 				}
 				if (showDeadProcesses) {
 					Config.put(Config.KEY_LAST_DEAD_COLUMN_ORDER, String.join(";", order));
@@ -333,9 +392,11 @@ public class ProcessTable extends JTable {
 			super.setResizingColumn(aColumn);
 			isResizingColumn = aColumn != null;
 			if (!isResizingColumn) {
-				String[] widths = new String[headers.length];
+				List<String> widths = new ArrayList<>();
 				for (int i = 0; i < headers.length; i++) {
-					widths[i] = "" + getColumnModel().getColumn(getColumnIndex(headers[i].header)).getWidth();
+					if (headers[i] != null) {
+						widths.add(Integer.toString(getColumnModel().getColumn(getColumnIndex(headers[i].header)).getWidth()));
+					}
 				}
 				if (showDeadProcesses) {
 					Config.put(Config.KEY_LAST_DEAD_COLUMN_WIDTHS, String.join(";", widths));
@@ -353,6 +414,10 @@ public class ProcessTable extends JTable {
 			}
 		}
 		return -1;
+	}
+
+	public List<Columns> getVisibleColumns() {
+		return visibleColumns;
 	}
 
 	public void setFilterAttribute(Columns column) {
@@ -411,7 +476,7 @@ public class ProcessTable extends JTable {
 			int realColumn = 0;
 			String name = table.getColumnName(column);
 			for (ColumnHeader header : headers) {
-				if (header.header.equals(name)) {
+				if (header != null && header.header.equals(name)) {
 					realColumn = header.index;
 					break;
 				}
@@ -428,7 +493,8 @@ public class ProcessTable extends JTable {
 				result.setBackground(blend(result.getBackground(), selection));
 			}
 
-			if (showDeadProcesses && realColumn == headers[Columns.FileName.ordinal()].index) {
+			ColumnHeader fileNameHeader = headers[Columns.FileName.ordinal()];
+			if (showDeadProcesses && fileNameHeader != null && realColumn == fileNameHeader.index) {
                 setStrikeThroughFontFor(result);
             }
 
@@ -537,26 +603,29 @@ public class ProcessTable extends JTable {
 
 		@Override
 		public void keyTyped(KeyEvent e) {
-			long time = System.currentTimeMillis();
-			if (time - lastClick > 1000)
-				search = "";
+			ColumnHeader fileNameHeader = headers[Columns.FileName.ordinal()];
+			if (fileNameHeader != null) {
+				long time = System.currentTimeMillis();
+				if (time - lastClick > 1000)
+					search = "";
 
-			boolean isRepeatedSingleChar = search.length() == 1 && search.charAt(0) == e.getKeyChar();
-			if (!isRepeatedSingleChar)
-				search += e.getKeyChar();
+				boolean isRepeatedSingleChar = search.length() == 1 && search.charAt(0) == e.getKeyChar();
+				if (!isRepeatedSingleChar)
+					search += e.getKeyChar();
 
-			int startIndex = getSelectedRow();
-			for (int i = (search.length() == 1) ? 1 : 0; i < getRowCount(); i++) {
-				int idx = (startIndex + i) % getRowCount();
-				String currentProcessName = (String) tableModel.filteredData[idx][headers[Columns.FileName.ordinal()].index];
-				if (currentProcessName.toLowerCase().startsWith(search.toLowerCase())) {
-					setRowSelectionInterval(idx, idx);
-					scrollRectToVisible(getCellRect(idx, getSelectedColumn(), true));
-					break;
+				int startIndex = getSelectedRow();
+				for (int i = (search.length() == 1) ? 1 : 0; i < getRowCount(); i++) {
+					int idx = (startIndex + i) % getRowCount();
+					String currentProcessName = (String) tableModel.filteredData[idx][fileNameHeader.index];
+					if (currentProcessName.toLowerCase().startsWith(search.toLowerCase())) {
+						setRowSelectionInterval(idx, idx);
+						scrollRectToVisible(getCellRect(idx, getSelectedColumn(), true));
+						break;
+					}
 				}
-			}
 
-			lastClick = time;
+				lastClick = time;
+			}
 		}
 
 		@Override
