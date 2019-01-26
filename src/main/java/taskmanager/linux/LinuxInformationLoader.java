@@ -1,26 +1,29 @@
 package taskmanager.linux;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
-
+import oshi.software.os.linux.LinuxUserGroupInfo;
 import oshi.util.FileUtil;
 import taskmanager.InformationLoader;
 import taskmanager.Process;
 import taskmanager.SystemInformation;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.*;
+
 public class LinuxInformationLoader extends InformationLoader {
 	private static final String PROC_PATH = "/proc";
 
-//  private long lastCpuTime;
-//  private long currentCpuTime;
+	private LinuxUserGroupInfo userGroupInfo;
+
+	private long lastCpuTime;
+	private long currentCpuTime;
 
 	private long nextProcessId;
+
+	public LinuxInformationLoader() {
+		userGroupInfo = new LinuxUserGroupInfo();
+	}
 
 	@Override
 	public void init(SystemInformation systemInformation) {
@@ -38,7 +41,7 @@ public class LinuxInformationLoader extends InformationLoader {
 	public void update(SystemInformation systemInformation) {
 		super.update(systemInformation);
 
-//    updateTotalCpuTime();
+		updateTotalCpuTime();
 		updateProcesses(systemInformation);
 //
 //    PERFORMANCE_INFORMATION performanceInfo = fetchPerformanceInformation();
@@ -70,13 +73,19 @@ public class LinuxInformationLoader extends InformationLoader {
 //    }
 	}
 
-	//  private void updateTotalCpuTime() {
-//    lastCpuTime = currentCpuTime;
-//    FILETIME time = new FILETIME();
-//    Kernel32Ext.INSTANCE.GetSystemTimeAsFileTime(time);
-//    currentCpuTime = time.toTime();
-//  }
-//
+	private void updateTotalCpuTime() {
+		lastCpuTime = currentCpuTime;
+
+		List<String> lines = FileUtil.readFile(PROC_PATH + "/stat");
+		String[] tokens = lines.get(0).split("\\s+");
+		long time = 0;
+		for (int i = 1; i < tokens.length; i++) {
+			time += Long.parseLong(tokens[i]);
+		}
+
+		currentCpuTime = time;
+	}
+
 	private void updateProcesses(SystemInformation systemInformation) {
 		Set<Long> newProcessIds = fetchProcessIds();
 
@@ -90,52 +99,60 @@ public class LinuxInformationLoader extends InformationLoader {
 			String processPath = PROC_PATH + "/" + pid;
 
 			if (!process.hasReadOnce) {
-				process.commandLine = readFileAsString(processPath + "/cmdline").replaceAll("" + (char) 0, " ").trim();
-//        Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
-				String partialName = readFileAsString(processPath + "/comm");
-				if (partialName.isEmpty()) {
-					Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
-					System.out.println("Found no name: " + status.getOrDefault("Name", "Not found!"));
-				} else {
-					int start = process.commandLine.indexOf(partialName);
-					if (start == -1) {
-						System.out.println("Error? " + partialName + " vs. " + process.commandLine);
+				Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
+				if (!status.isEmpty()) {
+					String userId = status.getOrDefault("Uid", "-1").split("\\s+")[0];
+					process.userName = userGroupInfo.getGroupName(userId);
+
+					process.commandLine = readFileAsString(processPath + "/cmdline").replaceAll("" + (char) 0, " ").trim();
+					String partialName = readFileAsString(processPath + "/comm");
+					if (partialName.isEmpty()) {
+						System.out.println("Found no name: " + status.getOrDefault("Name", "Not found!"));
 					} else {
-						int end = process.commandLine.indexOf(' ', start + partialName.length());
-						end = (end == -1) ? process.commandLine.length() : end;
-						process.fileName = process.commandLine.substring(start, end);
-						if (process.fileName.endsWith(":")) {
-							process.fileName = process.fileName.substring(0, process.fileName.length() - 1);
+						int start = process.commandLine.indexOf(partialName);
+						if (start == -1) {
+							System.out.println("Error? " + partialName + " vs. " + process.commandLine);
+						} else {
+							int end = process.commandLine.indexOf(' ', start + partialName.length());
+							end = (end == -1) ? process.commandLine.length() : end;
+							process.fileName = process.commandLine.substring(start, end);
+							if (process.fileName.endsWith(":")) {
+								process.fileName = process.fileName.substring(0, process.fileName.length() - 1);
+							}
 						}
 					}
-				}
 
-				Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
-				process.privateWorkingSet.addValue(Long.parseLong(removeUnit(status.getOrDefault("VmRSS", "0 kb"))) * 1024);
-//        if (process.id == 0) {
-//          process.fileName = "System Idle Process";
-//          process.userName = "SYSTEM";
-//        } else
-//          process.fileName = newProcess.ImageName.Buffer.getWideString(0);
-//      
-//        if (readProcessCommandLine(process)) {
-//          readFileDescription(process);
-//        }
-//        
+					process.hasReadOnce = true;
+				} else {
+					System.out.println("Failed to read status for: " + process.fileName);
+				}
 //        if (process.description.isEmpty())
 //          process.description = process.fileName;
 			}
-//      
-//      process.privateWorkingSet.addValue(newProcess.WorkingSetPrivateSize);
-//
-//      // For some reason we need to extract the value and then put it back inside a new LONG_INTEGER instance before using
-//      // it otherwise the FILETIME becomes corrupted. Does this have something to do with the memory the NT-call returns?
-//      process.updateCpu(
-//          new FILETIME(new LARGE_INTEGER(newProcess.KernelTime.getValue())).toTime(), 
-//          new FILETIME(new LARGE_INTEGER(newProcess.UserTime.getValue())).toTime(), 
-//          (currentCpuTime - lastCpuTime), systemInformation.logicalProcessorCount);
-//      
-//      process.hasReadOnce = true;
+
+			Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
+			process.privateWorkingSet.addValue(Long.parseLong(removeUnit(status.getOrDefault("VmRSS", "0 kb"))) * 1024);
+
+			int attempts = 0;
+			String stat = "";
+			while (stat.isEmpty() && attempts < 100) {
+				stat = FileUtil.getStringFromFile(processPath + "/stat");
+				attempts += 1;
+			}
+			if (attempts > 1) {
+				System.out.println("Did several attempts to open file: " + attempts);
+			}
+			if (stat.isEmpty()) {
+				// TODO Copy old
+				System.out.println("File was empty, did more than 100 attempts!");
+			} else {
+				String[] tokens = stat.split("\\s+");
+				long utime = Long.parseLong(tokens[13]);
+				long stime = Long.parseLong(tokens[14]);
+				long cutime = Long.parseLong(tokens[15]);
+				long cstime = Long.parseLong(tokens[16]);
+				process.updateCpu(stime + cstime, utime + cutime, (currentCpuTime - lastCpuTime), 1); // Set cores to 1 since the total time is already divided by cores
+			}
 		}
 
 		// Remove old processes
