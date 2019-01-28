@@ -81,7 +81,7 @@ public class ProcessTable extends JTable {
 	private ProcessContextMenu contextMenu;
 
 	public ProcessTable(final ProcessDetailsCallback processDetailsCallback, SystemInformation systemInformation,
-	                    boolean showDeadProcesses) {
+							  boolean showDeadProcesses) {
 		this.processCallback = processDetailsCallback;
 		this.systemInformation = systemInformation;
 		this.showDeadProcesses = showDeadProcesses;
@@ -139,20 +139,22 @@ public class ProcessTable extends JTable {
 					String name = getColumnName(col);
 					for (int i = 0; i < headers.length; i++) {
 						ColumnHeader header = headers[i];
-						if (header.header.equals(name)) {
-							if (header.isSelected)
-								header.comparator.invert();
-							processDetailsCallback.setComparator(header.comparator, showDeadProcesses);
-							header.isSelected = true;
-							if (showDeadProcesses) {
-								Config.put(Config.KEY_LAST_DEAD_COLUMN_SELECTION, Integer.toString(i));
-								Config.put(Config.KEY_LAST_DEAD_SELECTION_INVERTED, Boolean.toString(header.comparator.isInverted()));
+						if (header != null) {
+							if (header.header.equals(name)) {
+								if (header.isSelected)
+									header.comparator.invert();
+								processDetailsCallback.setComparator(header.comparator, showDeadProcesses);
+								header.isSelected = true;
+								if (showDeadProcesses) {
+									Config.put(Config.KEY_LAST_DEAD_COLUMN_SELECTION, Integer.toString(i));
+									Config.put(Config.KEY_LAST_DEAD_SELECTION_INVERTED, Boolean.toString(header.comparator.isInverted()));
+								} else {
+									Config.put(Config.KEY_LAST_COLUMN_SELECTION, Integer.toString(i));
+									Config.put(Config.KEY_LAST_SELECTION_INVERTED, Boolean.toString(header.comparator.isInverted()));
+								}
 							} else {
-								Config.put(Config.KEY_LAST_COLUMN_SELECTION, Integer.toString(i));
-								Config.put(Config.KEY_LAST_SELECTION_INVERTED, Boolean.toString(header.comparator.isInverted()));
+								header.isSelected = false;
 							}
-						} else {
-							header.isSelected = false;
 						}
 					}
 				}
@@ -203,7 +205,7 @@ public class ProcessTable extends JTable {
 	}
 
 	private void loadPreviousColumnSizes() {
-		String defaultValue = visibleColumns.stream().map(c->Integer.toString(c.defaultWidth)).collect(Collectors.joining(";"));
+		String defaultValue = visibleColumns.stream().map(c -> Integer.toString(c.defaultWidth)).collect(Collectors.joining(";"));
 		String widthsAsString = Config.get(Config.KEY_LAST_COLUMN_WIDTHS, defaultValue);
 		if (showDeadProcesses) {
 			widthsAsString = Config.get(Config.KEY_LAST_DEAD_COLUMN_WIDTHS, defaultValue);
@@ -297,7 +299,7 @@ public class ProcessTable extends JTable {
 
 	private void trySelectPid(long selectedPid) {
 		for (int i = 0; i < tableModel.filteredData.length; i++) {
-			if (selectedPid == (Long)tableModel.filteredData[i][headers[Columns.Pid.ordinal()].index]) {
+			if (selectedPid == (Long) tableModel.filteredData[i][headers[Columns.Pid.ordinal()].index]) {
 				setRowSelectionInterval(i, i);
 				return;
 			}
@@ -470,7 +472,7 @@ public class ProcessTable extends JTable {
 
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-		                                               int row, int column) {
+																	  int row, int column) {
 			JComponent result = (JComponent) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
 			int realColumn = 0;
@@ -495,27 +497,27 @@ public class ProcessTable extends JTable {
 
 			ColumnHeader fileNameHeader = headers[Columns.FileName.ordinal()];
 			if (showDeadProcesses && fileNameHeader != null && realColumn == fileNameHeader.index) {
-                setStrikeThroughFontFor(result);
-            }
+				setStrikeThroughFontFor(result);
+			}
 
 			result.setBorder(new EmptyBorder(0, CELL_PADDING, 0, CELL_PADDING));
 			return result;
 		}
 
-        private Color blend(Color c1, Color c2) {
-            float a = c2.getAlpha() / 255f;
-            return new Color((int) (c1.getRed() * (1 - a) + c2.getRed() * a),
-                    (int) (c1.getGreen() * (1 - a) + c2.getGreen() * a),
-                    (int) (c1.getBlue() * (1 - a) + c2.getBlue() * a));
-        }
+		private Color blend(Color c1, Color c2) {
+			float a = c2.getAlpha() / 255f;
+			return new Color((int) (c1.getRed() * (1 - a) + c2.getRed() * a),
+					(int) (c1.getGreen() * (1 - a) + c2.getGreen() * a),
+					(int) (c1.getBlue() * (1 - a) + c2.getBlue() * a));
+		}
 
-        private void setStrikeThroughFontFor(JComponent result) {
-            Font font = result.getFont();
-            Map attributes = font.getAttributes();
-            attributes.put(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON);
-            Font newFont = new Font(attributes);
-            result.setFont(newFont);
-        }
+		private void setStrikeThroughFontFor(JComponent result) {
+			Font font = result.getFont();
+			Map attributes = font.getAttributes();
+			attributes.put(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON);
+			Font newFont = new Font(attributes);
+			result.setFont(newFont);
+		}
 	}
 
 
@@ -663,17 +665,17 @@ public class ProcessTable extends JTable {
 
 			String cellValue = getValueAt(row, column).toString();
 			int cellWidth = getColumnModel().getColumn(column).getWidth();
-			if (cellWidth <= metrics.stringWidth(cellValue) + ProcessTableCellRenderer.CELL_PADDING*2) {
+			if (cellWidth <= metrics.stringWidth(cellValue) + ProcessTableCellRenderer.CELL_PADDING * 2) {
 				final int maxTooltipWidth = 600;
 				if (metrics.stringWidth(cellValue) > maxTooltipWidth) {
 					StringBuilder sb = new StringBuilder();
 					sb.append("<html>");
 					int lastIndex = 0;
 					for (int i = 0; i < cellValue.length(); i++) {
-						if (metrics.stringWidth(cellValue.substring(lastIndex, i+1)) > maxTooltipWidth) {
+						if (metrics.stringWidth(cellValue.substring(lastIndex, i + 1)) > maxTooltipWidth) {
 							sb.append(cellValue, lastIndex, i);
 							sb.append("<br/>");
-							lastIndex = i+1;
+							lastIndex = i + 1;
 						}
 					}
 					if (lastIndex < cellValue.length()) {
