@@ -35,19 +35,26 @@ public class Process {
 		cpuTime = new MeasurementContainer<>(0L);
 	}
 
-	public void copyFrom(Process other) {
+	public void copyFrom(Process other, boolean doFullCopy) {
 		uniqueId = other.uniqueId;
 		id = other.id;
-		privateWorkingSet.copyFrom(other.privateWorkingSet);
 		fileName = other.fileName;
 		filePath = other.filePath;
 		commandLine = other.commandLine;
 		description = other.description;
 		userName = other.userName;
-		cpuUsage.copyFrom(other.cpuUsage);
-		cpuTime.copyFrom(other.cpuTime);
 		isDead = other.isDead;
 		deathTimestamp = other.deathTimestamp;
+
+		if (doFullCopy) {
+			privateWorkingSet.copyFrom(other.privateWorkingSet);
+			cpuUsage.copyFrom(other.cpuUsage);
+			cpuTime.copyFrom(other.cpuTime);
+		} else {
+			privateWorkingSet.copyDelta(other.privateWorkingSet);
+			cpuUsage.copyDelta(other.cpuUsage);
+			cpuTime.copyDelta(other.cpuTime);
+		}
 
 		hasReadOnce = other.hasReadOnce;
 

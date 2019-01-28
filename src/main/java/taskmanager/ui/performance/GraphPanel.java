@@ -352,6 +352,11 @@ public class GraphPanel extends JPanel {
 		}
 
 		@Override
+		public void copyDelta(Measurements<Long> other) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public void addValue(Long value) {
 			iterable.addValue(value / (double) Config.DOUBLE_TO_LONG);
 		}

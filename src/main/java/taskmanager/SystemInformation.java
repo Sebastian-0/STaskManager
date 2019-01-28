@@ -2,7 +2,6 @@ package taskmanager;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -78,7 +77,7 @@ public class SystemInformation {
 
 		physicalMemoryTotalInstalled = other.physicalMemoryTotalInstalled; // Includes reserved memory
 		physicalMemoryTotal = other.physicalMemoryTotal;
-		physicalMemoryUsed.copyFrom(other.physicalMemoryUsed);
+		physicalMemoryUsed.copyDelta(other.physicalMemoryUsed);
 		reservedMemory = other.reservedMemory;
 
 		pageSize = other.pageSize;
@@ -102,9 +101,9 @@ public class SystemInformation {
 			if (cpuUsagePerCore[i] == null) {
 				cpuUsagePerCore[i] = new MeasurementContainer<Double>(0d);
 			}
-			cpuUsagePerCore[i].copyFrom(other.cpuUsagePerCore[i]);
+			cpuUsagePerCore[i].copyDelta(other.cpuUsagePerCore[i]);
 		}
-		cpuUsageTotal.copyFrom(other.cpuUsageTotal);
+		cpuUsageTotal.copyDelta(other.cpuUsageTotal);
 
 		totalProcesses = other.totalProcesses;
 		totalThreads = other.totalThreads;
@@ -117,19 +116,23 @@ public class SystemInformation {
 
 	private void copyDisks(SystemInformation other) {
 		for (int i = 0; i < disks.length; i++) {
+			boolean isNew = false;
 			if (disks[i] == null) {
 				disks[i] = new Disk();
+				isNew = true;
 			}
-			disks[i].copyFrom(other.disks[i]);
+			disks[i].copyFrom(other.disks[i], isNew);
 		}
 	}
 
 	private void copyNetworks(SystemInformation other) {
 		for (int i = 0; i < networks.length; i++) {
+			boolean isNew = false;
 			if (networks[i] == null) {
 				networks[i] = new Network();
+				isNew = true;
 			}
-			networks[i].copyFrom(other.networks[i]);
+			networks[i].copyFrom(other.networks[i], isNew);
 		}
 	}
 
@@ -148,13 +151,15 @@ public class SystemInformation {
 					break;
 				}
 			}
+			boolean isNew = false;
 			if (process == null) {
 				process = new Process(processNew.uniqueId, processNew.id);
 				target.add(process);
+				isNew = true;
 			}
 
 			processIds.add(process.uniqueId);
-			process.copyFrom(processNew);
+			process.copyFrom(processNew, isNew);
 		}
 
 		// Remove old processes
@@ -200,7 +205,7 @@ public class SystemInformation {
 			ipv6Addresses = new String[0];
 		}
 
-		void copyFrom(Network other) {
+		void copyFrom(Network other, boolean doFullCopy) {
 			if (ipv4Addresses.length != other.ipv4Addresses.length) {
 				ipv4Addresses = new String[other.ipv4Addresses.length];
 			}
@@ -208,8 +213,13 @@ public class SystemInformation {
 				ipv6Addresses = new String[other.ipv6Addresses.length];
 			}
 
-			inRate.copyFrom(other.inRate);
-			outRate.copyFrom(other.outRate);
+			if (doFullCopy) {
+				inRate.copyFrom(other.inRate);
+				outRate.copyFrom(other.outRate);
+			} else {
+				inRate.copyDelta(other.inRate);
+				outRate.copyDelta(other.outRate);
+			}
 
 			macAddress = other.macAddress;
 			System.arraycopy(other.ipv4Addresses, 0, ipv4Addresses, 0, other.ipv4Addresses.length);
@@ -245,10 +255,16 @@ public class SystemInformation {
 			ioQueueLength = new MeasurementContainer<Long>(0L);
 		}
 
-		void copyFrom(Disk other) {
-			writeRate.copyFrom(other.writeRate);
-			readRate.copyFrom(other.readRate);
-			activeFraction.copyFrom(other.activeFraction);
+		void copyFrom(Disk other, boolean doFullCopy) {
+			if (doFullCopy) {
+				writeRate.copyFrom(other.writeRate);
+				readRate.copyFrom(other.readRate);
+				activeFraction.copyFrom(other.activeFraction);
+			} else {
+				writeRate.copyDelta(other.writeRate);
+				readRate.copyDelta(other.readRate);
+				activeFraction.copyDelta(other.activeFraction);
+			}
 
 			index = other.index;
 			name = other.name;
