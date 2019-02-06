@@ -64,6 +64,21 @@ public class ProcessTable extends JTable {
 		}
 	}
 
+	public enum Time {
+		None(new Color(255, 255, 255)), // 0%
+		VeryLittle(new Color(255, 229, 229)), // 17%
+		Little(new Color(255, 196, 196)), // 33%
+		Halfway(new Color(247, 168, 168)), // 50%
+		Much(new Color(255, 135, 135)),   // 67%
+		VeryMuch(new Color(255, 100, 100)); // 83%
+
+		private Color color;
+
+		Time(Color c) {
+			color = c;
+		}
+	}
+
 	private List<Columns> visibleColumns;
 
 	private SystemInformation systemInformation;
@@ -356,16 +371,16 @@ public class ProcessTable extends JTable {
 	private Color selectColorDeath(float seconds) {
 		float fraction = seconds / Integer.parseInt(Config.get(Config.KEY_DEAD_PROCESS_KEEP_TIME));
 		if (fraction > 0.83)
-			return Load.Extreme.color;
+			return Time.VeryMuch.color;
 		if (fraction > 0.67)
-			return Load.VeryLarge.color;
+			return Time.Much.color;
 		if (fraction > 0.5)
-			return Load.Large.color;
+			return Time.Halfway.color;
 		if (fraction > 0.33)
-			return Load.Medium.color;
+			return Time.Little.color;
 		if (fraction > 0.17)
-			return Load.Small.color;
-		return Load.None.color;
+			return Time.VeryLittle.color;
+		return Time.None.color;
 	}
 
 
