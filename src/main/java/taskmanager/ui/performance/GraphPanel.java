@@ -2,6 +2,7 @@ package taskmanager.ui.performance;
 
 import config.Config;
 import taskmanager.Measurements;
+import taskmanager.ui.ColorUtils;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 
@@ -84,8 +85,8 @@ public class GraphPanel extends JPanel {
 			graph.measurementAverager.setInterval(dataStartIndex, dataEndIndex, computeIndicesPerPixel());
 		}
 
-		drawGrid(g);
 		drawCurve(g2d);
+		drawGrid(g);
 
 		if (mouseX >= 0 && renderValueMarker) {
 			drawSelection(g2d);
@@ -105,6 +106,7 @@ public class GraphPanel extends JPanel {
 		final int verticalOffset = 0;
 
 		g.setColor(new Color(227, 239, 247));
+		g.setColor(new Color(127, 139, 147, 50));
 		if (isLogarithmic) {
 			double lower = 0;
 			double upper = logarithm(numHorizontalSections);
@@ -150,39 +152,50 @@ public class GraphPanel extends JPanel {
 	}
 
 	private void drawCurve(Graphics2D g2d) {
+		int alpha = 25;
 		for (Graph graph : graphs) {
-			Stroke oldStroke = g2d.getStroke();
-			if (graph.isDashed) {
-				g2d.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[]{3f}, 0f));
-			}
+			drawCurvePart(g2d, graph, false, alpha);
+			alpha += 25;
+		}
+		for (Graph graph : graphs) {
+			drawCurvePart(g2d, graph, true, 255);
+		}
+	}
 
-			MeasurementAverager itr = graph.measurementAverager;
-			itr.reset();
-			long previous = itr.next();
-			int idx = 0;
-			while (itr.hasNext()) {
-				long current = itr.next();
+	private void drawCurvePart(Graphics2D g2d, Graph graph, boolean drawLine, int alpha) {
+		Stroke oldStroke = g2d.getStroke();
+		if (graph.isDashed) {
+			g2d.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[]{3f}, 0f));
+		}
 
-				int yPrev = (int) (getHeight() * Math.min(1, computeHeightFraction(previous, measurementMaximumValue)));
-				int yCurr = (int) (getHeight() * Math.min(1, computeHeightFraction(current, measurementMaximumValue)));
+		MeasurementAverager itr = graph.measurementAverager;
+		itr.reset();
+		long previous = itr.next();
+		int idx = 0;
+		while (itr.hasNext()) {
+			long current = itr.next();
 
-				int x = getWidth() * (idx) / itr.numPoints();
-				int xNext = getWidth() * (idx + 1) / itr.numPoints();
+			int yPrev = (int) (getHeight() * Math.min(1, computeHeightFraction(previous, measurementMaximumValue)));
+			int yCurr = (int) (getHeight() * Math.min(1, computeHeightFraction(current, measurementMaximumValue)));
 
-				Color color = graphType.color;
-				g2d.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 25));
+			int x = getWidth() * (idx) / itr.numPoints();
+			int xNext = getWidth() * (idx + 1) / itr.numPoints();
+
+			Color color = graphType.color;
+			if (drawLine) {
+				g2d.setColor(color);
+				g2d.drawLine(x, getHeight() - yPrev, xNext, getHeight() - yCurr);
+			} else {
+				g2d.setColor(ColorUtils.blend(color, Color.WHITE, alpha/255f));
 				int[] xs = {x, x, xNext, xNext};
 				int[] ys = {getHeight(), getHeight() - yPrev, getHeight() - yCurr, getHeight()};
 				g2d.fillPolygon(xs, ys, xs.length);
-
-				g2d.setColor(color);
-				g2d.drawLine(x, getHeight() - yPrev, xNext, getHeight() - yCurr);
-
-				idx += 1;
-				previous = current;
 			}
-			g2d.setStroke(oldStroke);
+
+			idx += 1;
+			previous = current;
 		}
+		g2d.setStroke(oldStroke);
 	}
 
 	private double computeHeightFraction(long value, long maximum) {

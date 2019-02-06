@@ -66,7 +66,7 @@ public class CpuPanel extends JPanel
     processesLabel = new InformationItemPanel("Processes", ValueType.Raw);
     threadsLabel = new InformationItemPanel("Threads", ValueType.Raw);
     handlesLabel = new InformationItemPanel("Handles", ValueType.Raw);
-    uptimeLabel = new InformationItemPanel("Uptime", ValueType.Time);
+    uptimeLabel = new InformationItemPanel("Uptime", ValueType.TimeFull);
     
     SimpleGridBagLayout realTimeLayout = new SimpleGridBagLayout(realTimePanel);
     realTimeLayout.addToGrid(utilizationLabel, 0, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);

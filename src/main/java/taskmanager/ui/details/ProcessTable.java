@@ -4,6 +4,9 @@ import config.Config;
 import taskmanager.Process;
 import taskmanager.Process.ProcessComparator;
 import taskmanager.SystemInformation;
+import taskmanager.ui.ColorUtils;
+import taskmanager.ui.TextUtils;
+import taskmanager.ui.TextUtils.ValueType;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -122,7 +125,6 @@ public class ProcessTable extends JTable {
 		}
 		setIntercellSpacing(new Dimension(1, 0));
 
-		getColumnModel().addColumnModelListener(columnListener);
 		addKeyListener(keyListener);
 		addMouseListener(mouseListener);
 		addMouseMotionListener(mouseListener);
@@ -257,7 +259,9 @@ public class ProcessTable extends JTable {
 				trySetData(Columns.FileName, i, process.fileName);
 				trySetData(Columns.Pid, i, process.id);
 				trySetData(Columns.UserName, i, process.userName);
-				trySetData(Columns.DeathTime, i, String.format("%.1f s", (System.currentTimeMillis() - process.deathTimestamp) / 1000f));
+				trySetData(Columns.DeathTime, i, TextUtils.valueToString(
+						(long) ((System.currentTimeMillis() - process.deathTimestamp) / 1000f * Config.DOUBLE_TO_LONG),
+						ValueType.Time));//String.format("%.1f s", (System.currentTimeMillis() - process.deathTimestamp) / 1000f));
 				trySetColor(Columns.DeathTime, i, selectColorDeath((System.currentTimeMillis() - process.deathTimestamp) / 1000f));
 				if (showDeadProcesses) {
 					trySetData(Columns.Cpu, i, "--.- %");
@@ -491,8 +495,8 @@ public class ProcessTable extends JTable {
 			}
 
 			if (isSelected) {
-				Color selection = new Color(0, 160, 255, 50);
-				result.setBackground(blend(result.getBackground(), selection));
+				Color selection = new Color(0, 160, 255);
+				result.setBackground(ColorUtils.blend(selection, result.getBackground(), 50f/255));
 			}
 
 			ColumnHeader fileNameHeader = headers[Columns.FileName.ordinal()];
@@ -502,13 +506,6 @@ public class ProcessTable extends JTable {
 
 			result.setBorder(new EmptyBorder(0, CELL_PADDING, 0, CELL_PADDING));
 			return result;
-		}
-
-		private Color blend(Color c1, Color c2) {
-			float a = c2.getAlpha() / 255f;
-			return new Color((int) (c1.getRed() * (1 - a) + c2.getRed() * a),
-					(int) (c1.getGreen() * (1 - a) + c2.getGreen() * a),
-					(int) (c1.getBlue() * (1 - a) + c2.getBlue() * a));
 		}
 
 		private void setStrikeThroughFontFor(JComponent result) {
@@ -574,29 +571,6 @@ public class ProcessTable extends JTable {
 			return index - o.index;
 		}
 	}
-
-
-	private TableColumnModelListener columnListener = new TableColumnModelListener() {
-		@Override
-		public void columnSelectionChanged(ListSelectionEvent e) {
-		}
-
-		@Override
-		public void columnRemoved(TableColumnModelEvent e) {
-		}
-
-		@Override
-		public void columnMoved(TableColumnModelEvent e) {
-		}
-
-		@Override
-		public void columnMarginChanged(ChangeEvent e) {
-		}
-
-		@Override
-		public void columnAdded(TableColumnModelEvent e) {
-		}
-	};
 
 
 	private KeyAdapter keyListener = new KeyAdapter() {

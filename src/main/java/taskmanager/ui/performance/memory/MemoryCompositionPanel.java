@@ -1,18 +1,16 @@
 package taskmanager.ui.performance.memory;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
+import taskmanager.SystemInformation;
+import taskmanager.ui.ColorUtils;
+import taskmanager.ui.performance.GraphType;
+
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.text.MessageFormat;
-
-import javax.swing.JPanel;
-import javax.swing.border.LineBorder;
-
-import taskmanager.SystemInformation;
-import taskmanager.ui.performance.GraphType;
 
 public class MemoryCompositionPanel extends JPanel {
 	private Section[] sections;
@@ -35,7 +33,7 @@ public class MemoryCompositionPanel extends JPanel {
 
 	private Color color(int alpha) {
 		Color c = GraphType.Memory.color;
-		return new Color(c.getRed(), c.getGreen(), c.getBlue(), alpha);
+		return ColorUtils.blend(c, Color.WHITE, alpha/255f);
 	}
 
 	private String convertLinebreaks(String input) {
