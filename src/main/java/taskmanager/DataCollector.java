@@ -1,25 +1,24 @@
 
 package taskmanager;
 
-import javax.swing.SwingUtilities;
-
 import com.sun.jna.Platform;
-
 import config.Config;
 import taskmanager.linux.LinuxInformationLoader;
 import taskmanager.win32.WindowsInformationLoader;
 
+import javax.swing.SwingUtilities;
+
 public class DataCollector extends Thread {
 	private boolean isTransferLocked;
 
-	private UI ui;
+	private InformationUpdateCallback ui;
 
 	private InformationLoader loader;
 
 	private SystemInformation systemInformationPrivate;
 	private SystemInformation systemInformationShared;
 
-	public DataCollector(UI ui) {
+	public DataCollector(InformationUpdateCallback ui) {
 		this.ui = ui;
 		systemInformationPrivate = new SystemInformation();
 		systemInformationShared = new SystemInformation();

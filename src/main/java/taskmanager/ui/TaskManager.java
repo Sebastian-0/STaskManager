@@ -3,9 +3,9 @@ package taskmanager.ui;
 import config.Config;
 import config.TextureStorage;
 import taskmanager.DataCollector;
+import taskmanager.InformationUpdateCallback;
 import taskmanager.Process;
 import taskmanager.SystemInformation;
-import taskmanager.UI;
 import taskmanager.ui.details.ProcessDetailsCallback;
 import taskmanager.ui.details.ProcessPanel;
 import taskmanager.ui.performance.PerformancePanel;
@@ -15,13 +15,14 @@ import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import javax.swing.ToolTipManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import java.awt.AWTException;
 import java.awt.Dimension;
 import java.awt.Image;
+import java.awt.SystemTray;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -32,7 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class TaskManager extends JFrame implements UI, ProcessDetailsCallback {
+public class TaskManager extends JFrame implements InformationUpdateCallback, ProcessDetailsCallback, ApplicationCallback {
 	private DataCollector dataCollector;
 	private SystemInformation systemInformation;
 
@@ -45,6 +46,7 @@ public class TaskManager extends JFrame implements UI, ProcessDetailsCallback {
 	private Map<Long, ProcessDialog> processDialogs;
 	private Map<Long, ProcessDialog> deadProcessDialogs;
 
+	private Tray trayIcon;
 	private boolean hasTerminated;
 
 	public TaskManager() {
@@ -54,15 +56,28 @@ public class TaskManager extends JFrame implements UI, ProcessDetailsCallback {
 		dataCollector = new DataCollector(this);
 		systemInformation = new SystemInformation();
 		comparator = new Process.IdComparator();
-        deadComparator = new Process.DeadTimestampsComparator();
+		deadComparator = new Process.DeadTimestampsComparator();
 
 		processDialogs = new HashMap<>();
 		deadProcessDialogs = new HashMap<>();
 
 		addWindowListener(windowListener);
+		addWindowStateListener(windowListener);
 		addComponentListener(componentListener);
 
 		dataCollector.init();
+
+		if (!SystemTray.isSupported()) {
+			System.out.println("No system tray support!");
+		} else {
+			try {
+				trayIcon = new Tray(this, TextureStorage.instance().getTexture("icon_large"));
+				SystemTray.getSystemTray().add(trayIcon);
+			} catch (AWTException e) {
+				System.out.println("Failed to create tray icon");
+				e.printStackTrace();
+			}
+		}
 	}
 
 	@Override
@@ -150,6 +165,27 @@ public class TaskManager extends JFrame implements UI, ProcessDetailsCallback {
 		processDialogs.forEach((id, d) -> d.update());
 		processDialogs.entrySet().removeIf(e -> !e.getValue().isVisible());
 		deadProcessDialogs.entrySet().removeIf(e -> !e.getValue().isVisible());
+
+		if (trayIcon != null) {
+			trayIcon.update(systemInformation);
+		}
+	}
+
+	@Override
+	public void focus() {
+		if ((getExtendedState() & JFrame.ICONIFIED) != 0) {
+			setExtendedState(getExtendedState() & ~JFrame.ICONIFIED);
+		}
+		toFront();
+	}
+
+	@Override
+	public void exit() {
+		dispose();
+		hasTerminated = true;
+		if (trayIcon != null) {
+			SystemTray.getSystemTray().remove(trayIcon);
+		}
 	}
 
 	@Override
@@ -172,31 +208,29 @@ public class TaskManager extends JFrame implements UI, ProcessDetailsCallback {
 				processDialogs.put(process.uniqueId, dialog);
 			}
 		} else {
-			// Already exists
 			dialog.toFront();
 		}
 	}
 
 	@Override
 	public void setComparator(Comparator<Process> comparator, boolean isDeadList) {
-        if (isDeadList) {
-            this.deadComparator = comparator;
-            systemInformation.deadProcesses.sort(comparator);
-        } else {
-            this.comparator = comparator;
-            systemInformation.processes.sort(comparator);
-        }
+		if (isDeadList) {
+			this.deadComparator = comparator;
+			systemInformation.deadProcesses.sort(comparator);
+		} else {
+			this.comparator = comparator;
+			systemInformation.processes.sort(comparator);
+		}
 		if (processPanel != null) {
 			processPanel.update();
 		}
 	}
 
-
-	private WindowListener windowListener = new WindowAdapter() {
+	private WindowAdapter windowListener = new WindowAdapter() {
 		@Override
 		public void windowClosing(WindowEvent e) {
 			synchronized (TaskManager.this) {
-				hasTerminated = true;
+				exit();
 			}
 		}
 

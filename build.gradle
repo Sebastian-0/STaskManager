@@ -13,10 +13,11 @@ targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
-    compile "com.github.oshi:oshi-core:3.12.0"
+    compile "com.github.oshi:oshi-core:3.12.2"
     compile "net.java.dev.jna:jna:5.2.0"
     compile "net.java.dev.jna:jna-platform:5.2.0"
     compile "org.slf4j:slf4j-api:1.7.25"
