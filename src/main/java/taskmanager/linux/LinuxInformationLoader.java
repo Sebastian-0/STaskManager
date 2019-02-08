@@ -9,7 +9,13 @@ import taskmanager.SystemInformation;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
 
 public class LinuxInformationLoader extends InformationLoader {
 	private static final String PROC_PATH = "/proc";
@@ -30,7 +36,6 @@ public class LinuxInformationLoader extends InformationLoader {
 		super.init(systemInformation);
 
 		systemInformation.physicalMemoryTotalInstalled = systemInformation.physicalMemoryTotal;
-
 //    systemInformation.reservedMemory = systemInformation.physicalMemoryTotalInstalled - systemInformation.physicalMemoryTotal;
 
 		systemInformation.processes.add(new Process(nextProcessId++, 0));
@@ -43,34 +48,6 @@ public class LinuxInformationLoader extends InformationLoader {
 
 		updateTotalCpuTime();
 		updateProcesses(systemInformation);
-//
-//    PERFORMANCE_INFORMATION performanceInfo = fetchPerformanceInformation();
-//    systemInformation.totalProcesses = performanceInfo.ProcessCount.intValue();
-//    systemInformation.totalThreads = performanceInfo.ThreadCount.intValue();
-//    systemInformation.totalHandles = performanceInfo.HandleCount.intValue();
-//    
-//    systemInformation.commitLimit = performanceInfo.CommitLimit.longValue() * systemInformation.pageSize;
-//    systemInformation.commitUsed = performanceInfo.CommitTotal.longValue() * systemInformation.pageSize;
-//    
-//    systemInformation.kernelPaged = performanceInfo.KernelPaged.longValue() * systemInformation.pageSize;
-//    systemInformation.kernelNonpaged = performanceInfo.KernelNonpaged.longValue() * systemInformation.pageSize;
-//    
-//    Memory memory = new Memory(new SYSTEM_MEMORY_LIST_INFORMATION().size());
-//    int status = NtDllExt.INSTANCE.NtQuerySystemInformation(
-//        SYSTEM_INFORMATION_CLASS.SystemMemoryListInformation.ordinal(), memory, (int)memory.size(), null);
-//    if (status == 0) {
-//      SYSTEM_MEMORY_LIST_INFORMATION memoryInfo = Structure.newInstance(NtDllExt.SYSTEM_MEMORY_LIST_INFORMATION.class, memory);
-//      memoryInfo.read();
-//      systemInformation.modifiedMemory = memoryInfo.ModifiedPageCount.longValue() * systemInformation.pageSize;
-//      systemInformation.standbyMemory = 0;
-//      systemInformation.freeMemory = (memoryInfo.FreePageCount.longValue() + memoryInfo.ZeroPageCount.longValue()) * systemInformation.pageSize;
-//      for (int i = 0; i < memoryInfo.PageCountByPriority.length; i++)
-//      {
-//        systemInformation.standbyMemory += memoryInfo.PageCountByPriority[i].longValue() * systemInformation.pageSize;
-//      }
-//    } else {
-//      System.out.println("update(): Failed to read SYSTEM_MEMORY_LIST_INFORMATION: " + Integer.toHexString(status));
-//    }
 	}
 
 	private void updateTotalCpuTime() {
@@ -109,19 +86,36 @@ public class LinuxInformationLoader extends InformationLoader {
 					if (partialName.isEmpty()) {
 						System.out.println("Found no name: " + status.getOrDefault("Name", "Not found!"));
 					} else {
-						int start = process.commandLine.indexOf(partialName);
-						if (start == -1) {
-							System.out.println("Error? " + partialName + " vs. " + process.commandLine);
+						if (process.commandLine.isEmpty()) {
+							process.fileName = partialName;
 						} else {
-							int end = process.commandLine.indexOf(' ', start + partialName.length());
-							end = (end == -1) ? process.commandLine.length() : end;
-							process.fileName = process.commandLine.substring(start, end);
-							if (process.fileName.endsWith(":")) {
-								process.fileName = process.fileName.substring(0, process.fileName.length() - 1);
+							int start = process.commandLine.indexOf(partialName);
+							if (start == -1) {
+								System.out.println("Error? " + partialName + " vs. " + process.commandLine);
+							} else {
+								int end = process.commandLine.indexOf(' ', start + partialName.length());
+								end = (end == -1) ? process.commandLine.length() : end;
+								process.fileName = process.commandLine.substring(start, end);
+								if (process.fileName.endsWith(":")) {
+									process.fileName = process.fileName.substring(0, process.fileName.length() - 1);
+								}
 							}
 						}
 					}
 
+					try {
+						File target = new File("/proc/" + process.id + "/exe");
+						if (target.exists()) {
+							Path absolutePath = Files.readSymbolicLink(target.toPath()).toAbsolutePath();
+							process.filePath = absolutePath.toString();
+							process.fileName = absolutePath.getFileName().toString();
+						}
+					} catch (NoSuchFileException e) {
+						System.out.println("The exe file for " + process.id + " is invalid!");
+						System.err.println("The exe file for " + process.id + " is invalid!");
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 					process.hasReadOnce = true;
 				} else {
 					System.out.println("Failed to read status for: " + process.fileName);
@@ -169,7 +163,7 @@ public class LinuxInformationLoader extends InformationLoader {
 	}
 
 	private String removeUnit(String vmRSS) {
-		return vmRSS.substring(0, vmRSS.length()-3);
+		return vmRSS.substring(0, vmRSS.length() - 3);
 	}
 
 
@@ -185,113 +179,6 @@ public class LinuxInformationLoader extends InformationLoader {
 		return "";
 	}
 
-	//
-//  private boolean readProcessCommandLine(Process process) {
-//    WinNT.HANDLE handle = Kernel32.INSTANCE.OpenProcess( // TODO Try again with only PROCESS_QUERY_LIMITED_INFORMATION, might give you the user name at least
-//        WinNT.PROCESS_QUERY_INFORMATION | WinNT.PROCESS_VM_READ,
-//        false,
-//        (int)process.id);
-//    if (handle == null) {
-//      System.out.println("readProcessCommandLine(): Failed to open " + process.fileName + ": " + Integer.toHexString(Native.getLastError()));
-//      return false;
-//    }
-//    
-//    Memory mem = new Memory(new PROCESS_BASIC_INFORMATION().size());
-//    int status = NtDllExt.INSTANCE.NtQueryInformationProcess(handle, 0, mem, (int)mem.size(), null);
-//    if (status != 0) {
-//      System.out.println("readProcessCommandLine(): Failed to read process information for " + process.fileName + ": " + Integer.toHexString(status));
-//      Kernel32.INSTANCE.CloseHandle(handle);
-//      return false;
-//    }
-//    
-//    PROCESS_BASIC_INFORMATION processInfo = Structure.newInstance(NtDllExt.PROCESS_BASIC_INFORMATION.class, mem);
-//    processInfo.read();
-//    
-//    mem = new Memory(new PEB().size());
-//    if (!readProcessMemory(handle, mem, processInfo.PebBaseAddress, process, "PEB"))
-//      return false;
-//    
-//    PEB peb = Structure.newInstance(NtDllExt.PEB.class, mem);
-//    peb.read();
-//    
-//    mem = new Memory(new RTL_USER_PROCESS_PARAMETERS().size());
-//    if (!readProcessMemory(handle, mem, peb.ProcessParameters, process, "RTL_USER_PROCESS_PARAMETERS"))
-//      return false;
-//    
-//    RTL_USER_PROCESS_PARAMETERS parameters = Structure.newInstance(NtDllExt.RTL_USER_PROCESS_PARAMETERS.class, mem);
-//    parameters.read();
-//    
-//    mem = new Memory(parameters.ImagePathName.Length + 2);
-//    if (!readProcessMemory(handle, mem, parameters.ImagePathName.Buffer, process, "image path"))
-//      return false;
-//    
-//    process.filePath = mem.getWideString(0);
-//    
-//    mem = new Memory(parameters.CommandLine.Length + 2);
-//    if (!readProcessMemory(handle, mem, parameters.CommandLine.Buffer, process, "command line"))
-//      return false;
-//    
-//    process.commandLine = mem.getWideString(0);
-//    
-//    HANDLEByReference tokenRef = new HANDLEByReference();
-//    if (Advapi32.INSTANCE.OpenProcessToken(handle, WinNT.TOKEN_QUERY, tokenRef)) {
-//      Account account = Advapi32Util.getTokenAccount(tokenRef.getValue());
-//      process.userName = account.name;
-//    } else {
-//      Kernel32.INSTANCE.CloseHandle(handle);
-//      return false;
-//    }
-//    
-//    Kernel32.INSTANCE.CloseHandle(handle);
-//    
-//    return true;
-//  }
-//
-//  private boolean readProcessMemory(WinNT.HANDLE handle, Memory mem, Pointer address, Process process, String targetStruct) {
-//    boolean success = Kernel32.INSTANCE.ReadProcessMemory(handle, address, mem, (int)mem.size(), null);
-//    if (!success) {
-//      System.out.println("readProcessCommandLine(): Failed to read " + targetStruct + " information for " + process.fileName + ": " + Integer.toHexString(Native.getLastError()));
-//      Kernel32.INSTANCE.CloseHandle(handle);
-//    }
-//    return success;
-//  }
-//
-//  private boolean readFileDescription(Process process) {
-//    IntByReference size = new IntByReference();
-//    int versionInfoSize = Version.INSTANCE.GetFileVersionInfoSize(process.filePath, size);
-//    if (versionInfoSize == 0) {
-//      System.out.println("readFileDescription(): Failed to read FileVersionSize for " + process.filePath + ": " + Integer.toHexString(Native.getLastError()));
-//      return false;
-//    }
-//    
-//    Memory mem = new Memory(versionInfoSize);
-//    if (!Version.INSTANCE.GetFileVersionInfo(process.filePath, 0, (int) mem.size(), mem)) {
-//      System.out.println("readFileDescription(): Failed to read FileVersionInfo for " + process.filePath + ": " + Integer.toHexString(Native.getLastError()));
-//      return false;
-//    }
-//    
-//    PointerByReference pointerRef = new PointerByReference();
-//    if (!Version.INSTANCE.VerQueryValue(mem, "\\VarFileInfo\\Translation", pointerRef, size)) {
-//      System.out.println("readFileDescription(): Failed to read Translations for " + process.filePath + ": " + Integer.toHexString(Native.getLastError()));
-//      return false;
-//    }
-//    
-//    int nLangs = size.getValue()/new LANGANDCODEPAGE().size();
-//    LANGANDCODEPAGE language = Structure.newInstance(VersionExt.LANGANDCODEPAGE.class, pointerRef.getValue());
-//    language.read();
-//    String query = "\\StringFileInfo\\" + String.format("%04x%04x", language.wLanguage.intValue(), language.wCodePage.intValue()).toUpperCase() + "\\FileDescription";
-//    
-////    System.out.println("Query: " + query);
-//    if (!Version.INSTANCE.VerQueryValue(mem, query, pointerRef, size)) {
-//      System.out.println("readFileDescription(): Failed to read FileDescription for " + process.filePath + ": " + Integer.toHexString(Native.getLastError()));
-//      return false;
-//    }
-//    
-//    process.description = pointerRef.getValue().getWideString(0).trim();
-//    
-//    return true;
-//  }
-//
 	private Set<Long> fetchProcessIds() {
 		Set<Long> processIds = new HashSet<>();
 		File processDir = new File(PROC_PATH);
