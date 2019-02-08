@@ -1,26 +1,29 @@
 package taskmanager.ui.details;
 
-import java.awt.Component;
-
-import javax.swing.JPopupMenu;
-
 import taskmanager.Process;
 
-public class ProcessContextMenu extends JPopupMenu
-{
-  private DeleteProcessMenuItem deleteMenuItem;
-  private OpenFileLocationMenuItem openLocationMenuItem;
+import javax.swing.JPopupMenu;
+import java.awt.Component;
 
-  public ProcessContextMenu(Component parent) {
-    deleteMenuItem = new DeleteProcessMenuItem(parent);
-    openLocationMenuItem = new OpenFileLocationMenuItem(parent);
-    
-    add(openLocationMenuItem);
-    add(deleteMenuItem);
-  }
+public class ProcessContextMenu extends JPopupMenu {
+	private OpenProcessDialogMenuItem openDialogMenuItem;
+	private DeleteProcessMenuItem deleteMenuItem;
+	private OpenFileLocationMenuItem openLocationMenuItem;
 
-  public void setProcess(Process process) {
-    deleteMenuItem.setProcess(process);
-    openLocationMenuItem.setProcess(process);
-  }
+	public ProcessContextMenu(Component parent) {
+		openDialogMenuItem = new OpenProcessDialogMenuItem(parent);
+		deleteMenuItem = new DeleteProcessMenuItem(parent);
+		openLocationMenuItem = new OpenFileLocationMenuItem(parent);
+
+		add(openDialogMenuItem);
+		addSeparator();
+		add(openLocationMenuItem);
+		add(deleteMenuItem);
+	}
+
+	public void setProcess(Process process) {
+		openDialogMenuItem.setProcess(process);
+		deleteMenuItem.setProcess(process);
+		openLocationMenuItem.setProcess(process);
+	}
 }
