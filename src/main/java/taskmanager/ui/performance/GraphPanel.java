@@ -64,7 +64,7 @@ public class GraphPanel extends JPanel {
 
 	public void addGraph(Measurements<Long> measurements, boolean isDashed) {
 		this.graphs.add(new Graph(measurements, isDashed));
-		setDataIndexInterval((int) (measurements.size() - 1 - 60 * Double.parseDouble(Config.get(Config.KEY_UPDATE_RATE))), measurements.size() - 1);
+		setDataIndexInterval((int) (measurements.size() - 1 - 60 * Config.getFloat(Config.KEY_UPDATE_RATE)), measurements.size() - 1);
 	}
 
 	public void setSelected(boolean selected) {
@@ -95,7 +95,7 @@ public class GraphPanel extends JPanel {
 
 	protected int computeIndicesPerPixel() {
 		return (int) Math.ceil((dataEndIndex - dataStartIndex) /
-				(float) (getWidth() / Integer.parseInt(Config.get(Config.KEY_GRAPH_MAX_PIXELS_PER_SEGMENT))));
+				(float) (getWidth() / Config.getInt(Config.KEY_GRAPH_MAX_PIXELS_PER_SEGMENT)));
 	}
 
 	private void drawGrid(Graphics g) {

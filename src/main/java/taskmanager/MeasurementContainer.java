@@ -10,7 +10,7 @@ public class MeasurementContainer<T extends Comparable<T>> implements Measuremen
 	private int startIndex;
 
 	public MeasurementContainer(T defaultValue) {
-		this((int) (Integer.parseInt(Config.get(Config.KEY_MAXIMUM_MEASURMENT_BUFFER_SIZE)) * Double.parseDouble(Config.get(Config.KEY_UPDATE_RATE))), defaultValue);
+		this((int) (Config.getInt(Config.KEY_MAXIMUM_MEASURMENT_BUFFER_SIZE) * Config.getFloat(Config.KEY_UPDATE_RATE)), defaultValue);
 	}
 
 	@SuppressWarnings("unchecked")

@@ -1,5 +1,9 @@
 package taskmanager.ui.performance;
 
+import config.Config;
+import taskmanager.Measurements;
+
+import javax.swing.JLabel;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
@@ -7,11 +11,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import javax.swing.JLabel;
-
-import config.Config;
-import taskmanager.Measurements;
 
 public class TimelineGraphPanel extends GraphPanel
 {
@@ -76,7 +75,7 @@ public class TimelineGraphPanel extends GraphPanel
 
   private void updateTimeLabel() {
     int diff = endIndex - startIndex;
-    int seconds = (int) (diff / Float.parseFloat(Config.get(Config.KEY_UPDATE_RATE)));
+    int seconds = (int) (diff / Config.getFloat(Config.KEY_UPDATE_RATE));
     
     if (seconds > 60*3-1) {
       timeLabel.setText("Displaying " + Math.round(seconds/(float)60) + " minutes");
@@ -191,7 +190,7 @@ public class TimelineGraphPanel extends GraphPanel
     public void mouseDragged(MouseEvent e) {
       int x = e.getX();
       
-      final int smallestIntervalPoints = (int)(60 * Float.parseFloat(Config.get(Config.KEY_UPDATE_RATE)));
+      final int smallestIntervalPoints = (int)(60 * Config.getFloat(Config.KEY_UPDATE_RATE));
       
       if (isMovingLeftBorder) {
         startIndex = positionToIndex(x);

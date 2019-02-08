@@ -1,17 +1,16 @@
 package taskmanager.ui.performance;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-
 import config.Config;
 import taskmanager.SystemInformation;
 import taskmanager.ui.performance.cpu.CpuPanel;
 import taskmanager.ui.performance.disks.DiskPanel;
 import taskmanager.ui.performance.memory.MemoryPanel;
 import taskmanager.ui.performance.network.NetworkPanel;
+
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PerformancePanel extends JSplitPane implements PerformanceButtonListener {
 	private GraphSelectionPanel graphSelectionPanel;
@@ -30,7 +29,7 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 		selectedPanelContainer.setBorder(null);
 
 		TimelineGroup timelineGroup = new TimelineGroup();
-		timelineGroup.setLinked(Boolean.parseBoolean(Config.get(Config.KEY_LINK_TIMELINES)));
+		timelineGroup.setLinked(Config.getBoolean(Config.KEY_LINK_TIMELINES));
 		memoryPanel = new MemoryPanel(timelineGroup, systemInformation);
 		cpuPanel = new CpuPanel(timelineGroup, systemInformation);
 		diskPanels = new DiskPanel[systemInformation.disks.length];

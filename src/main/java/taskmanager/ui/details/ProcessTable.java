@@ -238,11 +238,11 @@ public class ProcessTable extends JTable {
 	}
 
 	private void loadPreviousColumnSelection() {
-		int selectedColumn = Integer.parseInt(Config.get(Config.KEY_LAST_COLUMN_SELECTION, "" + Columns.Pid.ordinal()));
-		boolean selectionInverted = Boolean.parseBoolean(Config.get(Config.KEY_LAST_SELECTION_INVERTED));
+		int selectedColumn = Config.getInt(Config.KEY_LAST_COLUMN_SELECTION, Columns.Pid.ordinal());
+		boolean selectionInverted = Config.getBoolean(Config.KEY_LAST_SELECTION_INVERTED);
 		if (showDeadProcesses) {
-			selectedColumn = Integer.parseInt(Config.get(Config.KEY_LAST_DEAD_COLUMN_SELECTION, "" + Columns.DeathTime.ordinal()));
-			selectionInverted = Boolean.parseBoolean(Config.get(Config.KEY_LAST_DEAD_SELECTION_INVERTED));
+			selectedColumn = Config.getInt(Config.KEY_LAST_DEAD_COLUMN_SELECTION, Columns.DeathTime.ordinal());
+			selectionInverted = Config.getBoolean(Config.KEY_LAST_DEAD_SELECTION_INVERTED);
 		}
 		headers[selectedColumn].isSelected = true;
 		if (selectionInverted)
@@ -369,7 +369,7 @@ public class ProcessTable extends JTable {
 	}
 
 	private Color selectColorDeath(float seconds) {
-		float fraction = seconds / Integer.parseInt(Config.get(Config.KEY_DEAD_PROCESS_KEEP_TIME));
+		float fraction = seconds / Config.getInt(Config.KEY_DEAD_PROCESS_KEEP_TIME);
 		if (fraction > 0.83)
 			return Time.VeryMuch.color;
 		if (fraction > 0.67)

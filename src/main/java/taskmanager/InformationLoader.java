@@ -1,9 +1,5 @@
 package taskmanager;
 
-import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.List;
-
 import config.Config;
 import oshi.SystemInfo;
 import oshi.hardware.HWDiskStore;
@@ -11,6 +7,10 @@ import oshi.hardware.HWPartition;
 import oshi.hardware.NetworkIF;
 import taskmanager.SystemInformation.Disk;
 import taskmanager.SystemInformation.Network;
+
+import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class InformationLoader {
 	private SystemInfo systemInfoLoader;
@@ -87,7 +87,7 @@ public abstract class InformationLoader {
 		}
 		systemInformation.cpuUsageTotal.addValue(systemInfoLoader.getHardware().getProcessor().getSystemCpuLoad());
 
-		final int deadKeepTime = Integer.parseInt(Config.get(Config.KEY_DEAD_PROCESS_KEEP_TIME)) * 1000;
+		final int deadKeepTime = Config.getInt(Config.KEY_DEAD_PROCESS_KEEP_TIME) * 1000;
 		systemInformation.deadProcesses.removeIf(process -> System.currentTimeMillis() - process.deathTimestamp > deadKeepTime);
 
 		for (int i = 0; i < networkInterfaces.length; i++) {

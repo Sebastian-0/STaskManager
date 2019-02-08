@@ -72,7 +72,7 @@ public class DataCollector extends Thread {
 			System.out.println(String.format("Time: %dms (avg: %.1fms, runs: %d)", delta, totalTime / (float) ++count, count));
 
 			try {
-				Thread.sleep(Math.max(0, (long) (1000 / Float.parseFloat(Config.get(Config.KEY_UPDATE_RATE)) - delta)));
+				Thread.sleep(Math.max(0, (long) (1000 / Config.getFloat(Config.KEY_UPDATE_RATE) - delta)));
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

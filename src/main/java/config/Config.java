@@ -53,6 +53,30 @@ public class Config {
 		return properties.getProperty(configKey, defaultValue);
 	}
 
+	public static int getInt(String configKey) {
+		return Integer.parseInt(get(configKey));
+	}
+
+	public static int getInt(String configKey, int defaultValue) {
+		return properties.containsKey(configKey) ? getInt(configKey) : defaultValue;
+	}
+
+	public static float getFloat(String configKey) {
+		return Float.parseFloat(get(configKey));
+	}
+
+	public static float getFloat(String configKey, float defaultValue) {
+		return properties.containsKey(configKey) ? getFloat(configKey) : defaultValue;
+	}
+
+	public static boolean getBoolean(String configKey) {
+		return Boolean.parseBoolean(get(configKey));
+	}
+
+	public static boolean getBoolean(String configKey, boolean defaultValue) {
+		return properties.containsKey(configKey) ? getBoolean(configKey) : defaultValue;
+	}
+
 	public static void put(String configKey, String value) {
 		properties.put(configKey, value);
 		saveConfig();

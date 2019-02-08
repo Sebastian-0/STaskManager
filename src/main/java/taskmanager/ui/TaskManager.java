@@ -130,21 +130,18 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 
 	private Dimension getPreviousSize() {
 		return new Dimension(
-				Integer.parseInt(Config.get(Config.KEY_LAST_WINDOW_WIDTH, "-1")),
-				Integer.parseInt(Config.get(Config.KEY_LAST_WINDOW_HEIGHT, "-1")));
+				Config.getInt(Config.KEY_LAST_WINDOW_WIDTH, -1),
+				Config.getInt(Config.KEY_LAST_WINDOW_HEIGHT, -1));
 	}
 
 	private int getPreviousExtendedState() {
-		return Integer.parseInt(Config.get(Config.KEY_LAST_EXTENDED_STATE, "" + NORMAL));
+		return Config.getInt(Config.KEY_LAST_EXTENDED_STATE, NORMAL);
 	}
 
 	private boolean shouldMinimizeToTray(int state) {
-		if ((state & ICONIFIED) != 0 &&
-				Boolean.parseBoolean(Config.get(Config.KEY_MINIMIZE_TO_TRAY)) &&
-				trayIcon != null) {
-			return true;
-		}
-		return false;
+		return (state & ICONIFIED) != 0 &&
+				Config.getBoolean(Config.KEY_MINIMIZE_TO_TRAY) &&
+				trayIcon != null;
 	}
 
 
