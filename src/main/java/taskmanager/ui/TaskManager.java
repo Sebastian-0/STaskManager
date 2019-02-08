@@ -65,8 +65,6 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		addWindowStateListener(windowListener);
 		addComponentListener(componentListener);
 
-		dataCollector.init();
-
 		if (!SystemTray.isSupported()) {
 			System.out.println("No system tray support!");
 		} else {
@@ -78,6 +76,18 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 				e.printStackTrace();
 			}
 		}
+
+		dataCollector.init();
+	}
+
+	private void loadProgramIcon() {
+		Image image = TextureStorage.instance().getTexture("icon_large");
+		Image image16 = TextureStorage.instance().getTexture("icon_small");
+
+		List<Image> images = new ArrayList<Image>();
+		images.add(image);
+		images.add(image16);
+		setIconImages(images);
 	}
 
 	@Override
@@ -102,10 +112,14 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		setExtendedState(getPreviousExtendedState());
 		pack();
 
+		dataCollector.start();
+
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-		dataCollector.start();
+		if (!shouldMinimizeToTray(getExtendedState())) {
+			setVisible(true);
+		}
 	}
 
 	private void copyData(SystemInformation other) {
@@ -124,14 +138,13 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		return Integer.parseInt(Config.get(Config.KEY_LAST_EXTENDED_STATE, "" + NORMAL));
 	}
 
-	private void loadProgramIcon() {
-		Image image = TextureStorage.instance().getTexture("icon_large");
-		Image image16 = TextureStorage.instance().getTexture("icon_small");
-
-		List<Image> images = new ArrayList<Image>();
-		images.add(image);
-		images.add(image16);
-		setIconImages(images);
+	private boolean shouldMinimizeToTray(int state) {
+		if ((state & ICONIFIED) != 0 &&
+				Boolean.parseBoolean(Config.get(Config.KEY_MINIMIZE_TO_TRAY)) &&
+				trayIcon != null) {
+			return true;
+		}
+		return false;
 	}
 
 
@@ -175,6 +188,7 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 	public void focus() {
 		if ((getExtendedState() & JFrame.ICONIFIED) != 0) {
 			setExtendedState(getExtendedState() & ~JFrame.ICONIFIED);
+			setVisible(true);
 		}
 		toFront();
 	}
@@ -236,11 +250,8 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 
 		@Override
 		public void windowStateChanged(WindowEvent e) {
-			int previousMaximizedState = (e.getOldState() & MAXIMIZED_BOTH);
-			int currentMaximizedState = (e.getNewState() & MAXIMIZED_BOTH);
-			if (previousMaximizedState != currentMaximizedState) {
-				Config.put(Config.KEY_LAST_EXTENDED_STATE, "" + currentMaximizedState);
-			}
+			Config.put(Config.KEY_LAST_EXTENDED_STATE, "" + e.getNewState());
+			setVisible(!shouldMinimizeToTray(e.getNewState()));
 		}
 	};
 
@@ -261,7 +272,6 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 
 		ToolTipManager.sharedInstance().setDismissDelay(8000);
 
-		TaskManager manager = new TaskManager();
-		manager.setVisible(true);
+		new TaskManager();
 	}
 }
