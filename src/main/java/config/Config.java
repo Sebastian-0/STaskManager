@@ -31,6 +31,7 @@ public class Config {
 	public static final String KEY_SHOW_DEAD_PROCESSES = "showDeadProcesses";
 
 	public static final String KEY_MINIMIZE_TO_TRAY = "minimizeToTray";
+	public static final String KEY_TRAY_GRAPH = "trayGraph";
 
 	public static final String KEY_UPDATE_RATE = "updateRate";
 	public static final String KEY_MAXIMUM_MEASURMENT_BUFFER_SIZE = "maximumMeasurementBufferSize";
@@ -111,6 +112,7 @@ public class Config {
 		properties.put(KEY_GRAPH_MAX_PIXELS_PER_SEGMENT, "2");
 		properties.put(KEY_LINK_TIMELINES, "true");
 		properties.put(KEY_MINIMIZE_TO_TRAY, "false");
+		properties.put(KEY_TRAY_GRAPH, "");
 	}
 
 	private static void saveConfig() {

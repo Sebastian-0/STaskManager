@@ -10,6 +10,7 @@ import taskmanager.ui.details.ProcessDetailsCallback;
 import taskmanager.ui.details.ProcessPanel;
 import taskmanager.ui.performance.PerformancePanel;
 import taskmanager.ui.processdialog.ProcessDialog;
+import taskmanager.ui.tray.Tray;
 
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
