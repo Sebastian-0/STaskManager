@@ -186,6 +186,7 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 	public void focus() {
 		if ((getExtendedState() & JFrame.ICONIFIED) != 0) {
 			setExtendedState(getExtendedState() & ~JFrame.ICONIFIED);
+			Config.put(Config.KEY_LAST_EXTENDED_STATE, "" + getExtendedState());
 			setVisible(true);
 		}
 		toFront();
