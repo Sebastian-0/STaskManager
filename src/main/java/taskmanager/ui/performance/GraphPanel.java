@@ -105,7 +105,7 @@ public class GraphPanel extends JPanel {
 		final int numVerticalSections = (dataEndIndex - dataStartIndex) / datapointsPerVerticalSection;
 		final int verticalOffset = 0;
 
-		g.setColor(new Color(227, 239, 247));
+//		g.setColor(new Color(227, 239, 247));
 		g.setColor(new Color(127, 139, 147, 50));
 		if (isLogarithmic) {
 			double lower = 0;

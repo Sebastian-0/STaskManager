@@ -8,15 +8,18 @@ import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphType;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Menu;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
+import java.awt.RenderingHints;
 import java.awt.TrayIcon;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class Tray extends TrayIcon {
 	private Image applicationIcon;
@@ -63,9 +66,10 @@ public class Tray extends TrayIcon {
 
 		addActionListener(e -> application.focus());
 
-		iconImage = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+		iconImage = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
 		imageGraphics = iconImage.createGraphics();
-		imageGraphics.setStroke(new BasicStroke(4));
+		imageGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+//		imageGraphics.setStroke(new BasicStroke(4));
 
 		String graphName = Config.get(Config.KEY_TRAY_GRAPH);
 		if (graphName.isEmpty()) {
@@ -110,21 +114,57 @@ public class Tray extends TrayIcon {
 		imageGraphics.setColor(Color.WHITE);
 		imageGraphics.fillRect(0, 0, iconImage.getWidth(), iconImage.getHeight());
 
-		double ratio = 0;
-		if (graphTypeToDisplay == GraphType.Cpu) {
-			ratio = info.cpuUsageTotal.newest();
-		} else if (graphTypeToDisplay == GraphType.Memory) {
-			ratio = info.physicalMemoryUsed.newest() / (double) info.physicalMemoryTotal;
+		imageGraphics.setColor(new Color(203, 208, 211));
+
+		int lines = 3-1;
+		for (int i = 0; i < lines; i++) {
+			int y = (i + 1) * iconImage.getHeight() / (lines + 1);
+			imageGraphics.drawLine(0, y, iconImage.getWidth(), y);
 		}
 
-		imageGraphics.setColor(ColorUtils.blend(graphTypeToDisplay.color, Color.WHITE, 75/255f));
-		int height = (int) (ratio * iconImage.getHeight());
-		imageGraphics.fillRect(0, iconImage.getHeight() - height, iconImage.getWidth(), height);
+		for (int i = 0; i < lines; i++) {
+			int x = (i + 1) * iconImage.getWidth() / (lines + 1);
+			imageGraphics.drawLine(x, 0, x, iconImage.getHeight());
+		}
 
-		imageGraphics.setColor(graphTypeToDisplay.color);
-		imageGraphics.drawLine(0, iconImage.getHeight() - height, iconImage.getWidth(), iconImage.getHeight() - height);
+		final int samples = 4;
+		List<Double> ratios = new ArrayList<>();
+		if (graphTypeToDisplay == GraphType.Cpu) {
+			Iterator<Double> itr = info.cpuUsageTotal.getRangeIterator(info.cpuUsageTotal.size() - samples, info.cpuUsageTotal.size() - 1);
+			while (itr.hasNext()) {
+				ratios.add(itr.next());
+			}
+		} else if (graphTypeToDisplay == GraphType.Memory) {
+			Iterator<Long> itr = info.physicalMemoryUsed.getRangeIterator(info.physicalMemoryUsed.size() - samples, info.physicalMemoryUsed.size() - 1);
+			while (itr.hasNext()) {
+				ratios.add(itr.next() / (double) info.physicalMemoryTotal);
+			}
+		}
+
+		double previous = ratios.get(0);
+		int idx = 0;
+		for (int i = 1; i < ratios.size(); i++) {
+			double current = ratios.get(i);
+
+			int yPrev = (int) (iconImage.getHeight() * previous);
+			int yCurr = (int) (iconImage.getHeight() * current);
+
+			int x = iconImage.getWidth() * (idx) / (samples-1);
+			int xNext = iconImage.getWidth() * (idx + 1) / (samples-1);
+
+			imageGraphics.setColor(ColorUtils.blend(graphTypeToDisplay.color, Color.WHITE, 75/255f));
+			int[] xs = {x, x, xNext, xNext};
+			int[] ys = {iconImage.getHeight(), iconImage.getHeight() - yPrev, iconImage.getHeight() - yCurr, iconImage.getHeight()};
+			imageGraphics.fillPolygon(xs, ys, xs.length);
+
+			imageGraphics.setColor(graphTypeToDisplay.color);
+			imageGraphics.drawLine(x, iconImage.getHeight() - yPrev, xNext, iconImage.getHeight() - yCurr);
+
+			idx += 1;
+			previous = current;
+		}
 
 		imageGraphics.setColor(Color.DARK_GRAY);
-		imageGraphics.drawRect(1, 1, iconImage.getWidth() - 1, iconImage.getHeight() - 1);
+		imageGraphics.drawRect(0, 0, iconImage.getWidth() - 1, iconImage.getHeight() - 1);
 	}
 }
