@@ -70,7 +70,7 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 			System.out.println("No system tray support!");
 		} else {
 			try {
-				trayIcon = new Tray(this, TextureStorage.instance().getTexture("icon_large"));
+				trayIcon = new Tray(this, TextureStorage.instance().getTexture("icon_small"));
 				SystemTray.getSystemTray().add(trayIcon);
 			} catch (AWTException e) {
 				System.out.println("Failed to create tray icon");
