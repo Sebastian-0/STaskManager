@@ -13,7 +13,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Arrays;
 
-public class SearchTextField extends JTextField {
+public class FilterTextField extends JTextField {
 	private static final String FILTER_STRING = "Filter processes";
 	private static final Color FILTER_COLOR = new Color(110, 110, 110);
 	private boolean hasDefault;
@@ -21,7 +21,7 @@ public class SearchTextField extends JTextField {
 
 	private ProcessTable[] processTables;
 
-	public SearchTextField(ProcessTable... processTables) {
+	public FilterTextField(ProcessTable... processTables) {
 		super(FILTER_STRING, 30);
 		this.processTables = processTables;
 		hasDefault = true;

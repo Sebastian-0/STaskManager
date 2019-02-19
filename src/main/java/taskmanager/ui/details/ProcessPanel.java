@@ -21,7 +21,7 @@ public class ProcessPanel extends JPanel {
 	public ProcessPanel(ProcessDetailsCallback processCallback, SystemInformation systemInformation) {
 		liveTable = new ProcessTable(processCallback, systemInformation, false);
 		deadTable = new ProcessTable(processCallback, systemInformation, true);
-		SearchTextField search = new SearchTextField(liveTable, deadTable);
+		FilterTextField search = new FilterTextField(liveTable, deadTable);
 		JLabel attributeLabel = new JLabel("By:");
 		SearchAttributeComboBox attribute = new SearchAttributeComboBox(liveTable, deadTable);
 

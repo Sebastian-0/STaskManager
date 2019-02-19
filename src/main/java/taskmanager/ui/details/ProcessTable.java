@@ -474,7 +474,14 @@ public class ProcessTable extends JTable {
 			List<Object[]> dataRows = new ArrayList<>();
 			List<Color[]> colorRows = new ArrayList<>();
 			for (int i = 0; i < tableModel.fullData.length; i++) {
-				if (tableModel.fullData[i][filterColumn].toString().toLowerCase().contains(filterPhrase)) {
+				boolean approved;
+				if (filterAttribute == Columns.Cpu || filterAttribute == Columns.PrivateWorkingSet) {
+					approved = filterOnNumber(tableModel.fullData[i][filterColumn].toString());
+				} else {
+					approved = filterOnString(tableModel.fullData[i][filterColumn].toString());
+				}
+
+				if (approved) {
 					dataRows.add(tableModel.fullData[i]);
 					colorRows.add(tableModel.fullColor[i]);
 				}
@@ -483,6 +490,53 @@ public class ProcessTable extends JTable {
 			tableModel.filteredData = dataRows.toArray(new Object[0][tableModel.columns.length]);
 			tableModel.filteredColor = colorRows.toArray(new Color[0][tableModel.columns.length]);
 		}
+	}
+
+	private boolean filterOnString(String columnValue) {
+		return columnValue.toLowerCase().contains(filterPhrase);
+	}
+
+	private boolean filterOnNumber(String columnValue) {
+		if (filterPhrase.trim().equals("-") || filterPhrase.trim().equals("+")) {
+			return true;
+		} else {
+			double tableValue = filterStringToNumber(columnValue);
+			double filterValue = filterStringToNumber(filterPhrase);
+
+			if (filterValue != -1 && tableValue != -1) {
+				boolean less = filterPhrase.startsWith("-");
+				return less && tableValue < filterValue ||
+						!less && tableValue >= filterValue;
+			}
+		}
+		return false;
+	}
+
+	private double filterStringToNumber(String o) {
+		String tableString = o.replaceAll("\\s+", "").replaceAll(",", ".");
+		if (tableString.startsWith("-") || tableString.startsWith("+")) {
+			tableString = tableString.substring(1);
+		}
+		double factor = 1;
+		char modifier = tableString.charAt(tableString.length()-1);
+		if (!Character.isDigit(modifier)) {
+			tableString = tableString.substring(0, tableString.length()-1);
+			if (modifier == 'M' || modifier == 'm') {
+				factor = 1024;
+			} else if (modifier == 'G' || modifier == 'g') {
+				factor = 1024 * 1024;
+			} else if (modifier == 'T' || modifier == 't') {
+				factor = 1024 * 1024 * 1024;
+			} else if (modifier == 'P' || modifier == 'p') {
+				factor = 1024 * 1024 * 1024 * 1024d;
+			} else if (modifier != '%' && modifier != 'K' && modifier != 'k') {
+				return -1;
+			}
+		}
+		try {
+			return factor * Double.parseDouble(tableString);
+		} catch (NumberFormatException ignored) { }
+		return -1;
 	}
 
 
