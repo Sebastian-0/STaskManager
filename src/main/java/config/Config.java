@@ -106,7 +106,7 @@ public class Config {
 		properties.put(KEY_DEAD_PROCESS_KEEP_TIME, "30");
 		properties.put(KEY_SHOW_DEAD_PROCESSES, "true");
 		properties.put(KEY_LAST_SELECTION_INVERTED, "false");
-		properties.put(KEY_LAST_DEAD_SELECTION_INVERTED, "false");
+		properties.put(KEY_LAST_DEAD_SELECTION_INVERTED, "true");
 		properties.put(KEY_UPDATE_RATE, "1.0");
 		properties.put(KEY_MAXIMUM_MEASURMENT_BUFFER_SIZE, "3600");
 		properties.put(KEY_GRAPH_MAX_PIXELS_PER_SEGMENT, "2");
