@@ -269,6 +269,8 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 //    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 //    UIManager.put("Panel.background", Color.white);
 
+		System.out.println("Running with PID: " + ProcessHandle.current().pid());
+
 		ToolTipManager.sharedInstance().setDismissDelay(8000);
 
 		new TaskManager();

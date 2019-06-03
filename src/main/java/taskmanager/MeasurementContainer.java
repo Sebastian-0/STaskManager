@@ -6,20 +6,22 @@ import java.util.Iterator;
 
 public class MeasurementContainer<T extends Comparable<T>> implements Measurements<T> {
 	private int size;
-	private T[] data;
-	private int startIndex;
+	private T defaultValue;
+
+	private Point oldest;
+	private Point newest;
+
+	private int time;
 
 	public MeasurementContainer(T defaultValue) {
 		this((int) (Config.getInt(Config.KEY_MAXIMUM_MEASURMENT_BUFFER_SIZE) * Config.getFloat(Config.KEY_UPDATE_RATE)), defaultValue);
 	}
 
-	@SuppressWarnings("unchecked")
 	public MeasurementContainer(int size, T defaultValue) {
 		this.size = size;
-		data = (T[]) new Comparable[size];
-		for (int i = 0; i < data.length; i++) {
-			data[i] = defaultValue;
-		}
+		this.defaultValue = defaultValue;
+		this.oldest = this.newest = new Point(defaultValue, -size);
+		oldest.count = size;
 	}
 
 	@Override
@@ -31,8 +33,19 @@ public class MeasurementContainer<T extends Comparable<T>> implements Measuremen
 			throw new IllegalArgumentException("Sizes must be equal!");
 
 		MeasurementContainer<T> other = (MeasurementContainer<T>) otherRaw;
-		System.arraycopy(other.data, 0, data, 0, size);
-		startIndex = other.startIndex;
+
+		oldest = new Point(other.oldest);
+		Point lastOtherPoint = other.oldest;
+		Point lastPoint = oldest;
+		while (lastOtherPoint.next != null) {
+			Point newPoint = new Point(lastOtherPoint.next);
+			lastPoint.next = newPoint;
+			newPoint.previous = lastPoint;
+			lastPoint = newPoint;
+			lastOtherPoint = lastOtherPoint.next;
+		}
+		newest = lastPoint;
+		time = other.time;
 	}
 
 	@Override
@@ -45,18 +58,67 @@ public class MeasurementContainer<T extends Comparable<T>> implements Measuremen
 
 		MeasurementContainer<T> other = (MeasurementContainer<T>) otherRaw;
 
-		if (other.startIndex < startIndex) {
-			System.arraycopy(other.data, startIndex, data, startIndex, size - startIndex);
-			startIndex = 0;
+		Point newNewest = null;
+		Point current = null;
+		Point otherCurrent = other.newest;
+		while (otherCurrent != null && otherCurrent.constructionTime != newest.constructionTime) {
+			Point newPoint = new Point(otherCurrent);
+			newPoint.next = current;
+			if (current != null) {
+				current.previous = newPoint;
+			} else {
+				newNewest = newPoint;
+			}
+			current = newPoint;
+			otherCurrent = otherCurrent.previous;
 		}
-		System.arraycopy(other.data, startIndex, data, startIndex, other.startIndex - startIndex);
-		startIndex = other.startIndex;
+
+		if (otherCurrent == null) {
+			oldest = current;
+			newest = newNewest;
+		} else {
+			newest.count = otherCurrent.count;
+			newest.next = current;
+			if (current != null) {
+				current.previous = newest;
+			}
+
+			while (oldest.constructionTime != other.oldest.constructionTime) {
+				oldest = oldest.next;
+			}
+			oldest.previous = null;
+
+			if (newNewest != null) {
+				newest = newNewest;
+			}
+		}
+
+		time = other.time;
 	}
 
 	@Override
 	public synchronized void addValue(T value) {
-		data[startIndex] = value;
-		startIndex = (startIndex + 1) % size;
+		Point previous = newest;
+		if (previous.value.equals(value)) {
+			previous.count += 1;
+		} else {
+			Point newPoint = new Point(value, time);
+			newPoint.count = 1;
+			newest.next = newPoint;
+			newPoint.previous = newest;
+			newest = newPoint;
+		}
+
+		time += 1;
+
+		pruneSingle();
+	}
+
+	private void pruneSingle() {
+		if (time - (oldest.constructionTime + oldest.count) > size) {
+			oldest = oldest.next;
+			oldest.previous = null;
+		}
 	}
 
 	@Override
@@ -66,34 +128,38 @@ public class MeasurementContainer<T extends Comparable<T>> implements Measuremen
 
 	@Override
 	public synchronized T newest() {
-		return data[(size + startIndex - 1) % size];
+		return newest.value;
 	}
 
 	@Override
 	public synchronized T oldest() {
-		return data[startIndex];
+		return oldest.value;
 	}
 
 	@Override
-	public synchronized T max() { // TODO highly inefficient, use a monotone queue
-		T max = data[0];
-		for (int i = 1; i < data.length; i++) {
-			if (max.compareTo(data[i]) < 0) {
-				max = data[i];
+	public synchronized T max() { // TODO inefficient, use a monotone queue/heap
+		T max = oldest.value;
+		Point current = oldest.next;
+		while (current != null) {
+			if (max.compareTo(current.value) < 0) {
+				max = current.value;
 			}
+			current = current.next;
 		}
 		return max;
 	}
 
 	@Override
-	public synchronized T min() { // TODO highly inefficient, use a monotone queue
-		T max = data[0];
-		for (int i = 1; i < data.length; i++) {
-			if (max.compareTo(data[i]) > 0) {
-				max = data[i];
+	public synchronized T min() { // TODO inefficient, use a monotone queue/heap
+		T min = oldest.value;
+		Point current = oldest.next;
+		while (current != null) {
+			if (min.compareTo(current.value) > 0) {
+				min = current.value;
 			}
+			current = current.next;
 		}
-		return max;
+		return min;
 	}
 
 	@Override
@@ -105,17 +171,34 @@ public class MeasurementContainer<T extends Comparable<T>> implements Measuremen
 
 
 	private class DataIterator implements Iterator<T> {
+		private Point lastPoint;
+		private int start;
+		private int end;
 		private int index;
-		private int pointsLeft;
 
 		public DataIterator(int start, int end) {
-			index = (startIndex + start) % size;
-			pointsLeft = end - start + 1;
+			this.start = start;
+			this.end = end;
+			index = 0;
+
+			if (isBefore(oldest)) {
+				lastPoint = new Point(defaultValue, time - size);
+				lastPoint.count = oldest.constructionTime - lastPoint.constructionTime;
+			} else {
+				Point current = oldest;
+				while (current != null) {
+					if (!isAfter(current)) {
+						lastPoint = current;
+						break;
+					}
+					current = current.next;
+				}
+			}
 		}
 
 		@Override
 		public boolean hasNext() {
-			return pointsLeft > 0;
+			return start + index <= end;
 		}
 
 		@Override
@@ -124,12 +207,46 @@ public class MeasurementContainer<T extends Comparable<T>> implements Measuremen
 				throw new IllegalStateException("The iterator is empty!");
 
 			T dataPoint;
+
 			synchronized (MeasurementContainer.this) {
-				dataPoint = data[index];
+				if (isAfter(lastPoint)) {
+					lastPoint = lastPoint.next;
+				}
+
+				dataPoint = lastPoint.value;
 			}
-			index = (index + 1) % size;
-			pointsLeft--;
+
+			index +=1;
 			return dataPoint;
+		}
+
+		private boolean isBefore(Point point) {
+			return start + index < size - (time - point.constructionTime);
+		}
+
+		private boolean isAfter(Point point) {
+			return start + index >= size - (time - point.constructionTime) + point.count;
+		}
+	}
+
+
+	private class Point {
+		private final T value;
+		private final int constructionTime;
+		private int count;
+
+		private Point next;
+		private Point previous;
+
+		public Point(T value, int constructionTime) {
+			this.value = value;
+			this.constructionTime = constructionTime;
+		}
+
+		public Point(Point other) {
+			this.value = other.value;
+			this.constructionTime = other.constructionTime;
+			this.count = other.count;
 		}
 	}
 }

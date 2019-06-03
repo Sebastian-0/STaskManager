@@ -539,7 +539,6 @@ public class ProcessTable extends JTable {
 		return -1;
 	}
 
-
 	public class ProcessTableCellRenderer extends DefaultTableCellRenderer {
 		public static final int CELL_PADDING = 8;
 
@@ -688,6 +687,9 @@ public class ProcessTable extends JTable {
 
 
 	private MouseAdapter mouseListener = new MouseAdapter() {
+		private int lastRowHover = -1;
+		private int lastColumnHover = -1;
+
 		@Override
 		public void mouseClicked(MouseEvent e) {
 			if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
@@ -706,31 +708,35 @@ public class ProcessTable extends JTable {
 			int row = rowAtPoint(e.getPoint());
 			int column = columnAtPoint(e.getPoint());
 
-			String cellValue = getValueAt(row, column).toString();
-			int cellWidth = getColumnModel().getColumn(column).getWidth();
-			if (cellWidth <= metrics.stringWidth(cellValue) + ProcessTableCellRenderer.CELL_PADDING * 2) {
-				final int maxTooltipWidth = 600;
-				if (metrics.stringWidth(cellValue) > maxTooltipWidth) {
-					StringBuilder sb = new StringBuilder();
-					sb.append("<html>");
-					int lastIndex = 0;
-					for (int i = 0; i < cellValue.length(); i++) {
-						if (metrics.stringWidth(cellValue.substring(lastIndex, i + 1)) > maxTooltipWidth) {
-							sb.append(cellValue, lastIndex, i);
-							sb.append("<br/>");
-							lastIndex = i + 1;
+			if (lastRowHover != row || lastColumnHover != column) {
+				String cellValue = getValueAt(row, column).toString();
+				int cellWidth = getColumnModel().getColumn(column).getWidth();
+				if (cellWidth <= metrics.stringWidth(cellValue) + ProcessTableCellRenderer.CELL_PADDING * 2) {
+					final int maxTooltipWidth = 600;
+					if (metrics.stringWidth(cellValue) > maxTooltipWidth) {
+						StringBuilder sb = new StringBuilder();
+						sb.append("<html>");
+						int lastIndex = 0;
+						for (int i = 0; i < cellValue.length(); i++) {
+							if (metrics.stringWidth(cellValue.substring(lastIndex, i + 1)) > maxTooltipWidth) {
+								sb.append(cellValue, lastIndex, i);
+								sb.append("<br/>");
+								lastIndex = i + 1;
+							}
 						}
+						if (lastIndex < cellValue.length()) {
+							sb.append(cellValue, lastIndex, cellValue.length());
+						}
+						sb.append("</html>");
+						setToolTipText(sb.toString());
+					} else {
+						setToolTipText(cellValue);
 					}
-					if (lastIndex < cellValue.length()) {
-						sb.append(cellValue, lastIndex, cellValue.length());
-					}
-					sb.append("</html>");
-					setToolTipText(sb.toString());
 				} else {
-					setToolTipText(cellValue);
+					setToolTipText(null);
 				}
-			} else {
-				setToolTipText(null);
+				lastColumnHover = column;
+				lastRowHover = row;
 			}
 		}
 	};
