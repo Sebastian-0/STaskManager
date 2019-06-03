@@ -11,11 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class LinuxInformationLoader extends InformationLoader {
 	private static final String PROC_PATH = "/proc";
@@ -125,7 +121,7 @@ public class LinuxInformationLoader extends InformationLoader {
 			}
 
 			Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
-			process.privateWorkingSet.addValue(Long.parseLong(removeUnit(status.getOrDefault("VmRSS", "0 kb"))) * 1024);
+			process.privateWorkingSet.addValue(Long.parseLong(removeUnit(status.getOrDefault("RssAnon", "0 kb"))) * 1024);
 
 			int attempts = 0;
 			String stat = "";
@@ -137,15 +133,14 @@ public class LinuxInformationLoader extends InformationLoader {
 				System.out.println("Did several attempts to open file: " + attempts);
 			}
 			if (stat.isEmpty()) {
-				// TODO Copy old
 				System.out.println("File was empty, did more than 100 attempts!");
+				process.cpuTime.addValue(process.cpuTime.newest());
+				process.cpuUsage.addValue(process.cpuUsage.newest());
 			} else {
 				String[] tokens = stat.split("\\s+");
 				long utime = Long.parseLong(tokens[13]);
 				long stime = Long.parseLong(tokens[14]);
-				long cutime = Long.parseLong(tokens[15]);
-				long cstime = Long.parseLong(tokens[16]);
-				process.updateCpu(stime + cstime, utime + cutime, (currentCpuTime - lastCpuTime), 1); // Set cores to 1 since the total time is already divided by cores
+				process.updateCpu(stime, utime, (currentCpuTime - lastCpuTime), 1); // Set cores to 1 since the total time is already divided by cores
 			}
 		}
 
