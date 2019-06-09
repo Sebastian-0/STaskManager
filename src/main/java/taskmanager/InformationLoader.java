@@ -30,7 +30,7 @@ public abstract class InformationLoader {
 
 		systemInformation.cpuUsagePerCore = new MeasurementContainer[systemInformation.logicalProcessorCount];
 		for (int i = 0; i < systemInformation.cpuUsagePerCore.length; i++) {
-			systemInformation.cpuUsagePerCore[i] = new MeasurementContainer<Double>(0d);
+			systemInformation.cpuUsagePerCore[i] = new MeasurementContainer<>(0L);
 		}
 
 		networkInterfaces = systemInfoLoader.getHardware().getNetworkIFs();
@@ -83,9 +83,10 @@ public abstract class InformationLoader {
 		systemInformation.physicalMemoryUsed.addValue(systemInformation.physicalMemoryTotal - systemInfoLoader.getHardware().getMemory().getAvailable());
 		double[] loadPerCore = systemInfoLoader.getHardware().getProcessor().getProcessorCpuLoadBetweenTicks();
 		for (int i = 0; i < loadPerCore.length; i++) {
-			systemInformation.cpuUsagePerCore[i].addValue(loadPerCore[i]);
+			systemInformation.cpuUsagePerCore[i].addValue(Math.round(loadPerCore[i] * Config.DOUBLE_TO_LONG));
 		}
-		systemInformation.cpuUsageTotal.addValue(systemInfoLoader.getHardware().getProcessor().getSystemCpuLoad());
+		systemInformation.cpuUsageTotal.addValue(
+				Math.round(systemInfoLoader.getHardware().getProcessor().getSystemCpuLoad() * Config.DOUBLE_TO_LONG));
 
 		final int deadKeepTime = Config.getInt(Config.KEY_DEAD_PROCESS_KEEP_TIME) * 1000;
 		systemInformation.deadProcesses.removeIf(process -> System.currentTimeMillis() - process.deathTimestamp > deadKeepTime);

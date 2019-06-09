@@ -126,8 +126,8 @@ public class NetworkPanel extends JPanel {
 	public GraphTypeButton createNetworkButton(int index) {
 		connectedButton = new GraphTypeButton(GraphType.Network, "Network", index);
 		connectedButton.setIsLogarithmic(transferGraph.isLogarithmic());
-		connectedButton.addGraph(network.outRate, true);
 		connectedButton.addGraph(network.inRate, false);
+		connectedButton.addGraph(network.outRate, true);
 		return connectedButton;
 	}
 }

@@ -116,8 +116,8 @@ public class LinuxInformationLoader extends InformationLoader {
 				} else {
 					System.out.println("Failed to read status for: " + process.fileName);
 				}
-//        if (process.description.isEmpty())
-//          process.description = process.fileName;
+//				if (process.description.isEmpty())
+//					process.description = process.fileName;
 			}
 
 			Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");

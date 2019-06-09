@@ -27,14 +27,14 @@ public class SystemInformation {
 	public long commitUsed;
 
 	public long kernelPaged;
-	public long kernelNonpaged;
+	public long kernelNonPaged;
 
 	/* Processor data */
 	public int logicalProcessorCount;
 	public int physicalProcessorCount;
 
-	public Measurements<Double>[] cpuUsagePerCore;
-	public Measurements<Double> cpuUsageTotal;
+	public Measurements<Long>[] cpuUsagePerCore;
+	public Measurements<Long> cpuUsageTotal;
 
 	public int totalProcesses;
 	public int totalThreads;
@@ -51,9 +51,9 @@ public class SystemInformation {
 
 	@SuppressWarnings("unchecked")
 	public SystemInformation() {
-		physicalMemoryUsed = new MeasurementContainer<Long>(0L);
+		physicalMemoryUsed = new MeasurementContainer<>(0L);
 		cpuUsagePerCore = new MeasurementContainer[0];
-		cpuUsageTotal = new MeasurementContainer<Double>(0d);
+		cpuUsageTotal = new MeasurementContainer<>(0L);
 		processes = new ArrayList<>();
 		deadProcesses = new ArrayList<>();
 		networks = new Network[0];
@@ -91,7 +91,7 @@ public class SystemInformation {
 		commitUsed = other.commitUsed;
 
 		kernelPaged = other.kernelPaged;
-		kernelNonpaged = other.kernelNonpaged;
+		kernelNonPaged = other.kernelNonPaged;
 
 		/* Processor data */
 		logicalProcessorCount = other.logicalProcessorCount;
@@ -99,7 +99,7 @@ public class SystemInformation {
 
 		for (int i = 0; i < cpuUsagePerCore.length; i++) {
 			if (cpuUsagePerCore[i] == null) {
-				cpuUsagePerCore[i] = new MeasurementContainer<Double>(0d);
+				cpuUsagePerCore[i] = new MeasurementContainer<>(0L);
 			}
 			cpuUsagePerCore[i].copyDelta(other.cpuUsagePerCore[i]);
 		}

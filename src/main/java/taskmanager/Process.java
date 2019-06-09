@@ -1,5 +1,7 @@
 package taskmanager;
 
+import config.Config;
+
 import java.text.Collator;
 import java.util.Comparator;
 
@@ -12,7 +14,7 @@ public class Process {
 	public String commandLine;
 	public String description;
 	public String userName;
-	public Measurements<Double> cpuUsage;
+	public Measurements<Long> cpuUsage;
 	public Measurements<Long> cpuTime;
 	public boolean isDead;
 	public long deathTimestamp;
@@ -31,7 +33,7 @@ public class Process {
 		commandLine = "";
 		description = "";
 		userName = "Unknown";
-		cpuUsage = new MeasurementContainer<>(0d);
+		cpuUsage = new MeasurementContainer<>(0L);
 		cpuTime = new MeasurementContainer<>(0L);
 	}
 
@@ -66,7 +68,7 @@ public class Process {
 		if (lastSysCpu != 0 || lastUserCpu != 0) {
 			long newCpuTime = sysCpu - lastSysCpu + userCpu - lastUserCpu;
 			cpuTime.addValue(newCpuTime);
-			cpuUsage.addValue(newCpuTime / (double) totalCpuDelta / numCores);
+			cpuUsage.addValue(Math.round(newCpuTime / (double) totalCpuDelta / numCores * Config.DOUBLE_TO_LONG));
 		}
 		lastSysCpu = sysCpu;
 		lastUserCpu = userCpu;

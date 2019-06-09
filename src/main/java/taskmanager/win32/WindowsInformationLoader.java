@@ -95,7 +95,7 @@ public class WindowsInformationLoader extends InformationLoader {
 		systemInformation.commitUsed = performanceInfo.CommitTotal.longValue() * systemInformation.pageSize;
 
 		systemInformation.kernelPaged = performanceInfo.KernelPaged.longValue() * systemInformation.pageSize;
-		systemInformation.kernelNonpaged = performanceInfo.KernelNonpaged.longValue() * systemInformation.pageSize;
+		systemInformation.kernelNonPaged = performanceInfo.KernelNonpaged.longValue() * systemInformation.pageSize;
 
 		Memory memory = new Memory(new SYSTEM_MEMORY_LIST_INFORMATION().size());
 		int status = NtDllExt.INSTANCE.NtQuerySystemInformation(

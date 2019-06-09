@@ -123,7 +123,7 @@ public class MemoryPanel extends JPanel
     committedPanel.updateValue(systemInformation.commitUsed);
     cachedPanel.updateValue(systemInformation.standbyMemory + systemInformation.modifiedMemory);
     pagedPoolPanel.updateValue(systemInformation.kernelPaged);
-    nonpagedPoolPanel.updateValue(systemInformation.kernelNonpaged);
+    nonpagedPoolPanel.updateValue(systemInformation.kernelNonPaged);
   }
 
 

@@ -284,11 +284,12 @@ public class ProcessTable extends JTable {
 					trySetData(Columns.PrivateWorkingSet, i, "--- --- K");
 					trySetColor(Columns.PrivateWorkingSet, i, selectColorMemory(0));
 				} else {
-					trySetData(Columns.Cpu, i, dfCpu.format(process.cpuUsage.newest() * 100) + " %");
+					double cpuUsage = process.cpuUsage.newest() / (double) Config.DOUBLE_TO_LONG;
+					trySetData(Columns.Cpu, i, dfCpu.format(cpuUsage * 100) + " %");
 					if (process.id == 0) {
 						trySetColor(Columns.Cpu, i, selectColorCpu(0));
 					} else {
-						trySetColor(Columns.Cpu, i, selectColorCpu(process.cpuUsage.newest()));
+						trySetColor(Columns.Cpu, i, selectColorCpu(cpuUsage));
 					}
 					trySetData(Columns.PrivateWorkingSet, i, dfMemory.format(process.privateWorkingSet.newest() / 1024) + " K");
 					trySetColor(Columns.PrivateWorkingSet, i, selectColorMemory(process.privateWorkingSet.newest() / (double) systemInformation.physicalMemoryTotal));

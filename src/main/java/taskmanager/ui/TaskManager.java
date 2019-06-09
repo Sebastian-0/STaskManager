@@ -105,7 +105,7 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		getContentPane().add(tabbed);
 
 //		pack(); // Pack two times to set minimum size before resizing to the preferred size
-//    setMinimumSize(getSize());
+//		setMinimumSize(getSize());
 		Dimension previousSize = getPreviousSize();
 		if (previousSize.width > 0) {
 			setPreferredSize(previousSize);
@@ -266,8 +266,8 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 
 
 	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
-//    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//    UIManager.put("Panel.background", Color.white);
+//		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+//		UIManager.put("Panel.background", Color.white);
 
 		System.out.println("Running with PID: " + ProcessHandle.current().pid());
 
