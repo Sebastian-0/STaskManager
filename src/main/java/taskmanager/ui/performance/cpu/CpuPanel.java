@@ -50,7 +50,7 @@ public class CpuPanel extends JPanel {
 		timelineGraph = new TimelineGraphPanel(singleCpuPanel, labelMaxTime);
 		multiCpuPanel = new MultiCpuPanel(timelineGraph, systemInformation);
 
-		singleCpuPanel.addGraph(cpuUsage);
+		singleCpuPanel.addGraph(cpuUsage, systemInformation.cpuTopList);
 		timelineGraph.addGraph(cpuUsage);
 		timelineGroup.add(timelineGraph);
 

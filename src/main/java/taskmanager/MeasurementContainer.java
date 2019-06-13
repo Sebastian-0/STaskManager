@@ -127,6 +127,17 @@ public class MeasurementContainer<T extends Comparable<T>> implements Measuremen
 	}
 
 	@Override
+	public int realSize() { // TODO Inefficient but currently only used to debug
+		int size = 1;
+		Point current = oldest;
+		while (current != newest) {
+			size++;
+			current = current.next;
+		}
+		return size;
+	}
+
+	@Override
 	public synchronized T newest() {
 		return newest.value;
 	}

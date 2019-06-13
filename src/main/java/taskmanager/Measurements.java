@@ -2,18 +2,18 @@ package taskmanager;
 
 import java.util.Iterator;
 
-public interface Measurements<T>
-{
-  public void copyFrom(Measurements<T> other);
-  public void copyDelta(Measurements<T> other);
+public interface Measurements<T> {
+	void copyFrom(Measurements<T> other);
+	void copyDelta(Measurements<T> other);
 
-  public void addValue(T value);
-  
-  public T newest();
-  public T oldest();
-  public T max();
-  public T min();
-  
-  public Iterator<T> getRangeIterator(int startIndex, int endIndex);
-  public int size();
+	void addValue(T value);
+
+	T newest();
+	T oldest();
+	T max();
+	T min();
+
+	Iterator<T> getRangeIterator(int startIndex, int endIndex);
+	int size();
+	int realSize();
 }

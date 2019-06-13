@@ -74,6 +74,18 @@ public class Process {
 		lastUserCpu = userCpu;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Process) {
+			return uniqueId == ((Process) obj).uniqueId;
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return Long.hashCode(uniqueId);
+	}
 
 	public static class IdComparator extends ProcessComparator {
 		@Override

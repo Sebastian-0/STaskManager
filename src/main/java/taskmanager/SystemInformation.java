@@ -1,9 +1,11 @@
 package taskmanager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 public class SystemInformation {
 	/* Time data */
@@ -14,6 +16,7 @@ public class SystemInformation {
 	public long physicalMemoryTotalInstalled; // Includes reserved memory
 	public long physicalMemoryTotal;
 	public Measurements<Long> physicalMemoryUsed;
+	public Measurements<TopList> physicalMemoryTopList;
 	public long reservedMemory;
 
 	public long pageSize;
@@ -35,6 +38,7 @@ public class SystemInformation {
 
 	public Measurements<Long>[] cpuUsagePerCore;
 	public Measurements<Long> cpuUsageTotal;
+	public Measurements<TopList> cpuTopList;
 
 	public int totalProcesses;
 	public int totalThreads;
@@ -52,8 +56,10 @@ public class SystemInformation {
 	@SuppressWarnings("unchecked")
 	public SystemInformation() {
 		physicalMemoryUsed = new MeasurementContainer<>(0L);
+		physicalMemoryTopList = new MeasurementContainer<>(TopList.EMPTY);
 		cpuUsagePerCore = new MeasurementContainer[0];
 		cpuUsageTotal = new MeasurementContainer<>(0L);
+		cpuTopList = new MeasurementContainer<>(TopList.EMPTY);
 		processes = new ArrayList<>();
 		deadProcesses = new ArrayList<>();
 		networks = new Network[0];
@@ -78,6 +84,7 @@ public class SystemInformation {
 		physicalMemoryTotalInstalled = other.physicalMemoryTotalInstalled; // Includes reserved memory
 		physicalMemoryTotal = other.physicalMemoryTotal;
 		physicalMemoryUsed.copyDelta(other.physicalMemoryUsed);
+		physicalMemoryTopList.copyDelta(other.physicalMemoryTopList);
 		reservedMemory = other.reservedMemory;
 
 		pageSize = other.pageSize;
@@ -104,6 +111,7 @@ public class SystemInformation {
 			cpuUsagePerCore[i].copyDelta(other.cpuUsagePerCore[i]);
 		}
 		cpuUsageTotal.copyDelta(other.cpuUsageTotal);
+		cpuTopList.copyDelta(other.cpuTopList);
 
 		totalProcesses = other.totalProcesses;
 		totalThreads = other.totalThreads;
@@ -182,6 +190,59 @@ public class SystemInformation {
 			}
 		}
 		return null;
+	}
+
+
+
+	public static class TopList implements Comparable<TopList> {
+		public static final TopList EMPTY = new TopList(0);
+
+		public final Entry[] entries;
+
+		public TopList(int size) {
+			this.entries = new Entry[size];
+		}
+
+		public static TopList of(Function<Process, Long> extractor, List<Process> processes, int length) {
+			TopList topList = new TopList(Math.min(length, processes.size()));
+			for (int i = 0; i < topList.entries.length; i++) {
+				topList.entries[i] = new Entry(extractor.apply(processes.get(i)), processes.get(i));
+			}
+			return topList;
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (other instanceof TopList) {
+				return Arrays.equals(entries, ((TopList) other).entries);
+			}
+			return false;
+		}
+
+		@Override
+		public int compareTo(TopList topList) {
+			throw new UnsupportedOperationException("Can't compare two toplists!");
+		}
+
+
+		public static class Entry {
+			public final long value;
+			public final Process process;
+
+			public Entry(long value, Process process) {
+				this.value = value;
+				this.process = process;
+			}
+
+			@Override
+			public boolean equals(Object obj) {
+				if (obj instanceof Entry) {
+					Entry otherEntry = (Entry) obj;
+					return value == otherEntry.value && process.uniqueId == otherEntry.process.uniqueId;
+				}
+				return false;
+			}
+		}
 	}
 
 

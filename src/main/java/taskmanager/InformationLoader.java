@@ -7,6 +7,7 @@ import oshi.hardware.HWPartition;
 import oshi.hardware.NetworkIF;
 import taskmanager.SystemInformation.Disk;
 import taskmanager.SystemInformation.Network;
+import taskmanager.SystemInformation.TopList;
 
 import java.net.SocketException;
 import java.util.ArrayList;
@@ -17,6 +18,8 @@ public abstract class InformationLoader {
 
 	private NetworkIF[] networkInterfaces;
 	private HWDiskStore[] disks;
+
+	private int numberOfUpdates;
 
 	@SuppressWarnings("unchecked")
 	public void init(SystemInformation systemInformation) {
@@ -91,6 +94,17 @@ public abstract class InformationLoader {
 		final int deadKeepTime = Config.getInt(Config.KEY_DEAD_PROCESS_KEEP_TIME) * 1000;
 		systemInformation.deadProcesses.removeIf(process -> System.currentTimeMillis() - process.deathTimestamp > deadKeepTime);
 
+		updateNetworkInterfaces(systemInformation);
+		updateDisks(systemInformation);
+
+		if (numberOfUpdates > 0) {
+			updateTopLists(systemInformation);
+		}
+
+		numberOfUpdates++;
+	}
+
+	private void updateNetworkInterfaces(SystemInformation systemInformation) {
 		for (int i = 0; i < networkInterfaces.length; i++) {
 			long received = networkInterfaces[i].getBytesRecv();
 			long sent = networkInterfaces[i].getBytesSent();
@@ -98,7 +112,9 @@ public abstract class InformationLoader {
 			systemInformation.networks[i].inRate.addValue(networkInterfaces[i].getBytesRecv() - received);
 			systemInformation.networks[i].outRate.addValue(networkInterfaces[i].getBytesSent() - sent);
 		}
+	}
 
+	private void updateDisks(SystemInformation systemInformation) {
 		int i = 0;
 		for (HWDiskStore disk : disks) {
 			if (disk.getPartitions().length > 0) {
@@ -124,5 +140,28 @@ public abstract class InformationLoader {
 				i++;
 			}
 		}
+	}
+
+	private void updateTopLists(SystemInformation systemInformation) {
+		final int topListSize = Config.getInt(Config.KEY_METRIC_TOP_LIST_SIZE);
+
+		// Cpu
+		systemInformation.processes.sort((p1, p2) -> (int) (p2.cpuUsage.newest() - p1.cpuUsage.newest()));
+		TopList cpuTopList = TopList.of(p -> p.cpuUsage.newest(), systemInformation.processes, topListSize);
+		systemInformation.cpuTopList.addValue(cpuTopList);
+
+		// Memory
+		systemInformation.processes.sort((p1, p2) -> signum(p2.privateWorkingSet.newest() - p1.privateWorkingSet.newest()));
+		TopList memoryTopList = TopList.of(p -> p.privateWorkingSet.newest(), systemInformation.processes, topListSize);
+		systemInformation.physicalMemoryTopList.addValue(memoryTopList);
+	}
+
+	private static int signum(long value) {
+		if (value > 0) {
+			return 1;
+		} else if (value < 0) {
+			return -1;
+		}
+		return 0;
 	}
 }

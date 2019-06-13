@@ -36,6 +36,7 @@ public class Config {
 	public static final String KEY_UPDATE_RATE = "updateRate";
 	public static final String KEY_MAXIMUM_MEASURMENT_BUFFER_SIZE = "maximumMeasurementBufferSize";
 	public static final String KEY_GRAPH_MAX_PIXELS_PER_SEGMENT = "maxPixelsPerSegment";
+	public static final String KEY_METRIC_TOP_LIST_SIZE = "metricTopListSize";
 
 	public static final String KEY_LINK_TIMELINES = "linkTimelines";
 
@@ -110,6 +111,7 @@ public class Config {
 		properties.put(KEY_UPDATE_RATE, "1.0");
 		properties.put(KEY_MAXIMUM_MEASURMENT_BUFFER_SIZE, "3600");
 		properties.put(KEY_GRAPH_MAX_PIXELS_PER_SEGMENT, "2");
+		properties.put(KEY_METRIC_TOP_LIST_SIZE, "3");
 		properties.put(KEY_LINK_TIMELINES, "true");
 		properties.put(KEY_MINIMIZE_TO_TRAY, "false");
 		properties.put(KEY_TRAY_GRAPH, "");

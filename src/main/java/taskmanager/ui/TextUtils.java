@@ -2,6 +2,8 @@ package taskmanager.ui;
 
 import config.Config;
 
+import java.awt.FontMetrics;
+
 public class TextUtils {
 	private static final String[] PREFIXES = {"", "K", "M", "G", "T", "P"};
 
@@ -103,5 +105,20 @@ public class TextUtils {
 			return String.format("%." + decimals + "f", value / 1024f);
 		}
 		return String.format("%d", value);
+	}
+
+
+	public static String limitWidth(String text, int maxWidth, FontMetrics metrics) {
+		if (metrics.stringWidth(text) < maxWidth) {
+			return text;
+		}
+
+		for (int i = text.length()-1; i >= 0; i--) {
+			if (metrics.stringWidth(text.substring(0, i) + "...") < maxWidth) {
+				return text.substring(0, i) + "...";
+			}
+		}
+
+		return "...";
 	}
 }

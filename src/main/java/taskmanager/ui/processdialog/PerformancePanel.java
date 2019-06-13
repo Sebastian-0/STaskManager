@@ -98,11 +98,11 @@ public class PerformancePanel extends JPanel {
 
 	public void update() {
 		long memoryMax = (long) (Math.max(128, process.privateWorkingSet.max()) * 1.1f);
-		memoryGraph.setMaxDatapointValue(memoryMax); // TODO Make this more intelligent
+		memoryGraph.setMaxDatapointValue(memoryMax); // TODO Make this more intelligent?
 		memoryTimeline.setMaxDatapointValue(memoryMax);
 
 		labelMemoryCurrent.setText(TextUtils.valueToString(process.privateWorkingSet.newest(), ValueType.Bytes));
-		labelCpuCurrent.setText(String.format("%.1f%%", 100 * process.cpuUsage.newest() / (double) Config.DOUBLE_TO_LONG));
+		labelCpuCurrent.setText(TextUtils.valueToString(process.cpuUsage.newest(), ValueType.Percentage));
 
 		cpuGraph.newDatapoint();
 		memoryGraph.newDatapoint();

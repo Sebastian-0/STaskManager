@@ -2,6 +2,7 @@ package taskmanager.ui.performance;
 
 import config.Config;
 import taskmanager.Measurements;
+import taskmanager.SystemInformation.TopList;
 
 import javax.swing.JLabel;
 import java.awt.Color;
@@ -40,8 +41,8 @@ public class TimelineGraphPanel extends GraphPanel
   }
   
   @Override
-  public void addGraph(Measurements<Long> measurements, boolean isDashed) {
-    super.addGraph(measurements, isDashed);
+  public void addGraph(Measurements<Long> measurements, Measurements<TopList> topLists, boolean isDashed) {
+    super.addGraph(measurements, topLists, isDashed);
     setDataIndexInterval(0, measurements.size() - 1);
   }
   
