@@ -4,6 +4,7 @@ import config.Config;
 import taskmanager.Measurements;
 import taskmanager.SystemInformation;
 import taskmanager.ui.performance.GraphPanel;
+import taskmanager.ui.performance.GraphPanel.ShortToLong;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.TimelineGraphPanel;
 
@@ -21,7 +22,7 @@ public class MultiCpuPanel extends JPanel {
 		graphs = new GraphPanel[numCores];
 
 		for (int i = 0; i < numCores; i++) {
-			measurements[i] = systemInformation.cpuUsagePerCore[i];
+			measurements[i] = new ShortToLong(systemInformation.cpuUsagePerCore[i]);
 			graphs[i] = new GraphPanel(GraphType.Cpu, true);
 			graphs[i].addGraph(measurements[i]);
 		}

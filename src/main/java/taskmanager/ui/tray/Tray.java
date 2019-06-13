@@ -130,7 +130,7 @@ public class Tray extends TrayIcon {
 		final int samples = 4;
 		List<Double> ratios = new ArrayList<>();
 		if (graphTypeToDisplay == GraphType.Cpu) {
-			Iterator<Long> itr = info.cpuUsageTotal.getRangeIterator(info.cpuUsageTotal.size() - samples, info.cpuUsageTotal.size() - 1);
+			Iterator<Short> itr = info.cpuUsageTotal.getRangeIterator(info.cpuUsageTotal.size() - samples, info.cpuUsageTotal.size() - 1);
 			while (itr.hasNext()) {
 				ratios.add(itr.next() / (double) Config.DOUBLE_TO_LONG);
 			}

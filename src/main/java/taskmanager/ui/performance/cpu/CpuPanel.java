@@ -6,6 +6,7 @@ import taskmanager.SystemInformation;
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
+import taskmanager.ui.performance.GraphPanel.ShortToLong;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
 import taskmanager.ui.performance.InformationItemPanel;
@@ -36,7 +37,7 @@ public class CpuPanel extends JPanel {
 
 
 	public CpuPanel(TimelineGroup timelineGroup, SystemInformation systemInformation) {
-		cpuUsage = systemInformation.cpuUsageTotal;
+		cpuUsage = new ShortToLong(systemInformation.cpuUsageTotal);
 
 		JLabel labelHeader = new JLabel("CPU");
 		labelHeader.setFont(labelHeader.getFont().deriveFont(24f));

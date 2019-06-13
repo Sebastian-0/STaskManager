@@ -308,8 +308,8 @@ public class GraphPanel extends JPanel {
 		final int padding = 2;
 		final int insets = 8;
 
-		int width = computeTextWidth(labelLines, metrics);
-		int height = computeTextHeight(labelLines.size(), metrics);
+		int width = computeTextWidth(labelLines, metrics) + insets * 2;
+		int height = computeTextHeight(labelLines.size(), metrics) + insets;
 
 		TopList selectedTopList = null;
 		List<String> usages = new ArrayList<>();
@@ -346,8 +346,8 @@ public class GraphPanel extends JPanel {
 				names.add(name);
 				pids.add(pid);
 			}
-			width = Math.max(width, usageWidth + nameWidth + pidWidth + columnOffset * 2) + insets * 2;
-			height += computeTextHeight(topList.entries.length + 3/4f, metrics) + insets;
+			width = Math.max(width, usageWidth + nameWidth + pidWidth + columnOffset * 2 + insets * 2);
+			height += computeTextHeight(topList.entries.length + 3/4f, metrics);
 
 			columnPositions[1] = usageWidth + columnOffset;
 			columnPositions[2] = columnPositions[1] + nameWidth + columnOffset;
@@ -524,6 +524,83 @@ public class GraphPanel extends JPanel {
 			@Override
 			public Long next() {
 				return (long) (sourceIterator.next() * Config.DOUBLE_TO_LONG);
+			}
+
+			@Override
+			public boolean hasNext() {
+				return sourceIterator.hasNext();
+			}
+		}
+	}
+
+
+	public static class ShortToLong implements Measurements<Long> {
+		private Measurements<Short> iterable;
+
+		public ShortToLong(Measurements<Short> iterable) {
+			this.iterable = iterable;
+		}
+
+		@Override
+		public void copyFrom(Measurements<Long> other) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void copyDelta(Measurements<Long> other) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void addValue(Long value) {
+			iterable.addValue((short) value.longValue());
+		}
+
+		@Override
+		public int size() {
+			return iterable.size();
+		}
+
+		@Override
+		public int realSize() {
+			return iterable.realSize();
+		}
+
+		@Override
+		public Long newest() {
+			return (long) iterable.newest();
+		}
+
+		@Override
+		public Long oldest() {
+			return (long) (iterable.oldest() * Config.DOUBLE_TO_LONG);
+		}
+
+		@Override
+		public Long min() {
+			return (long) (iterable.min() * Config.DOUBLE_TO_LONG);
+		}
+
+		@Override
+		public Long max() {
+			return (long) (iterable.max() * Config.DOUBLE_TO_LONG);
+		}
+
+		@Override
+		public Iterator<Long> getRangeIterator(int startIndex, int endIndex) {
+			return new ConversionIterator(iterable.getRangeIterator(startIndex, endIndex));
+		}
+
+		private class ConversionIterator implements Iterator<Long> {
+			private Iterator<Short> sourceIterator;
+
+			public ConversionIterator(Iterator<Short> sourceIterator) {
+				this.sourceIterator = sourceIterator;
+			}
+
+			@Override
+			public Long next() {
+				return (long) sourceIterator.next();
 			}
 
 			@Override

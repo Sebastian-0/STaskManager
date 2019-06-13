@@ -36,8 +36,8 @@ public class SystemInformation {
 	public int logicalProcessorCount;
 	public int physicalProcessorCount;
 
-	public Measurements<Long>[] cpuUsagePerCore;
-	public Measurements<Long> cpuUsageTotal;
+	public Measurements<Short>[] cpuUsagePerCore;
+	public Measurements<Short> cpuUsageTotal;
 	public Measurements<TopList> cpuTopList;
 
 	public int totalProcesses;
@@ -58,7 +58,7 @@ public class SystemInformation {
 		physicalMemoryUsed = new MeasurementContainer<>(0L);
 		physicalMemoryTopList = new MeasurementContainer<>(TopList.EMPTY);
 		cpuUsagePerCore = new MeasurementContainer[0];
-		cpuUsageTotal = new MeasurementContainer<>(0L);
+		cpuUsageTotal = new MeasurementContainer<>((short) 0);
 		cpuTopList = new MeasurementContainer<>(TopList.EMPTY);
 		processes = new ArrayList<>();
 		deadProcesses = new ArrayList<>();
@@ -106,7 +106,7 @@ public class SystemInformation {
 
 		for (int i = 0; i < cpuUsagePerCore.length; i++) {
 			if (cpuUsagePerCore[i] == null) {
-				cpuUsagePerCore[i] = new MeasurementContainer<>(0L);
+				cpuUsagePerCore[i] = new MeasurementContainer<>((short) 0);
 			}
 			cpuUsagePerCore[i].copyDelta(other.cpuUsagePerCore[i]);
 		}
@@ -194,7 +194,7 @@ public class SystemInformation {
 
 
 
-	public static class TopList implements Comparable<TopList> {
+	public static class TopList implements Comparable<TopList> { // TODO Support TopLists of Short!
 		public static final TopList EMPTY = new TopList(0);
 
 		public final Entry[] entries;
@@ -301,7 +301,7 @@ public class SystemInformation {
 	public static class Disk {
 		public Measurements<Long> writeRate;
 		public Measurements<Long> readRate;
-		public Measurements<Double> activeFraction;
+		public Measurements<Double> activeFraction; // TODO Replace with long!
 		public Measurements<Long> ioQueueLength;
 
 		public int index;
