@@ -26,10 +26,21 @@ public class FilterTextField extends JTextField {
 		this.processTables = processTables;
 		hasDefault = true;
 		defaultColor = getForeground();
+		setBackground(null);
 		setForeground(FILTER_COLOR);
 		addFocusListener(focusListener);
 		addActionListener(actionListener);
 		getDocument().addDocumentListener(documentListener);
+	}
+
+	public void clear() {
+		if (hasFocus()) {
+			setText("");
+		} else {
+			hasDefault = true;
+			setText(FILTER_STRING);
+			setForeground(FILTER_COLOR);
+		}
 	}
 
 	private FocusListener focusListener = new FocusListener() {
@@ -71,6 +82,8 @@ public class FilterTextField extends JTextField {
 		private void update() {
 			if (!hasDefault) {
 				Arrays.stream(processTables).forEach(table -> table.filterBy(getText()));
+			} else {
+				Arrays.stream(processTables).forEach(table -> table.filterBy(""));
 			}
 		}
 	};

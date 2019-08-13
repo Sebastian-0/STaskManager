@@ -21,7 +21,7 @@ public class ProcessPanel extends JPanel {
 	public ProcessPanel(ProcessDetailsCallback processCallback, SystemInformation systemInformation) {
 		liveTable = new ProcessTable(processCallback, systemInformation, false);
 		deadTable = new ProcessTable(processCallback, systemInformation, true);
-		FilterTextField search = new FilterTextField(liveTable, deadTable);
+		JPanel filterPanel = new FilterPanel(liveTable, deadTable);
 		JLabel attributeLabel = new JLabel("By:");
 		SearchAttributeComboBox attribute = new SearchAttributeComboBox(liveTable, deadTable);
 
@@ -37,7 +37,7 @@ public class ProcessPanel extends JPanel {
 		gbl.setInsets(borderWidth, borderWidth, borderWidth / 2, borderWidth);
 		gbl.addToGrid(container, 0, 0, 3, 1, GridBagConstraints.BOTH, 1, 1);
 		gbl.setInsets(0, borderWidth, borderWidth / 2, borderWidth);
-		gbl.addToGrid(search, 0, 1, 1, 1, GridBagConstraints.BOTH, 1, 0);
+		gbl.addToGrid(filterPanel, 0, 1, 1, 1, GridBagConstraints.BOTH, 1, 0);
 		gbl.setInsets(0, 0, borderWidth / 2, borderWidth/2);
 		gbl.addToGrid(attributeLabel, 1, 1, 1, 1);
 		gbl.setInsets(0, 0, borderWidth / 2, borderWidth);
