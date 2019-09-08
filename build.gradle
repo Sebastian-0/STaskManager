@@ -1,15 +1,14 @@
-import com.github.spotbugs.SpotBugsTask
 
 plugins {
     id 'java'
-    id 'com.github.spotbugs' version '1.6.8'
+    id 'com.github.spotbugs' version '2.0.0'
 }
 
 group 'sebastian-0.taskmanager'
 version '0.5-SNAPSHOT'
 
-sourceCompatibility = 1.11
-targetCompatibility = 1.11
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
     mavenCentral()
@@ -49,7 +48,7 @@ spotbugs {
     showProgress = true
 }
 
-tasks.withType(SpotBugsTask) {
+tasks.withType(com.github.spotbugs.SpotBugsTask) {
     reports {
         xml.enabled = false
         html.enabled = true
