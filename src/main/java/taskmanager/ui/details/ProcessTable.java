@@ -560,7 +560,11 @@ public class ProcessTable extends JTable {
 			if (tableModel.filteredColor[row][realColumn] != null) {
 				result.setBackground(tableModel.filteredColor[row][realColumn]);
 			} else {
-				result.setBackground(Color.WHITE);
+				if (row % 2 == 0) {
+					result.setBackground(Color.WHITE);
+				} else {
+					result.setBackground(new Color(243, 243, 243));
+				}
 			}
 
 			if (isSelected) {
