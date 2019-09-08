@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -220,6 +221,11 @@ public class SystemInformation {
 		}
 
 		@Override
+		public int hashCode() {
+			return Objects.hash((Object[]) entries);
+		}
+
+		@Override
 		public int compareTo(TopList topList) {
 			throw new UnsupportedOperationException("Can't compare two toplists!");
 		}
@@ -241,6 +247,11 @@ public class SystemInformation {
 					return value == otherEntry.value && process.uniqueId == otherEntry.process.uniqueId;
 				}
 				return false;
+			}
+
+			@Override
+			public int hashCode() {
+				return Objects.hash(value, process.uniqueId);
 			}
 		}
 	}

@@ -177,11 +177,14 @@ public class LinuxInformationLoader extends InformationLoader {
 	private Set<Long> fetchProcessIds() {
 		Set<Long> processIds = new HashSet<>();
 		File processDir = new File(PROC_PATH);
-		for (File file : processDir.listFiles()) {
-			String fileName = file.getName();
-			if (file.isDirectory() && fileName.matches("[0-9]+")) {
-				Long pid = Long.parseLong(fileName);
-				processIds.add(pid);
+		File[] files = processDir.listFiles();
+		if (files != null) {
+			for (File file : files) {
+				String fileName = file.getName();
+				if (file.isDirectory() && fileName.matches("[0-9]+")) {
+					Long pid = Long.parseLong(fileName);
+					processIds.add(pid);
+				}
 			}
 		}
 		return processIds;

@@ -514,10 +514,10 @@ public class GraphPanel extends JPanel {
 			return new ConversionIterator(iterable.getRangeIterator(startIndex, endIndex));
 		}
 
-		private class ConversionIterator implements Iterator<Long> {
+		private static class ConversionIterator implements Iterator<Long> {
 			private Iterator<Double> sourceIterator;
 
-			public ConversionIterator(Iterator<Double> sourceIterator) {
+			ConversionIterator(Iterator<Double> sourceIterator) {
 				this.sourceIterator = sourceIterator;
 			}
 
@@ -591,10 +591,10 @@ public class GraphPanel extends JPanel {
 			return new ConversionIterator(iterable.getRangeIterator(startIndex, endIndex));
 		}
 
-		private class ConversionIterator implements Iterator<Long> {
+		private static class ConversionIterator implements Iterator<Long> {
 			private Iterator<Short> sourceIterator;
 
-			public ConversionIterator(Iterator<Short> sourceIterator) {
+			ConversionIterator(Iterator<Short> sourceIterator) {
 				this.sourceIterator = sourceIterator;
 			}
 

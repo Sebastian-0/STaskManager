@@ -89,10 +89,8 @@ public class Config {
 
 		File config = new File(CONFIG_FILE);
 		if (config.exists()) {
-			try {
-				FileInputStream in = new FileInputStream(config);
+			try (FileInputStream in = new FileInputStream(config)) {
 				properties.load(in);
-				in.close();
 			} catch (IOException e) {
 				System.out.println("Config <static>: Failed to load config: " + e.getMessage());
 			}
@@ -118,10 +116,8 @@ public class Config {
 	}
 
 	private static void saveConfig() {
-		try {
-			FileOutputStream out = new FileOutputStream(new File(CONFIG_FILE));
+		try (FileOutputStream out = new FileOutputStream(new File(CONFIG_FILE))) {
 			properties.store(out, "Taskmanager ini-file. Do not change manually\n");
-			out.close();
 		} catch (IOException e) {
 			System.out.println("Config <static>: Failed to save config: " + e.getMessage());
 		}

@@ -194,8 +194,10 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 
 	@Override
 	public void exit() {
+		synchronized (this) {
+			hasTerminated = true;
+		}
 		dispose();
-		hasTerminated = true;
 		if (trayIcon != null) {
 			SystemTray.getSystemTray().remove(trayIcon);
 		}
