@@ -498,14 +498,14 @@ public class ProcessTable extends JTable {
 	}
 
 	private boolean filterOnNumber(String columnValue) {
-		if (filterPhrase.trim().equals("-") || filterPhrase.trim().equals("+")) {
+		if (filterPhrase.trim().equals("<") || filterPhrase.trim().equals(">")) {
 			return true;
 		} else {
 			double tableValue = filterStringToNumber(columnValue);
 			double filterValue = filterStringToNumber(filterPhrase);
 
 			if (filterValue != -1 && tableValue != -1) {
-				boolean less = filterPhrase.startsWith("-");
+				boolean less = filterPhrase.startsWith("<");
 				return less && tableValue < filterValue ||
 						!less && tableValue >= filterValue;
 			}
@@ -515,7 +515,7 @@ public class ProcessTable extends JTable {
 
 	private double filterStringToNumber(String o) {
 		String tableString = o.replaceAll("\\s+", "").replaceAll(",", ".");
-		if (tableString.startsWith("-") || tableString.startsWith("+")) {
+		if (tableString.startsWith("<") || tableString.startsWith(">")) {
 			tableString = tableString.substring(1);
 		}
 		double factor = 1;
