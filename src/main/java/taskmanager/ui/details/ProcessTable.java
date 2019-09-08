@@ -87,6 +87,7 @@ public class ProcessTable extends JTable {
 	private boolean showDeadProcesses;
 	private ColumnHeader[] headers;
 	private CustomTableModel tableModel;
+	private int[] tableColumnToDataColumn;
 
 	private ProcessTableCellRenderer cellRenderer;
 	private FontMetrics metrics;
@@ -201,6 +202,7 @@ public class ProcessTable extends JTable {
 		ColumnHeader[] tmp = new ColumnHeader[visibleColumns.size()];
 		Columns[] values = Columns.values();
 		headers = new ColumnHeader[values.length];
+		tableColumnToDataColumn = new int[values.length];
 		for (int i = 0, idx = 0; i < headers.length; i++) {
 			Columns value = values[i];
 			if (visibleColumns.contains(value)) {
@@ -209,6 +211,7 @@ public class ProcessTable extends JTable {
 				tmp[idx] = header;
 				idx++;
 			}
+			tableColumnToDataColumn[i] = i;
 		}
 
 		Arrays.sort(tmp);
@@ -398,7 +401,9 @@ public class ProcessTable extends JTable {
 				List<String> order = new ArrayList<>();
 				for (int i = 0; i < headers.length; i++) {
 					if (headers[i] != null) {
-						order.add(Integer.toString(getColumnIndex(headers[i].header)));
+						int index = getColumnIndex(headers[i].header);
+						order.add(Integer.toString(index));
+						tableColumnToDataColumn[index] = headers[i].index;
 					}
 				}
 				if (showDeadProcesses) {
@@ -751,7 +756,8 @@ public class ProcessTable extends JTable {
 		public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
 			SwingUtilities.invokeLater(() -> {
 				int rowAtPoint = rowAtPoint(SwingUtilities.convertPoint(contextMenu, new Point(0, 0), ProcessTable.this));
-				if (rowAtPoint > -1) {
+				int columnAtPoint = columnAtPoint(SwingUtilities.convertPoint(contextMenu, new Point(0, 0), ProcessTable.this));
+				if (rowAtPoint > -1 && columnAtPoint > -1) {
 					setRowSelectionInterval(rowAtPoint, rowAtPoint);
 					Long pid = (Long) tableModel.filteredData[rowAtPoint][headers[Columns.Pid.ordinal()].index];
 					if (showDeadProcesses) {
@@ -759,6 +765,9 @@ public class ProcessTable extends JTable {
 					} else {
 						contextMenu.setProcess(systemInformation.getProcessById(pid));
 					}
+
+					int index = tableColumnToDataColumn[columnAtPoint];
+					contextMenu.setCellText(tableModel.columns[index], tableModel.filteredData[rowAtPoint][index].toString());
 				} else {
 					((Component) e.getSource()).setVisible(false);
 				}
