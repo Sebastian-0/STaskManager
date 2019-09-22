@@ -13,6 +13,7 @@ package taskmanager.ui;
 
 import config.Config;
 import config.TextureStorage;
+import dorkbox.systemTray.SystemTray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import taskmanager.DataCollector;
@@ -33,10 +34,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
-import java.awt.AWTException;
 import java.awt.Dimension;
 import java.awt.Image;
-import java.awt.SystemTray;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
@@ -148,18 +147,14 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 	}
 
 	private void initSystemTray() {
-		if (!SystemTray.isSupported()) {
+		SystemTray tray = SystemTray.get();
+		if (tray == null) {
 			// TODO When we have settings in the program we should disable the tray minimization setting if this happens
 			LOGGER.warn("No system tray support! Disabling minimize to tray...");
 			Config.put(Config.KEY_MINIMIZE_TO_TRAY, "false"); // Force no tray minimization when we have no tray
+			System.out.println("No system tray support!");
 		} else {
-			try {
-				trayIcon = new Tray(this, TextureStorage.instance().getTexture(ICON_SMALL_NAME));
-				SystemTray.getSystemTray().add(trayIcon);
-			} catch (AWTException e) {
-				LOGGER.error("Failed to create tray icon", e);
-				Config.put(Config.KEY_MINIMIZE_TO_TRAY, "false"); // Force no tray minimization when we have no tray
-			}
+			trayIcon = new Tray(tray, this, TextureStorage.instance().getTexture("icon_small"));
 		}
 	}
 
@@ -245,7 +240,7 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		}
 		dispose();
 		if (trayIcon != null) {
-			SystemTray.getSystemTray().remove(trayIcon);
+			trayIcon.dispose();
 		}
 	}
 
