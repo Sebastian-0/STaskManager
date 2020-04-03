@@ -293,8 +293,8 @@ public class GraphPanel extends JPanel {
 		} else if (graphType == GraphType.Memory) {
 			labelLines.add(TextUtils.valueToString(selectedValues.get(0), ValueType.Bytes));
 		} else if (graphType == GraphType.Network) {
-			labelLines.add("S: " + TextUtils.valueToString(selectedValues.get(0), ValueType.BitsPerSecond));
-			labelLines.add("R: " + TextUtils.valueToString(selectedValues.get(1), ValueType.BitsPerSecond));
+			labelLines.add("S: " + TextUtils.valueToString(selectedValues.get(1), ValueType.BitsPerSecond));
+			labelLines.add("R: " + TextUtils.valueToString(selectedValues.get(0), ValueType.BitsPerSecond));
 		} else if (graphType == GraphType.Disk) {
 			if (graphs.size() == 1) {
 				labelLines.add(TextUtils.valueToString(selectedValues.get(0), ValueType.Percentage));
