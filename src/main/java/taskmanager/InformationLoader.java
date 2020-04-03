@@ -19,6 +19,9 @@ public abstract class InformationLoader {
 	private NetworkIF[] networkInterfaces;
 	private HWDiskStore[] disks;
 
+	private long[][] lastCpuLoadTicksPerCore;
+	private long[] lastCpuLoadTicks;
+
 	private int numberOfUpdates;
 
 	@SuppressWarnings("unchecked")
@@ -29,7 +32,7 @@ public abstract class InformationLoader {
 		systemInformation.physicalProcessorCount = systemInfoLoader.getHardware().getProcessor().getPhysicalProcessorCount();
 		systemInformation.physicalMemoryTotal = systemInfoLoader.getHardware().getMemory().getTotal();
 		systemInformation.pageSize = systemInfoLoader.getHardware().getMemory().getPageSize();
-		systemInformation.bootTime = System.currentTimeMillis() / 1000 - systemInfoLoader.getHardware().getProcessor().getSystemUptime(); // TODO this is incorrect when you take hibernation into account!
+		systemInformation.bootTime = System.currentTimeMillis() / 1000 - systemInfoLoader.getOperatingSystem().getSystemUptime(); // TODO this is incorrect when you take hibernation into account!
 
 		systemInformation.cpuUsagePerCore = new MeasurementContainer[systemInformation.logicalProcessorCount];
 		for (int i = 0; i < systemInformation.cpuUsagePerCore.length; i++) {
@@ -46,8 +49,9 @@ public abstract class InformationLoader {
 			systemInformation.networks[i].name = networkInterfaces[i].getDisplayName();       //-|
 			systemInformation.networks[i].compactIpv6();
 
+			// TODO shj: Try using networkInterfaces[i].isConnectorPresent instead?
 			try { // TODO Move this to update to continuously add/remove interfaces, how fast is isUp()?
-				systemInformation.networks[i].isEnabled = networkInterfaces[i].getNetworkInterface().isUp();
+				systemInformation.networks[i].isEnabled = networkInterfaces[i].queryNetworkInterface().isUp();
 			} catch (SocketException e) {
 				e.printStackTrace();
 			}
@@ -84,12 +88,27 @@ public abstract class InformationLoader {
 	public void update(SystemInformation systemInformation) {
 		systemInformation.uptime = System.currentTimeMillis() / 1000 - systemInformation.bootTime;
 		systemInformation.physicalMemoryUsed.addValue(systemInformation.physicalMemoryTotal - systemInfoLoader.getHardware().getMemory().getAvailable());
-		double[] loadPerCore = systemInfoLoader.getHardware().getProcessor().getProcessorCpuLoadBetweenTicks();
+
+		// Update the CPU usage
+		double[] loadPerCore;
+		if (lastCpuLoadTicksPerCore == null) {
+			loadPerCore = new double[systemInformation.cpuUsagePerCore.length];
+		} else {
+			loadPerCore = systemInfoLoader.getHardware().getProcessor().getProcessorCpuLoadBetweenTicks(lastCpuLoadTicksPerCore);
+		}
 		for (int i = 0; i < loadPerCore.length; i++) {
 			systemInformation.cpuUsagePerCore[i].addValue((short) Math.round(loadPerCore[i] * Config.DOUBLE_TO_LONG));
 		}
-		systemInformation.cpuUsageTotal.addValue(
-				(short) Math.round(systemInfoLoader.getHardware().getProcessor().getSystemCpuLoad() * Config.DOUBLE_TO_LONG));
+
+		if (lastCpuLoadTicks == null) {
+			systemInformation.cpuUsageTotal.addValue((short) 0);
+		} else {
+			systemInformation.cpuUsageTotal.addValue(
+					(short) Math.round(systemInfoLoader.getHardware().getProcessor().getSystemCpuLoadBetweenTicks(lastCpuLoadTicks) * Config.DOUBLE_TO_LONG));
+		}
+
+		lastCpuLoadTicksPerCore = systemInfoLoader.getHardware().getProcessor().getProcessorCpuLoadTicks();
+		lastCpuLoadTicks = systemInfoLoader.getHardware().getProcessor().getSystemCpuLoadTicks();
 
 		final int deadKeepTime = Config.getInt(Config.KEY_DEAD_PROCESS_KEEP_TIME) * 1000;
 		systemInformation.deadProcesses.removeIf(process -> System.currentTimeMillis() - process.deathTimestamp > deadKeepTime);
@@ -108,7 +127,7 @@ public abstract class InformationLoader {
 		for (int i = 0; i < networkInterfaces.length; i++) {
 			long received = networkInterfaces[i].getBytesRecv();
 			long sent = networkInterfaces[i].getBytesSent();
-			networkInterfaces[i].updateNetworkStats();
+			networkInterfaces[i].updateAttributes();
 			systemInformation.networks[i].inRate.addValue(networkInterfaces[i].getBytesRecv() - received);
 			systemInformation.networks[i].outRate.addValue(networkInterfaces[i].getBytesSent() - sent);
 		}
@@ -123,7 +142,7 @@ public abstract class InformationLoader {
 				long t1 = disk.getTimeStamp();
 				long a1 = disk.getTransferTime();
 
-				boolean diskExists = disk.updateDiskStats();
+				boolean diskExists = disk.updateAtrributes();
 
 				long w2 = disk.getWriteBytes();
 				long r2 = disk.getReadBytes();
