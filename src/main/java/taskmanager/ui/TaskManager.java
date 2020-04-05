@@ -99,7 +99,7 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		performancePanel = new PerformancePanel(this.systemInformation);
 
 		JTabbedPane tabbed = new JTabbedPane();
-		tabbed.addTab("Details", processPanel);
+		tabbed.addTab("Processes", processPanel);
 		tabbed.addTab("Performance", performancePanel);
 
 		getContentPane().add(tabbed);
