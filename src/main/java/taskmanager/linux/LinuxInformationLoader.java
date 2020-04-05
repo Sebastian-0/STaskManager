@@ -140,6 +140,7 @@ public class LinuxInformationLoader extends InformationLoader {
 				String[] tokens = stat.split("\\s+");
 				long utime = Long.parseLong(tokens[13]);
 				long stime = Long.parseLong(tokens[14]);
+				// TODO Maybe use a delta of the process uptime (like LinuxOperatingSystem#getProcess():286)?
 				process.updateCpu(stime, utime, (currentCpuTime - lastCpuTime), 1); // Set cores to 1 since the total time is already divided by cores
 			}
 		}
