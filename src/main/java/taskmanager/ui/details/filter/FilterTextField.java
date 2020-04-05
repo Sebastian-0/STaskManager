@@ -1,12 +1,21 @@
 /*
- * Copyright (c) 2018 Sebastian Hjelm
+ * Copyright (c) 2020. Sebastian Hjelm
  */
 
-package taskmanager.ui.details;
+package taskmanager.ui.details.filter;
+
+import taskmanager.filter.Filter;
+import taskmanager.ui.details.ProcessTable;
+import taskmanager.ui.details.filter.FilterCompiler.CompiledFilter;
+import taskmanager.ui.details.filter.FilterCompiler.Highlight;
+import taskmanager.ui.details.filter.FilterCompiler.Tag;
 
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
 import java.awt.Color;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -16,8 +25,12 @@ import java.util.Arrays;
 public class FilterTextField extends JTextField {
 	private static final String FILTER_STRING = "Filter processes";
 	private static final Color FILTER_COLOR = new Color(110, 110, 110);
+
+	private final Color defaultColor;
 	private boolean hasDefault;
-	private Color defaultColor;
+
+	private final FilterCompiler filterCompiler;
+	private Tag defaultTag;
 
 	private ProcessTable[] processTables;
 
@@ -31,6 +44,8 @@ public class FilterTextField extends JTextField {
 		addFocusListener(focusListener);
 		addActionListener(actionListener);
 		getDocument().addDocumentListener(documentListener);
+
+		filterCompiler = new FilterCompiler();
 	}
 
 	public void clear() {
@@ -40,6 +55,33 @@ public class FilterTextField extends JTextField {
 			hasDefault = true;
 			setText(FILTER_STRING);
 			setForeground(FILTER_COLOR);
+		}
+		requestFocus();
+	}
+
+	public void setDefaultTag(Tag tag) {
+		defaultTag = tag;
+		compileFilter();
+	}
+
+	private void compileFilter() {
+		if (!hasDefault) {
+			CompiledFilter compiledFilter = filterCompiler.compile(getText(), defaultTag);
+
+			try {
+				Highlighter highlighter = getHighlighter();
+				highlighter.removeAllHighlights();
+				for (Highlight highlight : compiledFilter.highlight) {
+					highlighter.addHighlight(highlight.start, highlight.end, new DefaultHighlighter.DefaultHighlightPainter(highlight.color));
+				}
+			} catch (BadLocationException e) {
+				System.err.println("Failed to apply highlight");
+				e.printStackTrace();
+			}
+
+			Arrays.stream(processTables).forEach(table -> table.setFilter(compiledFilter.filter));
+		} else {
+			Arrays.stream(processTables).forEach(table -> table.setFilter(Filter.UNIVERSE));
 		}
 	}
 
@@ -80,11 +122,7 @@ public class FilterTextField extends JTextField {
 		}
 
 		private void update() {
-			if (!hasDefault) {
-				Arrays.stream(processTables).forEach(table -> table.filterBy(getText()));
-			} else {
-				Arrays.stream(processTables).forEach(table -> table.filterBy(""));
-			}
+			compileFilter();
 		}
 	};
 

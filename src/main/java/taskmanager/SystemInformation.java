@@ -54,6 +54,9 @@ public class SystemInformation {
 	/* Disk data */
 	public Disk[] disks;
 
+	/* Other system data */
+	public String userName;
+
 	@SuppressWarnings("unchecked")
 	public SystemInformation() {
 		physicalMemoryUsed = new MeasurementContainer<>(0L);
@@ -121,6 +124,8 @@ public class SystemInformation {
 		copyProcesses(other);
 		copyNetworks(other);
 		copyDisks(other);
+
+		userName = other.userName;
 	}
 
 	private void copyDisks(SystemInformation other) {

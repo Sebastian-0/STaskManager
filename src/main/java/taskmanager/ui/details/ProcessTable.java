@@ -7,6 +7,9 @@ import taskmanager.SystemInformation;
 import taskmanager.ui.ColorUtils;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
+import taskmanager.filter.AndFilter;
+import taskmanager.filter.Filter;
+import taskmanager.filter.concrete.UserNameFilter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -38,9 +41,9 @@ public class ProcessTable extends JTable {
 		CommandLine("Command line", 200, new Process.CommandLineComparator()),
 		Description("Description", 100, new Process.DescriptionComparator());
 
-		public String name;
-		public int defaultWidth;
-		public ProcessComparator comparator;
+		public final String name;
+		public final int defaultWidth;
+		public final ProcessComparator comparator;
 
 		Columns(String name, int defaultWidth, ProcessComparator comparator) {
 			this.name = name;
@@ -57,7 +60,7 @@ public class ProcessTable extends JTable {
 		VeryLarge(new Color(255, 184, 25)), // 60%?
 		Extreme(new Color(255, 167, 29)); // 80%?
 
-		private Color color;
+		final Color color;
 
 		Load(Color c) {
 			color = c;
@@ -72,32 +75,32 @@ public class ProcessTable extends JTable {
 		Much(new Color(255, 135, 135)),   // 67%
 		VeryMuch(new Color(255, 100, 100)); // 83%
 
-		private Color color;
+		final Color color;
 
 		Time(Color c) {
 			color = c;
 		}
 	}
 
-	private List<Columns> visibleColumns;
+	private final List<Columns> visibleColumns;
 
-	private SystemInformation systemInformation;
-	private ProcessDetailsCallback processCallback;
+	private final SystemInformation systemInformation;
+	private final ProcessDetailsCallback processCallback;
 
-	private boolean showDeadProcesses;
+	private final boolean showDeadProcesses;
+	private final CustomTableModel tableModel;
 	private ColumnHeader[] headers;
-	private CustomTableModel tableModel;
 	private int[] tableColumnToDataColumn;
 
-	private ProcessTableCellRenderer cellRenderer;
-	private FontMetrics metrics;
+	private final FontMetrics metrics;
 
-	private Columns filterAttribute;
-	private String filterPhrase;
+	private Filter filter;
+	private boolean showProcessesForAllUsers;
+
 	private boolean isMovingColumn;
 	private boolean isResizingColumn;
 
-	private ProcessContextMenu contextMenu;
+	private final ProcessContextMenu contextMenu;
 
 	public ProcessTable(final ProcessDetailsCallback processDetailsCallback, SystemInformation systemInformation,
 							  boolean showDeadProcesses) {
@@ -126,13 +129,11 @@ public class ProcessTable extends JTable {
 
 		tableModel = new CustomTableModel();
 		tableModel.columns = loadHeaders();
-		tableModel.fullData = new Object[0][tableModel.columns.length];
-		tableModel.filteredData = new Object[0][tableModel.columns.length];
-		tableModel.filteredColor = new Color[0][tableModel.columns.length];
-		tableModel.fullColor = new Color[0][tableModel.columns.length];
+		tableModel.data = new Object[0][tableModel.columns.length];
+		tableModel.color = new Color[0][tableModel.columns.length];
 		setModel(tableModel);
 
-		cellRenderer = new ProcessTableCellRenderer();
+		ProcessTableCellRenderer cellRenderer = new ProcessTableCellRenderer();
 		cellRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
 		getColumnModel().getColumn(headers[Columns.Cpu.ordinal()].index).setCellRenderer(cellRenderer);
 		getColumnModel().getColumn(headers[Columns.PrivateWorkingSet.ordinal()].index).setCellRenderer(cellRenderer);
@@ -181,8 +182,8 @@ public class ProcessTable extends JTable {
 
 		metrics = getTableHeader().getFontMetrics(getFont());
 
-		filterAttribute = Columns.FileName;
-		filterPhrase = "";
+		filter = Filter.UNIVERSE;
+		showProcessesForAllUsers = Config.getBoolean(Config.KEY_SHOW_PROCESSES_FOR_ALL_USERS);
 
 		contextMenu = new ProcessContextMenu((Component) processDetailsCallback);
 		contextMenu.addPopupMenuListener(popupListener);
@@ -260,11 +261,13 @@ public class ProcessTable extends JTable {
 			processes = systemInformation.deadProcesses;
 		}
 
+		processes = filter(processes);
+
 		if (!isMovingColumn && !isResizingColumn) {
 			long selectedPid = getSelectedPid();
 
-			tableModel.fullData = new Object[processes.size()][tableModel.columns.length];
-			tableModel.fullColor = new Color[processes.size()][tableModel.columns.length];
+			tableModel.data = new Object[processes.size()][tableModel.columns.length];
+			tableModel.color = new Color[processes.size()][tableModel.columns.length];
 
 			DecimalFormatSymbols symbols = new DecimalFormatSymbols();
 			symbols.setGroupingSeparator(' ');
@@ -279,7 +282,7 @@ public class ProcessTable extends JTable {
 				trySetData(Columns.UserName, i, process.userName);
 				trySetData(Columns.DeathTime, i, TextUtils.valueToString(
 						(long) ((System.currentTimeMillis() - process.deathTimestamp) / 1000f * Config.DOUBLE_TO_LONG),
-						ValueType.Time));//String.format("%.1f s", (System.currentTimeMillis() - process.deathTimestamp) / 1000f));
+						ValueType.Time));
 				trySetColor(Columns.DeathTime, i, selectColorDeath((System.currentTimeMillis() - process.deathTimestamp) / 1000f));
 				if (showDeadProcesses) {
 					trySetData(Columns.Cpu, i, "--.- %");
@@ -301,7 +304,6 @@ public class ProcessTable extends JTable {
 				trySetData(Columns.Description, i, process.description);
 			}
 
-			filter();
 			trySelectPid(selectedPid);
 
 			revalidate();
@@ -311,18 +313,32 @@ public class ProcessTable extends JTable {
 		}
 	}
 
+	private List<Process> filter(List<Process> processes) {
+		Filter actualFilter = filter;
+		if (!showProcessesForAllUsers) {
+			actualFilter = new AndFilter(actualFilter, new UserNameFilter(systemInformation.userName));
+		}
+		List<Process> result = new ArrayList<>();
+		for (Process process : processes) {
+			if (actualFilter.apply(process)) {
+				result.add(process);
+			}
+		}
+		return result;
+	}
+
 	private long getSelectedPid() {
 		long selectedPid = -1;
 		int selectedRow = getSelectedRow();
 		if (selectedRow >= 0) {
-			selectedPid = (Long) tableModel.filteredData[selectedRow][headers[Columns.Pid.ordinal()].index];
+			selectedPid = (Long) tableModel.data[selectedRow][headers[Columns.Pid.ordinal()].index];
 		}
 		return selectedPid;
 	}
 
 	private void trySelectPid(long selectedPid) {
-		for (int i = 0; i < tableModel.filteredData.length; i++) {
-			if (selectedPid == (Long) tableModel.filteredData[i][headers[Columns.Pid.ordinal()].index]) {
+		for (int i = 0; i < tableModel.data.length; i++) {
+			if (selectedPid == (Long) tableModel.data[i][headers[Columns.Pid.ordinal()].index]) {
 				setRowSelectionInterval(i, i);
 				return;
 			}
@@ -333,14 +349,14 @@ public class ProcessTable extends JTable {
 	private void trySetData(Columns column, int row, Object data) {
 		ColumnHeader header = headers[column.ordinal()];
 		if (header != null) {
-			tableModel.fullData[row][header.index] = data;
+			tableModel.data[row][header.index] = data;
 		}
 	}
 
 	private void trySetColor(Columns column, int row, Color color) {
 		ColumnHeader header = headers[column.ordinal()];
 		if (header != null) {
-			tableModel.fullColor[row][header.index] = color;
+			tableModel.color[row][header.index] = color;
 		}
 	}
 
@@ -399,11 +415,11 @@ public class ProcessTable extends JTable {
 			isMovingColumn = aColumn != null;
 			if (!isMovingColumn) {
 				List<String> order = new ArrayList<>();
-				for (int i = 0; i < headers.length; i++) {
-					if (headers[i] != null) {
-						int index = getColumnIndex(headers[i].header);
+				for (ColumnHeader header : headers) {
+					if (header != null) {
+						int index = getColumnIndex(header.header);
 						order.add(Integer.toString(index));
-						tableColumnToDataColumn[index] = headers[i].index;
+						tableColumnToDataColumn[index] = header.index;
 					}
 				}
 				if (showDeadProcesses) {
@@ -420,9 +436,9 @@ public class ProcessTable extends JTable {
 			isResizingColumn = aColumn != null;
 			if (!isResizingColumn) {
 				List<String> widths = new ArrayList<>();
-				for (int i = 0; i < headers.length; i++) {
-					if (headers[i] != null) {
-						widths.add(Integer.toString(getColumnModel().getColumn(getColumnIndex(headers[i].header)).getWidth()));
+				for (ColumnHeader header : headers) {
+					if (header != null) {
+						widths.add(Integer.toString(getColumnModel().getColumn(getColumnIndex(header.header)).getWidth()));
 					}
 				}
 				if (showDeadProcesses) {
@@ -447,103 +463,16 @@ public class ProcessTable extends JTable {
 		return visibleColumns;
 	}
 
-	public void setFilterAttribute(Columns column) {
-		if (filterAttribute != column) {
-			filterAttribute = column;
-
-			long selectedPid = getSelectedPid();
-			filter();
-			trySelectPid(selectedPid);
-
-			revalidate();
-			repaint();
-		}
+	public void setFilter(Filter filter) {
+		this.filter = filter;
+		update();
 	}
 
-	public void filterBy(String text) {
-		filterPhrase = text.toLowerCase();
-
-		long selectedPid = getSelectedPid();
-		filter();
-		trySelectPid(selectedPid);
-
-		revalidate();
-		repaint();
+	public void setShowProcessesForAllUsers(boolean newState) {
+		showProcessesForAllUsers = newState;
+		update();
 	}
 
-	private void filter() {
-		if (filterPhrase.isEmpty()) {
-			tableModel.filteredColor = tableModel.fullColor;
-			tableModel.filteredData = tableModel.fullData;
-		} else {
-			int filterColumn = headers[filterAttribute.ordinal()].index;
-			List<Object[]> dataRows = new ArrayList<>();
-			List<Color[]> colorRows = new ArrayList<>();
-			for (int i = 0; i < tableModel.fullData.length; i++) {
-				boolean approved;
-				if (filterAttribute == Columns.Cpu || filterAttribute == Columns.PrivateWorkingSet) {
-					approved = filterOnNumber(tableModel.fullData[i][filterColumn].toString());
-				} else {
-					approved = filterOnString(tableModel.fullData[i][filterColumn].toString());
-				}
-
-				if (approved) {
-					dataRows.add(tableModel.fullData[i]);
-					colorRows.add(tableModel.fullColor[i]);
-				}
-			}
-
-			tableModel.filteredData = dataRows.toArray(new Object[0][tableModel.columns.length]);
-			tableModel.filteredColor = colorRows.toArray(new Color[0][tableModel.columns.length]);
-		}
-	}
-
-	private boolean filterOnString(String columnValue) {
-		return columnValue.toLowerCase().contains(filterPhrase);
-	}
-
-	private boolean filterOnNumber(String columnValue) {
-		if (filterPhrase.trim().equals("<") || filterPhrase.trim().equals(">")) {
-			return true;
-		} else {
-			double tableValue = filterStringToNumber(columnValue);
-			double filterValue = filterStringToNumber(filterPhrase);
-
-			if (filterValue != -1 && tableValue != -1) {
-				boolean less = filterPhrase.startsWith("<");
-				return less && tableValue < filterValue ||
-						!less && tableValue >= filterValue;
-			}
-		}
-		return false;
-	}
-
-	private double filterStringToNumber(String o) {
-		String tableString = o.replaceAll("\\s+", "").replaceAll(",", ".");
-		if (tableString.startsWith("<") || tableString.startsWith(">")) {
-			tableString = tableString.substring(1);
-		}
-		double factor = 1;
-		char modifier = tableString.charAt(tableString.length()-1);
-		if (!Character.isDigit(modifier)) {
-			tableString = tableString.substring(0, tableString.length()-1);
-			if (modifier == 'M' || modifier == 'm') {
-				factor = 1024;
-			} else if (modifier == 'G' || modifier == 'g') {
-				factor = 1024 * 1024;
-			} else if (modifier == 'T' || modifier == 't') {
-				factor = 1024 * 1024 * 1024;
-			} else if (modifier == 'P' || modifier == 'p') {
-				factor = 1024 * 1024 * 1024 * 1024d;
-			} else if (modifier != '%' && modifier != 'K' && modifier != 'k') {
-				return -1;
-			}
-		}
-		try {
-			return factor * Double.parseDouble(tableString);
-		} catch (NumberFormatException ignored) { }
-		return -1;
-	}
 
 	public class ProcessTableCellRenderer extends DefaultTableCellRenderer {
 		public static final int CELL_PADDING = 8;
@@ -562,8 +491,8 @@ public class ProcessTable extends JTable {
 				}
 			}
 
-			if (tableModel.filteredColor[row][realColumn] != null) {
-				result.setBackground(tableModel.filteredColor[row][realColumn]);
+			if (tableModel.color[row][realColumn] != null) {
+				result.setBackground(tableModel.color[row][realColumn]);
 			} else {
 				if (row % 2 == 0) {
 					result.setBackground(Color.WHITE);
@@ -598,14 +527,12 @@ public class ProcessTable extends JTable {
 
 	public static class CustomTableModel extends AbstractTableModel {
 		public String[] columns;
-		public Object[][] fullData;
-		public Object[][] filteredData;
-		public Color[][] fullColor;
-		public Color[][] filteredColor;
+		public Object[][] data;
+		public Color[][] color;
 
 		@Override
 		public int getRowCount() {
-			return filteredData.length;
+			return data.length;
 		}
 
 		@Override
@@ -615,7 +542,7 @@ public class ProcessTable extends JTable {
 
 		@Override
 		public Object getValueAt(int rowIndex, int columnIndex) {
-			return filteredData[rowIndex][columnIndex];
+			return data[rowIndex][columnIndex];
 		}
 
 		@Override
@@ -670,7 +597,7 @@ public class ProcessTable extends JTable {
 				int startIndex = getSelectedRow();
 				for (int i = (search.length() == 1) ? 1 : 0; i < getRowCount(); i++) {
 					int idx = (startIndex + i) % getRowCount();
-					String currentProcessName = (String) tableModel.filteredData[idx][fileNameHeader.index];
+					String currentProcessName = (String) tableModel.data[idx][fileNameHeader.index];
 					if (currentProcessName.toLowerCase().startsWith(search.toLowerCase())) {
 						setRowSelectionInterval(idx, idx);
 						scrollRectToVisible(getCellRect(idx, getSelectedColumn(), true));
@@ -686,7 +613,7 @@ public class ProcessTable extends JTable {
 		public void keyPressed(KeyEvent e) {
 			if (e.getKeyCode() == KeyEvent.VK_DELETE && !showDeadProcesses) {
 				if (getSelectedRow() > -1) {
-					long pid = (long) tableModel.filteredData[getSelectedRow()][headers[Columns.Pid.ordinal()].index];
+					long pid = (long) tableModel.data[getSelectedRow()][headers[Columns.Pid.ordinal()].index];
 					DeleteProcessMenuItem menuItem = new DeleteProcessMenuItem((Component) processCallback);
 					menuItem.setProcess(systemInformation.getProcessById(pid));
 					menuItem.doAction();
@@ -704,7 +631,7 @@ public class ProcessTable extends JTable {
 		public void mouseClicked(MouseEvent e) {
 			if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
 				int row = rowAtPoint(e.getPoint());
-				long pid = (long) tableModel.filteredData[row][headers[Columns.Pid.ordinal()].index];
+				long pid = (long) tableModel.data[row][headers[Columns.Pid.ordinal()].index];
 				if (showDeadProcesses) {
 					processCallback.openDialog(systemInformation.getDeadProcessById(pid));
 				} else {
@@ -759,7 +686,7 @@ public class ProcessTable extends JTable {
 				int columnAtPoint = columnAtPoint(SwingUtilities.convertPoint(contextMenu, new Point(0, 0), ProcessTable.this));
 				if (rowAtPoint > -1 && columnAtPoint > -1) {
 					setRowSelectionInterval(rowAtPoint, rowAtPoint);
-					Long pid = (Long) tableModel.filteredData[rowAtPoint][headers[Columns.Pid.ordinal()].index];
+					Long pid = (Long) tableModel.data[rowAtPoint][headers[Columns.Pid.ordinal()].index];
 					if (showDeadProcesses) {
 						contextMenu.setProcess(systemInformation.getDeadProcessById(pid));
 					} else {
@@ -767,7 +694,7 @@ public class ProcessTable extends JTable {
 					}
 
 					int index = tableColumnToDataColumn[columnAtPoint];
-					contextMenu.setCellText(tableModel.columns[index], tableModel.filteredData[rowAtPoint][index].toString());
+					contextMenu.setCellText(tableModel.columns[index], tableModel.data[rowAtPoint][index].toString());
 				} else {
 					((Component) e.getSource()).setVisible(false);
 				}

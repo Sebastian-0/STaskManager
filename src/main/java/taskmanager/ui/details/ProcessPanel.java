@@ -1,7 +1,13 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui.details;
 
+import config.Config;
 import taskmanager.SystemInformation;
 import taskmanager.ui.SimpleGridBagLayout;
+import taskmanager.ui.details.filter.FilterPanel;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -21,9 +27,10 @@ public class ProcessPanel extends JPanel {
 	public ProcessPanel(ProcessDetailsCallback processCallback, SystemInformation systemInformation) {
 		liveTable = new ProcessTable(processCallback, systemInformation, false);
 		deadTable = new ProcessTable(processCallback, systemInformation, true);
-		JPanel filterPanel = new FilterPanel(liveTable, deadTable);
+		ShowAllProcessesCheckbox showAllProcessesCheckbox = new ShowAllProcessesCheckbox(liveTable, deadTable);
+		FilterPanel filterPanel = new FilterPanel(liveTable, deadTable);
 		JLabel attributeLabel = new JLabel("By:");
-		SearchAttributeComboBox attribute = new SearchAttributeComboBox(liveTable, deadTable);
+		FilterAttributeComboBox attribute = new FilterAttributeComboBox(liveTable.getVisibleColumns(), filterPanel);
 
 		liveTableScrollPane = new JScrollPane(liveTable);
 		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, liveTableScrollPane, new JScrollPane(deadTable));
@@ -36,14 +43,17 @@ public class ProcessPanel extends JPanel {
 		SimpleGridBagLayout gbl = new SimpleGridBagLayout(this);
 		gbl.setInsets(borderWidth, borderWidth, borderWidth / 2, borderWidth);
 		gbl.addToGrid(container, 0, 0, 3, 1, GridBagConstraints.BOTH, 1, 1);
-		gbl.setInsets(0, borderWidth, borderWidth / 2, borderWidth);
-		gbl.addToGrid(filterPanel, 0, 1, 1, 1, GridBagConstraints.BOTH, 1, 0);
-		gbl.setInsets(0, 0, borderWidth / 2, borderWidth/2);
-		gbl.addToGrid(attributeLabel, 1, 1, 1, 1);
-		gbl.setInsets(0, 0, borderWidth / 2, borderWidth);
-		gbl.addToGrid(attribute, 2, 1, 1, 1);
 
-		setShowDeadProcesses(true);//Boolean.parseBoolean(Config.get(Config.KEY_SHOW_DEAD_PROCESSES)));
+		gbl.setInsets(0, borderWidth, borderWidth / 2, borderWidth);
+		gbl.addToGrid(showAllProcessesCheckbox, 0, 1, 3, 1, GridBagConstraints.WEST);
+
+		gbl.addToGrid(filterPanel, 0, 2, 1, 1, GridBagConstraints.BOTH, 1, 0);
+		gbl.setInsets(0, 0, borderWidth / 2, borderWidth/2);
+		gbl.addToGrid(attributeLabel, 1, 2, 1, 1);
+		gbl.setInsets(0, 0, borderWidth / 2, borderWidth);
+		gbl.addToGrid(attribute, 2, 2, 1, 1);
+
+		setShowDeadProcesses(Boolean.parseBoolean(Config.get(Config.KEY_SHOW_DEAD_PROCESSES)));
 	}
 
 	public void setShowDeadProcesses(boolean shouldShow) {

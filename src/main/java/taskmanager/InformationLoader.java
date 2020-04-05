@@ -83,6 +83,8 @@ public abstract class InformationLoader {
 		}
 
 		systemInformation.disks = diskList.toArray(new Disk[0]);
+
+		systemInformation.userName = System.getProperty("user.name");
 	}
 
 	public void update(SystemInformation systemInformation) {

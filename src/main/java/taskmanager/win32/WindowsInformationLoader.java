@@ -1,11 +1,5 @@
 package taskmanager.win32;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
-
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
@@ -27,7 +21,6 @@ import com.sun.jna.platform.win32.WinNT.LUID_AND_ATTRIBUTES;
 import com.sun.jna.platform.win32.WinNT.TOKEN_PRIVILEGES;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
-
 import taskmanager.InformationLoader;
 import taskmanager.Process;
 import taskmanager.SystemInformation;
@@ -38,6 +31,13 @@ import taskmanager.win32.NtDllExt.SYSTEM_INFORMATION_CLASS;
 import taskmanager.win32.NtDllExt.SYSTEM_MEMORY_LIST_INFORMATION;
 import taskmanager.win32.NtDllExt.SYSTEM_PROCESS_INFORMATION;
 import taskmanager.win32.VersionExt.LANGANDCODEPAGE;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Set;
 
 public class WindowsInformationLoader extends InformationLoader {
 	private long lastCpuTime;
@@ -55,7 +55,19 @@ public class WindowsInformationLoader extends InformationLoader {
 
 		systemInformation.reservedMemory = systemInformation.physicalMemoryTotalInstalled - systemInformation.physicalMemoryTotal;
 
+		readUsername(systemInformation);
+
 		enableSeDebugNamePrivilege();
+	}
+
+	private void readUsername(SystemInformation systemInformation) {
+		char[] userName = new char[1024];
+		IntByReference size = new IntByReference(userName.length);
+		if (Advapi32.INSTANCE.GetUserNameW(userName, size)) {
+			systemInformation.userName = new String(Arrays.copyOf(userName, size.getValue()));
+		} else {
+			System.out.println("Failed to read username, using fallback instead! Error: " + Integer.toHexString(Native.getLastError()));
+		}
 	}
 
 	private void enableSeDebugNamePrivilege() {

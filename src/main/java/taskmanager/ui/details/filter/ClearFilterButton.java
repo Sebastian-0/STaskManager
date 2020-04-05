@@ -1,4 +1,8 @@
-package taskmanager.ui.details;
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
+package taskmanager.ui.details.filter;
 
 import config.TextureStorage;
 

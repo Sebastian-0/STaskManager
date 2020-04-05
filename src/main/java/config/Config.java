@@ -40,19 +40,22 @@ public class Config {
 
 	public static final String KEY_LINK_TIMELINES = "linkTimelines";
 
-	private static Properties properties;
+	public static final String KEY_SHOW_PROCESSES_FOR_ALL_USERS = "showProcessesForAllUsers";
+	public static final String KEY_LAST_DEFAULT_FILTER_ATTRIBUTE = "lastDefaultFilterAttribute";
+
+	private static final Properties PROPERTIES;
 
 	static {
-		properties = new Properties();
+		PROPERTIES = new Properties();
 		loadConfig();
 	}
 
 	public static String get(String configKey) {
-		return properties.getProperty(configKey, "");
+		return PROPERTIES.getProperty(configKey, "");
 	}
 
 	public static String get(String configKey, String defaultValue) {
-		return properties.getProperty(configKey, defaultValue);
+		return PROPERTIES.getProperty(configKey, defaultValue);
 	}
 
 	public static int getInt(String configKey) {
@@ -60,7 +63,7 @@ public class Config {
 	}
 
 	public static int getInt(String configKey, int defaultValue) {
-		return properties.containsKey(configKey) ? getInt(configKey) : defaultValue;
+		return PROPERTIES.containsKey(configKey) ? getInt(configKey) : defaultValue;
 	}
 
 	public static float getFloat(String configKey) {
@@ -68,7 +71,7 @@ public class Config {
 	}
 
 	public static float getFloat(String configKey, float defaultValue) {
-		return properties.containsKey(configKey) ? getFloat(configKey) : defaultValue;
+		return PROPERTIES.containsKey(configKey) ? getFloat(configKey) : defaultValue;
 	}
 
 	public static boolean getBoolean(String configKey) {
@@ -76,11 +79,11 @@ public class Config {
 	}
 
 	public static boolean getBoolean(String configKey, boolean defaultValue) {
-		return properties.containsKey(configKey) ? getBoolean(configKey) : defaultValue;
+		return PROPERTIES.containsKey(configKey) ? getBoolean(configKey) : defaultValue;
 	}
 
 	public static void put(String configKey, String value) {
-		properties.put(configKey, value);
+		PROPERTIES.put(configKey, value);
 		saveConfig();
 	}
 
@@ -90,7 +93,7 @@ public class Config {
 		File config = new File(CONFIG_FILE);
 		if (config.exists()) {
 			try (FileInputStream in = new FileInputStream(config)) {
-				properties.load(in);
+				PROPERTIES.load(in);
 			} catch (IOException e) {
 				System.out.println("Config <static>: Failed to load config: " + e.getMessage());
 			}
@@ -101,23 +104,24 @@ public class Config {
 	}
 
 	private static void generateDefaultValues() {
-		properties.put(KEY_USE_DEBUG_MODE, "false");
-		properties.put(KEY_DEAD_PROCESS_KEEP_TIME, "30");
-		properties.put(KEY_SHOW_DEAD_PROCESSES, "true");
-		properties.put(KEY_LAST_SELECTION_INVERTED, "false");
-		properties.put(KEY_LAST_DEAD_SELECTION_INVERTED, "true");
-		properties.put(KEY_UPDATE_RATE, "1.0");
-		properties.put(KEY_MAXIMUM_MEASURMENT_BUFFER_SIZE, "3600");
-		properties.put(KEY_GRAPH_MAX_PIXELS_PER_SEGMENT, "2");
-		properties.put(KEY_METRIC_TOP_LIST_SIZE, "3");
-		properties.put(KEY_LINK_TIMELINES, "true");
-		properties.put(KEY_MINIMIZE_TO_TRAY, "false");
-		properties.put(KEY_TRAY_GRAPH, "");
+		PROPERTIES.put(KEY_USE_DEBUG_MODE, "false");
+		PROPERTIES.put(KEY_DEAD_PROCESS_KEEP_TIME, "30");
+		PROPERTIES.put(KEY_SHOW_DEAD_PROCESSES, "true");
+		PROPERTIES.put(KEY_LAST_SELECTION_INVERTED, "false");
+		PROPERTIES.put(KEY_LAST_DEAD_SELECTION_INVERTED, "true");
+		PROPERTIES.put(KEY_UPDATE_RATE, "1.0");
+		PROPERTIES.put(KEY_MAXIMUM_MEASURMENT_BUFFER_SIZE, "3600");
+		PROPERTIES.put(KEY_GRAPH_MAX_PIXELS_PER_SEGMENT, "2");
+		PROPERTIES.put(KEY_METRIC_TOP_LIST_SIZE, "3");
+		PROPERTIES.put(KEY_LINK_TIMELINES, "true");
+		PROPERTIES.put(KEY_MINIMIZE_TO_TRAY, "false");
+		PROPERTIES.put(KEY_TRAY_GRAPH, "");
+		PROPERTIES.put(KEY_SHOW_PROCESSES_FOR_ALL_USERS, "true");
 	}
 
 	private static void saveConfig() {
 		try (FileOutputStream out = new FileOutputStream(new File(CONFIG_FILE))) {
-			properties.store(out, "Taskmanager ini-file. Do not change manually\n");
+			PROPERTIES.store(out, "Taskmanager ini-file. Do not change manually\n");
 		} catch (IOException e) {
 			System.out.println("Config <static>: Failed to save config: " + e.getMessage());
 		}
