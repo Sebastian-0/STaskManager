@@ -9,12 +9,13 @@ import taskmanager.filter.AndFilter;
 import taskmanager.filter.Filter;
 import taskmanager.filter.concrete.CommandLineFilter;
 import taskmanager.filter.concrete.CpuFilter;
+import taskmanager.filter.concrete.DeathTimeFilter;
 import taskmanager.filter.concrete.DescriptionFilter;
 import taskmanager.filter.concrete.MemoryFilter;
 import taskmanager.filter.concrete.PidFilter;
 import taskmanager.filter.concrete.ProcessNameFilter;
 import taskmanager.filter.concrete.UserNameFilter;
-import taskmanager.ui.details.ProcessTable;
+import taskmanager.ui.details.ProcessTable.Columns;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -24,13 +25,14 @@ public class FilterCompiler {
     private static final Color ERROR_COLOR = new Color(255, 113, 113);
 
     public enum Tag {
-        Pid("pid", ProcessTable.Columns.Pid.name, new Color(230, 230, 230)),
-        ProcessName("name", ProcessTable.Columns.FileName.name, new Color(230, 230, 230)),
-        UserName("user", ProcessTable.Columns.UserName.name, new Color(230, 230, 230)),
-        Cpu("cpu", ProcessTable.Columns.Cpu.name, new Color(188, 231, 255)),
-        Memory("mem", ProcessTable.Columns.PrivateWorkingSet.name, new Color(244, 205, 255)),
-        CommandLine("cmd", ProcessTable.Columns.CommandLine.name, new Color(230, 230, 230)),
-        Description("desc", ProcessTable.Columns.Description.name, new Color(230, 230, 230));
+        Pid("pid", Columns.Pid.name, new Color(230, 230, 230)),
+        ProcessName("name", Columns.FileName.name, new Color(230, 230, 230)),
+        UserName("user", Columns.UserName.name, new Color(230, 230, 230)),
+        Cpu("cpu", Columns.Cpu.name, new Color(188, 231, 255)),
+        Memory("mem", Columns.PrivateWorkingSet.name, new Color(244, 205, 255)),
+        CommandLine("cmd", Columns.CommandLine.name, new Color(230, 230, 230)),
+        Description("desc", Columns.Description.name, new Color(230, 230, 230)),
+        DeathTime("death", Columns.DeathTime.name, new Color(230, 230, 230));
 
         public final String text;
         public final String displayName;
@@ -44,7 +46,6 @@ public class FilterCompiler {
     }
 
     public CompiledFilter compile(String text, Tag defaultTag) {
-        System.out.println("Compile");
         CompiledFilter result = new CompiledFilter();
 
         Tag currentTag = defaultTag;
@@ -118,6 +119,8 @@ public class FilterCompiler {
                 return new CommandLineFilter(text);
             case Description:
                 return new DescriptionFilter(text);
+            case DeathTime:
+                return parseDeathTime(text);
             default:
                 throw new UnsupportedOperationException("Unsupported tag (programmer error): " + tag);
         }
@@ -135,13 +138,14 @@ public class FilterCompiler {
         }
     }
 
-    private Filter parseMemory(String text) { text = text.toLowerCase();
+    private Filter parseMemory(String text) {
+        text = text.toLowerCase();
         try {
             long lower = parseMemoryNumber(lowerBound(text, "0"));
             long upper = parseMemoryNumber(upperBound(text, Long.toString(Long.MAX_VALUE / 1024)));
             return new MemoryFilter(lower, upper);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid CPU filter text: " + text, e);
+            throw new IllegalArgumentException("Invalid memory filter text: " + text, e);
         }
     }
 
@@ -168,6 +172,37 @@ public class FilterCompiler {
         }
 
         return Long.parseLong(number) * factor * 1024;
+    }
+
+    private Filter parseDeathTime(String text) {
+        text = text.toLowerCase();
+        try {
+            long lower = parseTime(lowerBound(text, "0"));
+            long upper = parseTime(upperBound(text, Long.toString(Long.MAX_VALUE / 1000)));
+            return new DeathTimeFilter(lower, upper);
+        } catch (NumberFormatException e) {throw new IllegalArgumentException("Invalid death time filter text: " + text, e);
+        }
+    }
+
+    private long parseTime(String time) {
+        if (time.isEmpty()) {
+            throw new NumberFormatException("The empty string is not a timestamp!");
+        }
+        long seconds;
+        char modifier = time.charAt(time.length()-1);
+        if (Character.isDigit(modifier)) {
+            seconds = (long) (Double.parseDouble(time) * 1000);
+        } else {
+            seconds = (long) (Double.parseDouble(time.substring(0, time.length() - 1)) * 1000);
+        }
+        if (modifier == 'm') {
+            seconds *= 60;
+        } else if (modifier == 'h') {
+            seconds *= 60 * 60;
+        } else if (modifier == 'd') {
+            seconds *= 60 * 60 * 24;
+        }
+        return seconds;
     }
 
     private String lowerBound(String text, String defaultValue) {
