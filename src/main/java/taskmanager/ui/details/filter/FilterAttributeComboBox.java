@@ -2,7 +2,7 @@
  * Copyright (c) 2020 Sebastian Hjelm
  */
 
-package taskmanager.ui.details;
+package taskmanager.ui.details.filter;
 
 import config.Config;
 import taskmanager.ui.details.ProcessTable.Columns;
@@ -26,12 +26,17 @@ public class FilterAttributeComboBox extends JComboBox<String> {
 			}
 		});
 
+		boolean wasSet = false;
 		String lastFilterAttribute = Config.get(Config.KEY_LAST_DEFAULT_FILTER_ATTRIBUTE);
 		for (int i = 0; i < visibleColumns.size(); i++) {
 			if (visibleColumns.get(i).name.equals(lastFilterAttribute)) {
+				wasSet = true;
 				setSelectedIndex(i);
 				break;
 			}
+		}
+		if (!wasSet) {
+			setSelectedIndex(0);
 		}
 	}
 }

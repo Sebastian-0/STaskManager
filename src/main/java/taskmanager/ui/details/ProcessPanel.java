@@ -7,6 +7,7 @@ package taskmanager.ui.details;
 import config.Config;
 import taskmanager.SystemInformation;
 import taskmanager.ui.SimpleGridBagLayout;
+import taskmanager.ui.details.filter.FilterAttributeComboBox;
 import taskmanager.ui.details.filter.FilterPanel;
 
 import javax.swing.JLabel;
