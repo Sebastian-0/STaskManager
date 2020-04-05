@@ -1,3 +1,4 @@
+import com.github.spotbugs.SpotBugsTask
 
 plugins {
     id 'java'
@@ -7,9 +8,6 @@ plugins {
 
 group 'sebastian-0.taskmanager'
 version '0.5-SNAPSHOT'
-
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
     mavenCentral()
@@ -35,6 +33,11 @@ task copyTextures( type: Copy ) {
     include "*.png"
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 jar {
     manifest {
         attributes 'Main-Class':'taskmanager.ui.TaskManager',
@@ -49,7 +52,7 @@ spotbugs {
     showProgress = true
 }
 
-tasks.withType(com.github.spotbugs.SpotBugsTask) {
+tasks.withType(SpotBugsTask) {
     reports {
         xml.enabled = false
         html.enabled = true
