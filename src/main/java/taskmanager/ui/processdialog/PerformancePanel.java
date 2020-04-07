@@ -97,9 +97,14 @@ public class PerformancePanel extends JPanel {
 	}
 
 	public void update() {
+		// TODO Make Memory/CPU max computation more intelligent?
 		long memoryMax = (long) (Math.max(128, process.privateWorkingSet.max()) * 1.1f);
-		memoryGraph.setMaxDatapointValue(memoryMax); // TODO Make this more intelligent?
+		memoryGraph.setMaxDatapointValue(memoryMax);
 		memoryTimeline.setMaxDatapointValue(memoryMax);
+
+		long cpuMax = (long) Math.min(Config.DOUBLE_TO_LONG, Math.max(Config.DOUBLE_TO_LONG / 100f, process.cpuUsage.max()* 1.1f));
+		cpuGraph.setMaxDatapointValue(cpuMax);
+		cpuTimeline.setMaxDatapointValue(cpuMax);
 
 		labelMemoryCurrent.setText(TextUtils.valueToString(process.privateWorkingSet.newest(), ValueType.Bytes));
 		labelCpuCurrent.setText(TextUtils.valueToString(process.cpuUsage.newest(), ValueType.Percentage));
