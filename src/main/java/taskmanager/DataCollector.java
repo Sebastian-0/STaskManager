@@ -69,8 +69,8 @@ public class DataCollector extends Thread {
 			updateInformation(false);
 			long delta = System.currentTimeMillis() - startTime;
 			totalTime += delta;
-			if (count % 1000 == 0) {
-				System.out.println(String.format("Data collection time: %dms (avg: %.1fms, runs: %d)", delta, totalTime / (float) ++count, count));
+			if (++count % 1000 == 0) {
+				System.out.println(String.format("Data collection time: %dms (avg: %.1fms, runs: %d)", delta, totalTime / (float) count, count));
 			}
 
 			try {
