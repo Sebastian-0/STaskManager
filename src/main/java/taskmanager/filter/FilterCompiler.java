@@ -2,11 +2,9 @@
  * Copyright (c) 2020. Sebastian Hjelm
  */
 
-package taskmanager.ui.details.filter;
+package taskmanager.filter;
 
 import config.Config;
-import taskmanager.filter.AndFilter;
-import taskmanager.filter.Filter;
 import taskmanager.filter.concrete.CommandLineFilter;
 import taskmanager.filter.concrete.CpuFilter;
 import taskmanager.filter.concrete.DeathTimeFilter;
@@ -21,7 +19,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FilterCompiler {
+public class FilterCompiler { // TODO Get rid of dependency on ProcessTable.Columns to make filter package independent
     private static final Color ERROR_COLOR = new Color(255, 113, 113);
 
     public enum Tag {

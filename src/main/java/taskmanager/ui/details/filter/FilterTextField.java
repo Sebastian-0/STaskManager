@@ -5,10 +5,11 @@
 package taskmanager.ui.details.filter;
 
 import taskmanager.filter.Filter;
+import taskmanager.filter.FilterCompiler;
 import taskmanager.ui.details.ProcessTable;
-import taskmanager.ui.details.filter.FilterCompiler.CompiledFilter;
-import taskmanager.ui.details.filter.FilterCompiler.Highlight;
-import taskmanager.ui.details.filter.FilterCompiler.Tag;
+import taskmanager.filter.FilterCompiler.CompiledFilter;
+import taskmanager.filter.FilterCompiler.Highlight;
+import taskmanager.filter.FilterCompiler.Tag;
 
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;

@@ -6,8 +6,7 @@ package taskmanager.ui.details.filter;
 
 import config.Config;
 import taskmanager.ui.details.ProcessTable.Columns;
-import taskmanager.ui.details.filter.FilterCompiler.Tag;
-import taskmanager.ui.details.filter.FilterPanel;
+import taskmanager.filter.FilterCompiler.Tag;
 
 import javax.swing.JComboBox;
 import java.util.List;

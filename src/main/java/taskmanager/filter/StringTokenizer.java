@@ -2,7 +2,7 @@
  * Copyright (c) 2020. Sebastian Hjelm
  */
 
-package taskmanager.ui.details.filter;
+package taskmanager.filter;
 
 public class StringTokenizer {
     private static final String DELIMITERS = " \t\n\r";

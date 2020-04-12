@@ -6,7 +6,7 @@ package taskmanager.ui.details.filter;
 
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.details.ProcessTable;
-import taskmanager.ui.details.filter.FilterCompiler.Tag;
+import taskmanager.filter.FilterCompiler.Tag;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
