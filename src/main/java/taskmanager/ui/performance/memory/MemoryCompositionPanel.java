@@ -8,12 +8,13 @@ import taskmanager.SystemInformation;
 import taskmanager.ui.ColorUtils;
 import taskmanager.ui.performance.GraphType;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.text.MessageFormat;
 
 public class MemoryCompositionPanel extends JPanel {
@@ -26,7 +27,13 @@ public class MemoryCompositionPanel extends JPanel {
 		setBorder(new LineBorder(Color.BLACK));
 		setPreferredSize(new Dimension(80, 50));
 
-		addMouseMotionListener(motionListener);
+		addMouseMotionListener(new MouseAdapter() {
+				@Override
+				public void mouseMoved(MouseEvent e) {
+					lastMouseX = e.getX();
+					updateTooltipText();
+				}
+			});
 
 		sections = new Section[]{new Section(color(180), convertLinebreaks("Reserved ({0} MB)\nReserved memory for the BIOS and\n some drivers")),
 				new Section(color(130), convertLinebreaks("In use ({0} MB)\nMemory used by processes, drivers\n and the operating system")),
@@ -71,8 +78,8 @@ public class MemoryCompositionPanel extends JPanel {
 		sections[3].value = systemInformation.standbyMemory;
 		sections[4].value = systemInformation.freeMemory;
 
-		for (int i = 0; i < sections.length; i++) {
-			sections[i].fractionOfWidth = sections[i].value / (float) systemInformation.physicalMemoryTotalInstalled;
+		for (Section section : sections) {
+			section.fractionOfWidth = section.value / (float) systemInformation.physicalMemoryTotalInstalled;
 		}
 
 		updateTooltipText();
@@ -80,22 +87,13 @@ public class MemoryCompositionPanel extends JPanel {
 	}
 
 	private void updateTooltipText() {
-		for (int i = 0; i < sections.length; i++) {
-			if (lastMouseX <= sections[i].startPosition + sections[i].fractionOfWidth * getWidth()) {
-				setToolTipText(MessageFormat.format(sections[i].tooltip, sections[i].value / 1024 / 1024));
+		for (Section section : sections) {
+			if (lastMouseX <= section.startPosition + section.fractionOfWidth * getWidth()) {
+				setToolTipText(MessageFormat.format(section.tooltip, section.value / 1024 / 1024));
 				break;
 			}
 		}
 	}
-
-
-	private MouseMotionListener motionListener = new MouseAdapter() {
-		@Override
-		public void mouseMoved(MouseEvent e) {
-			lastMouseX = e.getX();
-			updateTooltipText();
-		}
-	};
 
 
 	private static class Section {

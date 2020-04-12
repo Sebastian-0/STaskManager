@@ -153,10 +153,11 @@ public class WindowsInformationLoader extends InformationLoader {
 				if (process.id == 0) {
 					process.fileName = "System Idle Process";
 					process.userName = "SYSTEM";
-				} else
+				} else {
 					process.fileName = newProcess.ImageName.Buffer.getWideString(0);
+				}
 
-				if (readProcessCommandLine(process)) {
+				if (readProcessFileNameCommandLineAndUser(process)) {
 					readFileDescription(process);
 				}
 
@@ -189,7 +190,7 @@ public class WindowsInformationLoader extends InformationLoader {
 		}
 	}
 
-	private boolean readProcessCommandLine(Process process) {
+	private boolean readProcessFileNameCommandLineAndUser(Process process) {
 		WinNT.HANDLE handle = Kernel32.INSTANCE.OpenProcess( // TODO Try again with only PROCESS_QUERY_LIMITED_INFORMATION, might give you the user name at least
 				WinNT.PROCESS_QUERY_INFORMATION | WinNT.PROCESS_VM_READ,
 				false,
@@ -199,53 +200,53 @@ public class WindowsInformationLoader extends InformationLoader {
 			return false;
 		}
 
-		Memory mem = new Memory(new PROCESS_BASIC_INFORMATION().size());
-		int status = NtDllExt.INSTANCE.NtQueryInformationProcess(handle, 0, mem, (int) mem.size(), null);
-		if (status != 0) {
-			System.out.println("readProcessCommandLine(): Failed to read process information for " + process.fileName + ": " + Integer.toHexString(status));
+		try {
+			Memory mem = new Memory(new PROCESS_BASIC_INFORMATION().size());
+			int status = NtDllExt.INSTANCE.NtQueryInformationProcess(handle, 0, mem, (int) mem.size(), null);
+			if (status != 0) {
+				System.out.println("readProcessCommandLine(): Failed to read process information for " + process.fileName + ": " + Integer.toHexString(status));
+				return false;
+			}
+
+			PROCESS_BASIC_INFORMATION processInfo = Structure.newInstance(NtDllExt.PROCESS_BASIC_INFORMATION.class, mem);
+			processInfo.read();
+
+			mem = new Memory(new PEB().size());
+			if (!readProcessMemory(handle, mem, processInfo.PebBaseAddress, process, "PEB"))
+				return false;
+
+			PEB peb = Structure.newInstance(NtDllExt.PEB.class, mem);
+			peb.read();
+
+			mem = new Memory(new RTL_USER_PROCESS_PARAMETERS().size());
+			if (!readProcessMemory(handle, mem, peb.ProcessParameters, process, "RTL_USER_PROCESS_PARAMETERS"))
+				return false;
+
+			RTL_USER_PROCESS_PARAMETERS parameters = Structure.newInstance(NtDllExt.RTL_USER_PROCESS_PARAMETERS.class, mem);
+			parameters.read();
+
+			mem = new Memory(parameters.ImagePathName.Length + 2);
+			if (!readProcessMemory(handle, mem, parameters.ImagePathName.Buffer, process, "image path"))
+				return false;
+
+			process.filePath = mem.getWideString(0);
+
+			mem = new Memory(parameters.CommandLine.Length + 2);
+			if (!readProcessMemory(handle, mem, parameters.CommandLine.Buffer, process, "command line"))
+				return false;
+
+			process.commandLine = mem.getWideString(0);
+
+			HANDLEByReference tokenRef = new HANDLEByReference();
+			if (Advapi32.INSTANCE.OpenProcessToken(handle, WinNT.TOKEN_QUERY, tokenRef)) {
+				Account account = Advapi32Util.getTokenAccount(tokenRef.getValue());
+				process.userName = account.name;
+			} else {
+				return false;
+			}
+		} finally {
 			Kernel32.INSTANCE.CloseHandle(handle);
-			return false;
 		}
-
-		PROCESS_BASIC_INFORMATION processInfo = Structure.newInstance(NtDllExt.PROCESS_BASIC_INFORMATION.class, mem);
-		processInfo.read();
-
-		mem = new Memory(new PEB().size());
-		if (!readProcessMemory(handle, mem, processInfo.PebBaseAddress, process, "PEB"))
-			return false;
-
-		PEB peb = Structure.newInstance(NtDllExt.PEB.class, mem);
-		peb.read();
-
-		mem = new Memory(new RTL_USER_PROCESS_PARAMETERS().size());
-		if (!readProcessMemory(handle, mem, peb.ProcessParameters, process, "RTL_USER_PROCESS_PARAMETERS"))
-			return false;
-
-		RTL_USER_PROCESS_PARAMETERS parameters = Structure.newInstance(NtDllExt.RTL_USER_PROCESS_PARAMETERS.class, mem);
-		parameters.read();
-
-		mem = new Memory(parameters.ImagePathName.Length + 2);
-		if (!readProcessMemory(handle, mem, parameters.ImagePathName.Buffer, process, "image path"))
-			return false;
-
-		process.filePath = mem.getWideString(0);
-
-		mem = new Memory(parameters.CommandLine.Length + 2);
-		if (!readProcessMemory(handle, mem, parameters.CommandLine.Buffer, process, "command line"))
-			return false;
-
-		process.commandLine = mem.getWideString(0);
-
-		HANDLEByReference tokenRef = new HANDLEByReference();
-		if (Advapi32.INSTANCE.OpenProcessToken(handle, WinNT.TOKEN_QUERY, tokenRef)) {
-			Account account = Advapi32Util.getTokenAccount(tokenRef.getValue());
-			process.userName = account.name;
-		} else {
-			Kernel32.INSTANCE.CloseHandle(handle);
-			return false;
-		}
-
-		Kernel32.INSTANCE.CloseHandle(handle);
 
 		return true;
 	}
