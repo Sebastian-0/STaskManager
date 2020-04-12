@@ -42,8 +42,13 @@ public class LinuxInformationLoader extends InformationLoader {
 	public void update(SystemInformation systemInformation) {
 		super.update(systemInformation);
 
+		updateMemory(systemInformation);
 		updateTotalCpuTime();
 		updateProcesses(systemInformation);
+	}
+
+	private void updateMemory(SystemInformation systemInformation) {
+		systemInformation.freeMemory = systemInformation.physicalMemoryTotal - systemInformation.physicalMemoryUsed.newest();
 	}
 
 	private void updateTotalCpuTime() {

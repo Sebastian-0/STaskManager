@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui.performance.memory;
 
 import taskmanager.SystemInformation;
@@ -13,7 +17,7 @@ import java.awt.event.MouseMotionListener;
 import java.text.MessageFormat;
 
 public class MemoryCompositionPanel extends JPanel {
-	private Section[] sections;
+	private final Section[] sections;
 
 	private int lastMouseX;
 
