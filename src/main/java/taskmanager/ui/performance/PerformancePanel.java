@@ -48,7 +48,7 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 		for (int i = 0; i < networkPanels.length; i++) {
 			networkPanels[i] = new NetworkPanel(timelineGroup, systemInformation.networks[i]);
 		}
-		for (int i = 0; i < networkPanels.length; i++) {
+		for (int i = 0; i < gpuPanels.length; i++) {
 			gpuPanels[i] = new GpuPanel(timelineGroup, systemInformation.gpus[i]);
 		}
 
