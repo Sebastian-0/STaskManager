@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui;
 
 import config.Config;
@@ -272,6 +276,9 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 //		UIManager.put("Panel.background", Color.white);
 
 //		System.out.println("Running with PID: " + ProcessHandle.current().pid());
+
+		System.setProperty("awt.useSystemAAFontSettings","on");
+		System.setProperty("swing.aatext", "true");
 
 		ToolTipManager.sharedInstance().setDismissDelay(8000);
 
