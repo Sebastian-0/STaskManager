@@ -2,7 +2,7 @@
  * Copyright (c) 2020. Sebastian Hjelm
  */
 
-package taskmanager.win32;
+package taskmanager.platform.win32;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -28,13 +28,13 @@ import com.sun.jna.ptr.PointerByReference;
 import taskmanager.InformationLoader;
 import taskmanager.Process;
 import taskmanager.SystemInformation;
-import taskmanager.win32.NtDllExt.PEB;
-import taskmanager.win32.NtDllExt.PROCESS_BASIC_INFORMATION;
-import taskmanager.win32.NtDllExt.RTL_USER_PROCESS_PARAMETERS;
-import taskmanager.win32.NtDllExt.SYSTEM_INFORMATION_CLASS;
-import taskmanager.win32.NtDllExt.SYSTEM_MEMORY_LIST_INFORMATION;
-import taskmanager.win32.NtDllExt.SYSTEM_PROCESS_INFORMATION;
-import taskmanager.win32.VersionExt.LANGANDCODEPAGE;
+import taskmanager.platform.win32.NtDllExt.PEB;
+import taskmanager.platform.win32.NtDllExt.PROCESS_BASIC_INFORMATION;
+import taskmanager.platform.win32.NtDllExt.RTL_USER_PROCESS_PARAMETERS;
+import taskmanager.platform.win32.NtDllExt.SYSTEM_INFORMATION_CLASS;
+import taskmanager.platform.win32.NtDllExt.SYSTEM_MEMORY_LIST_INFORMATION;
+import taskmanager.platform.win32.NtDllExt.SYSTEM_PROCESS_INFORMATION;
+import taskmanager.platform.win32.VersionExt.LANGANDCODEPAGE;
 
 import java.util.ArrayList;
 import java.util.Arrays;

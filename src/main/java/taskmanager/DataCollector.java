@@ -3,8 +3,8 @@ package taskmanager;
 
 import com.sun.jna.Platform;
 import config.Config;
-import taskmanager.linux.LinuxInformationLoader;
-import taskmanager.win32.WindowsInformationLoader;
+import taskmanager.platform.linux.LinuxInformationLoader;
+import taskmanager.platform.win32.WindowsInformationLoader;
 
 import javax.swing.SwingUtilities;
 

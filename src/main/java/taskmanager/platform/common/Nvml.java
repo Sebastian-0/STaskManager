@@ -2,7 +2,7 @@
  * Copyright (c) 2020. Sebastian Hjelm
  */
 
-package taskmanager.common;
+package taskmanager.platform.common;
 
 import com.sun.jna.Library;
 import com.sun.jna.Native;

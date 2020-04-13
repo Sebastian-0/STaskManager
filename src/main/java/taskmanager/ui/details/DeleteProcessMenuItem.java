@@ -2,9 +2,9 @@ package taskmanager.ui.details;
 
 import com.sun.jna.Platform;
 import taskmanager.Process;
-import taskmanager.linux.LinuxProcess;
+import taskmanager.platform.linux.LinuxProcess;
 import taskmanager.ui.AbstractMenuItem;
-import taskmanager.win32.WindowsProcess;
+import taskmanager.platform.win32.WindowsProcess;
 
 import javax.swing.JOptionPane;
 import java.awt.Component;

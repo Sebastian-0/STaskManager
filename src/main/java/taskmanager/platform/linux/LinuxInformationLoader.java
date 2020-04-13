@@ -2,7 +2,7 @@
  * Copyright (c) 2020. Sebastian Hjelm
  */
 
-package taskmanager.linux;
+package taskmanager.platform.linux;
 
 import oshi.software.os.linux.LinuxUserGroupInfo;
 import oshi.util.FileUtil;

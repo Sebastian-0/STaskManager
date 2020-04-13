@@ -2,7 +2,7 @@
  * Copyright (c) 2020. Sebastian Hjelm
  */
 
-package taskmanager.common;
+package taskmanager.platform.common;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Structure;
@@ -12,9 +12,9 @@ import config.Config;
 import taskmanager.SystemInformation;
 import taskmanager.SystemInformation.Gpu;
 import taskmanager.SystemInformation.Gpu.Type;
-import taskmanager.common.Nvml.nvmlMemory_t;
-import taskmanager.common.Nvml.nvmlPciInfo_t;
-import taskmanager.common.Nvml.nvmlUtilization_t;
+import taskmanager.platform.common.Nvml.nvmlMemory_t;
+import taskmanager.platform.common.Nvml.nvmlPciInfo_t;
+import taskmanager.platform.common.Nvml.nvmlUtilization_t;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;

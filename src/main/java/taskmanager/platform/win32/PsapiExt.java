@@ -2,7 +2,7 @@
  * Copyright (c) 2020. Sebastian Hjelm
  */
 
-package taskmanager.win32;
+package taskmanager.platform.win32;
 
 import com.sun.jna.Native;
 import com.sun.jna.Structure;

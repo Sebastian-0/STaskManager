@@ -15,7 +15,7 @@ import taskmanager.SystemInformation.Gpu;
 import taskmanager.SystemInformation.Gpu.Type;
 import taskmanager.SystemInformation.Network;
 import taskmanager.SystemInformation.TopList;
-import taskmanager.common.NvidiaGpuLoader;
+import taskmanager.platform.common.NvidiaGpuLoader;
 
 import java.net.SocketException;
 import java.util.ArrayList;
