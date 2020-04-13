@@ -100,8 +100,8 @@ public class GpuPanel extends JPanel {
 		// TODO Currently copy-n-paste strokes from GraphPanel! Improve this somehow!
 		utilizationPanel = new InformationItemPanel("Utilization    ", ValueType.Percentage); // Wider text here to force the label panel further to the right
 		memoryPanel = new RatioItemPanel("Memory", gpu.totalMemory);
-		encodePanel = new InformationItemPanel("Video encode    ", ValueType.Percentage, new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] {3f}, 0f), GraphType.Gpu.color);
-		decodePanel = new InformationItemPanel("Video decode    ", ValueType.Percentage, new BasicStroke(2), GraphType.Gpu.color);
+		encodePanel = new InformationItemPanel("Video encode    ", ValueType.Percentage, new BasicStroke(2), GraphType.Gpu.color);
+		decodePanel = new InformationItemPanel("Video decode    ", ValueType.Percentage, new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] {3f}, 0f), GraphType.Gpu.color);
 		temperaturePanel = new InformationItemPanel("Temperature", ValueType.Temperature);
 
 		JLabel labelCapacityHeader = new JLabel("Model: ");
