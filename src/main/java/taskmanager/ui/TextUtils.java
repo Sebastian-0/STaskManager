@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui;
 
 import config.Config;
@@ -16,6 +20,7 @@ public class TextUtils {
 		Millis,
 		TimeFull,
 		Time,
+		Temperature,
 		Raw
 	}
 
@@ -51,6 +56,8 @@ public class TextUtils {
 			} else {
 				return String.format("%.1f s", trueValue);
 			}
+		} else if (type == ValueType.Temperature) {
+			return value + " C";
 		} else if (type == ValueType.Raw) {
 			return Long.toString(value);
 		}

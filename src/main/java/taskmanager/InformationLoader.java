@@ -1,13 +1,21 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager;
 
 import config.Config;
 import oshi.SystemInfo;
+import oshi.hardware.GraphicsCard;
 import oshi.hardware.HWDiskStore;
 import oshi.hardware.HWPartition;
 import oshi.hardware.NetworkIF;
 import taskmanager.SystemInformation.Disk;
+import taskmanager.SystemInformation.Gpu;
+import taskmanager.SystemInformation.Gpu.Type;
 import taskmanager.SystemInformation.Network;
 import taskmanager.SystemInformation.TopList;
+import taskmanager.common.NvidiaGpuLoader;
 
 import java.net.SocketException;
 import java.util.ArrayList;
@@ -15,9 +23,11 @@ import java.util.List;
 
 public abstract class InformationLoader {
 	private SystemInfo systemInfoLoader;
+	private NvidiaGpuLoader nvidiaGpuLoader;
 
 	private NetworkIF[] networkInterfaces;
 	private HWDiskStore[] disks;
+	private GraphicsCard[] gpus;
 
 	private long[][] lastCpuLoadTicksPerCore;
 	private long[] lastCpuLoadTicks;
@@ -27,6 +37,7 @@ public abstract class InformationLoader {
 	@SuppressWarnings("unchecked")
 	public void init(SystemInformation systemInformation) {
 		systemInfoLoader = new SystemInfo();
+		nvidiaGpuLoader = new NvidiaGpuLoader();
 
 		systemInformation.logicalProcessorCount = systemInfoLoader.getHardware().getProcessor().getLogicalProcessorCount();
 		systemInformation.physicalProcessorCount = systemInfoLoader.getHardware().getProcessor().getPhysicalProcessorCount();
@@ -39,6 +50,14 @@ public abstract class InformationLoader {
 			systemInformation.cpuUsagePerCore[i] = new MeasurementContainer<>((short) 0);
 		}
 
+		initNetworkInterfaces(systemInformation);
+		initDisks(systemInformation);
+		initGpus(systemInformation);
+
+		systemInformation.userName = System.getProperty("user.name");
+	}
+
+	private void initNetworkInterfaces(SystemInformation systemInformation) {
 		networkInterfaces = systemInfoLoader.getHardware().getNetworkIFs();
 		systemInformation.networks = new Network[networkInterfaces.length];
 		for (int i = 0; i < networkInterfaces.length; i++) {
@@ -56,12 +75,15 @@ public abstract class InformationLoader {
 				e.printStackTrace();
 			}
 		}
+	}
 
+	private void initDisks(SystemInformation systemInformation) {
 		disks = systemInfoLoader.getHardware().getDiskStores();
 		List<Disk> diskList = new ArrayList<>();
+		int idx = 0;
 		for (int i = 0; i < disks.length; i++) {
 			Disk disk = new Disk();
-			disk.index = i;
+			disk.index = idx;
 			disk.size = disks[i].getSize();
 			disk.model = disks[i].getModel();
 			for (HWPartition partition : disks[i].getPartitions()) { // TODO Use UIID of the first partition to identify disks when new are added/removed
@@ -79,12 +101,37 @@ public abstract class InformationLoader {
 			}
 			if (disks[i].getPartitions().length > 0) {
 				diskList.add(disk);
+				idx += 1;
 			}
 		}
 
 		systemInformation.disks = diskList.toArray(new Disk[0]);
+	}
 
-		systemInformation.userName = System.getProperty("user.name");
+	private void initGpus(SystemInformation systemInformation) {
+		gpus = systemInfoLoader.getHardware().getGraphicsCards();
+		systemInformation.gpus = new Gpu[gpus.length];
+		for (int i = 0; i < gpus.length; i++) {
+			Gpu gpu = new Gpu();
+			gpu.index = i;
+			gpu.name = gpus[i].getName();
+			gpu.deviceId = Integer.decode(gpus[i].getDeviceId());
+			gpu.vendor = gpus[i].getVendor();
+			gpu.totalMemory = gpus[i].getVRam();
+
+			String vendor = gpu.vendor.toLowerCase();
+			if (vendor.contains("nvidia")) { // TODO Does this work in windows?
+				gpu.type = Type.Nvidia;
+			} else if (vendor.contains("amd")) { // TODO Verify that AMD/Intel works?
+				gpu.type = Type.Amd;
+			} else if (vendor.contains("intel")) {
+				gpu.type = Type.Intel;
+			} else {
+				gpu.type = Type.Unknown;
+			}
+
+			systemInformation.gpus[i] = gpu;
+		}
 	}
 
 	public void update(SystemInformation systemInformation) {
@@ -117,6 +164,8 @@ public abstract class InformationLoader {
 
 		updateNetworkInterfaces(systemInformation);
 		updateDisks(systemInformation);
+
+		nvidiaGpuLoader.update(systemInformation);
 
 		if (numberOfUpdates > 0) {
 			updateTopLists(systemInformation);

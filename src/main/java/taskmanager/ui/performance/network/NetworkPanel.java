@@ -1,29 +1,41 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui.performance.network;
 
-import taskmanager.SystemInformation;
 import taskmanager.SystemInformation.Network;
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
-import taskmanager.ui.performance.*;
+import taskmanager.ui.performance.GraphPanel;
+import taskmanager.ui.performance.GraphType;
+import taskmanager.ui.performance.GraphTypeButton;
+import taskmanager.ui.performance.InformationItemPanel;
+import taskmanager.ui.performance.TimelineGraphPanel;
+import taskmanager.ui.performance.TimelineGroup;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BasicStroke;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridLayout;
 
 public class NetworkPanel extends JPanel {
-	private Network network;
+	private final Network network;
 
-	private JLabel labelMaxTransfer;
+	private final JLabel labelMaxTransfer;
 
-	private GraphPanel transferGraph;
-	private TimelineGraphPanel timelineGraph;
+	private final GraphPanel transferGraph;
+	private final TimelineGraphPanel timelineGraph;
 
-	private InformationItemPanel sendRatePanel;
-	private InformationItemPanel receiveRatePanel;
-	private JLabel nameLabel;
-	private JLabel macLabel;
-	private JLabel ipv4Label;
-	private JLabel ipv6Label;
+	private final InformationItemPanel sendRatePanel;
+	private final InformationItemPanel receiveRatePanel;
+	private final JLabel nameLabel;
+	private final JLabel macLabel;
+	private final JLabel ipv4Label;
+	private final JLabel ipv6Label;
 
 	private GraphTypeButton connectedButton;
 
@@ -38,7 +50,7 @@ public class NetworkPanel extends JPanel {
 		JLabel labelMaxTime = new JLabel("Displaying 60 seconds");
 		labelMaxTransfer = new JLabel("XX Kbps");
 
-		transferGraph = new GraphPanel(GraphType.Network, true);
+		transferGraph = new GraphPanel(GraphType.Network, ValueType.BitsPerSecond);
 		timelineGraph = new TimelineGraphPanel(transferGraph, labelMaxTime);
 
 		transferGraph.setIsLogarithmic(true);
@@ -101,7 +113,7 @@ public class NetworkPanel extends JPanel {
 	}
 
 
-	public void update(SystemInformation systemInformation) {
+	public void update() {
 		long max = Math.max(100 * 1024, 8 * Math.max(network.outRate.max(), network.inRate.max())) / 8;
 
 		labelMaxTransfer.setText(TextUtils.bitsToString(max, 0) + "ps");
@@ -123,8 +135,8 @@ public class NetworkPanel extends JPanel {
 	}
 
 
-	public GraphTypeButton createNetworkButton(int index) {
-		connectedButton = new GraphTypeButton(GraphType.Network, "Network", index);
+	public GraphTypeButton createGraphButton(int index) {
+		connectedButton = new GraphTypeButton(GraphType.Network, ValueType.BitsPerSecond, "Network", index);
 		connectedButton.setIsLogarithmic(transferGraph.isLogarithmic());
 		connectedButton.addGraph(network.inRate, false);
 		connectedButton.addGraph(network.outRate, true);

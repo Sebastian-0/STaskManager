@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.linux;
 
 import java.io.IOException;

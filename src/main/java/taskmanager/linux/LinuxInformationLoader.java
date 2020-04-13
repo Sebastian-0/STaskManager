@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.linux;
 
 import oshi.software.os.linux.LinuxUserGroupInfo;
@@ -11,12 +15,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
 
 public class LinuxInformationLoader extends InformationLoader {
 	private static final String PROC_PATH = "/proc";
 
-	private LinuxUserGroupInfo userGroupInfo;
+	private final LinuxUserGroupInfo userGroupInfo;
 
 	private long lastCpuTime;
 	private long currentCpuTime;
@@ -32,8 +40,6 @@ public class LinuxInformationLoader extends InformationLoader {
 		super.init(systemInformation);
 
 		systemInformation.physicalMemoryTotalInstalled = systemInformation.physicalMemoryTotal;
-//    systemInformation.reservedMemory = systemInformation.physicalMemoryTotalInstalled - systemInformation.physicalMemoryTotal;
-
 		systemInformation.processes.add(new Process(nextProcessId++, 0));
 	}
 

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager;
 
 import java.util.ArrayList;
@@ -54,6 +58,9 @@ public class SystemInformation {
 	/* Disk data */
 	public Disk[] disks;
 
+	/* GPU data */
+	public Gpu[] gpus;
+
 	/* Other system data */
 	public String userName;
 
@@ -68,6 +75,7 @@ public class SystemInformation {
 		deadProcesses = new ArrayList<>();
 		networks = new Network[0];
 		disks = new Disk[0];
+		gpus = new Gpu[0];
 	}
 
 	@SuppressWarnings("unchecked")
@@ -80,6 +88,9 @@ public class SystemInformation {
 		}
 		if (disks.length != other.disks.length) {
 			disks = new Disk[other.disks.length];
+		}
+		if (gpus.length != other.gpus.length) {
+			gpus = new Gpu[other.gpus.length];
 		}
 
 		bootTime = other.bootTime;
@@ -124,8 +135,20 @@ public class SystemInformation {
 		copyProcesses(other);
 		copyNetworks(other);
 		copyDisks(other);
+		copyGpus(other);
 
 		userName = other.userName;
+	}
+
+	private void copyNetworks(SystemInformation other) {
+		for (int i = 0; i < networks.length; i++) {
+			boolean isNew = false;
+			if (networks[i] == null) {
+				networks[i] = new Network();
+				isNew = true;
+			}
+			networks[i].copyFrom(other.networks[i], isNew);
+		}
 	}
 
 	private void copyDisks(SystemInformation other) {
@@ -139,14 +162,14 @@ public class SystemInformation {
 		}
 	}
 
-	private void copyNetworks(SystemInformation other) {
-		for (int i = 0; i < networks.length; i++) {
+	private void copyGpus(SystemInformation other) {
+		for (int i = 0; i < gpus.length; i++) {
 			boolean isNew = false;
-			if (networks[i] == null) {
-				networks[i] = new Network();
+			if (gpus[i] == null) {
+				gpus[i] = new Gpu();
 				isNew = true;
 			}
-			networks[i].copyFrom(other.networks[i], isNew);
+			gpus[i].copyFrom(other.gpus[i], isNew);
 		}
 	}
 
@@ -275,8 +298,8 @@ public class SystemInformation {
 		public boolean isEnabled;
 
 		public Network() {
-			inRate = new MeasurementContainer<Long>(0L);
-			outRate = new MeasurementContainer<Long>(0L);
+			inRate = new MeasurementContainer<>(0L);
+			outRate = new MeasurementContainer<>(0L);
 
 			ipv4Addresses = new String[0];
 			ipv6Addresses = new String[0];
@@ -326,10 +349,10 @@ public class SystemInformation {
 		public long size;
 
 		public Disk() {
-			writeRate = new MeasurementContainer<Long>(0L);
-			readRate = new MeasurementContainer<Long>(0L);
-			activeFraction = new MeasurementContainer<Double>(0d);
-			ioQueueLength = new MeasurementContainer<Long>(0L);
+			writeRate = new MeasurementContainer<>(0L);
+			readRate = new MeasurementContainer<>(0L);
+			activeFraction = new MeasurementContainer<>(0d);
+			ioQueueLength = new MeasurementContainer<>(0L);
 		}
 
 		void copyFrom(Disk other, boolean doFullCopy) {
@@ -337,16 +360,77 @@ public class SystemInformation {
 				writeRate.copyFrom(other.writeRate);
 				readRate.copyFrom(other.readRate);
 				activeFraction.copyFrom(other.activeFraction);
+				ioQueueLength.copyFrom(other.ioQueueLength);
 			} else {
 				writeRate.copyDelta(other.writeRate);
 				readRate.copyDelta(other.readRate);
 				activeFraction.copyDelta(other.activeFraction);
+				ioQueueLength.copyDelta(other.ioQueueLength);
 			}
 
 			index = other.index;
 			name = other.name;
 			model = other.model;
 			size = other.size;
+		}
+	}
+
+
+	public static class Gpu {
+		public enum Type {
+			Nvidia,
+			Amd,
+			Intel,
+			Unknown
+		}
+
+		public Measurements<Long> usedMemory;
+		public Measurements<Long> utilization;
+		public Measurements<Long> temperature;
+
+		public Measurements<Long> encoderUtilization;
+		public Measurements<Long> decoderUtilization;
+
+		public int index;
+		public Type type;
+		public String name;
+		public String vendor;
+		public int deviceId;
+		public String driverVersion;
+		public long totalMemory;
+		public boolean isSupported;
+
+		public Gpu() {
+			usedMemory = new MeasurementContainer<>(0L);
+			utilization = new MeasurementContainer<>(0L);
+			temperature = new MeasurementContainer<>(0L);
+			encoderUtilization = new MeasurementContainer<>(0L);
+			decoderUtilization = new MeasurementContainer<>(0L);
+		}
+
+		void copyFrom(Gpu other, boolean doFullCopy) {
+			if (doFullCopy) {
+				usedMemory.copyFrom(other.usedMemory);
+				utilization.copyFrom(other.utilization);
+				temperature.copyFrom(other.temperature);
+				encoderUtilization.copyFrom(other.encoderUtilization);
+				decoderUtilization.copyFrom(other.decoderUtilization);
+			} else {
+				usedMemory.copyDelta(other.usedMemory);
+				utilization.copyDelta(other.utilization);
+				temperature.copyDelta(other.temperature);
+				encoderUtilization.copyDelta(other.encoderUtilization);
+				decoderUtilization.copyDelta(other.decoderUtilization);
+			}
+
+			index = other.index;
+			type = other.type;
+			name = other.name;
+			vendor = other.vendor;
+			driverVersion = other.driverVersion;
+			deviceId = other.deviceId;
+			totalMemory = other.totalMemory;
+			isSupported = other.isSupported;
 		}
 	}
 }

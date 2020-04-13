@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui.performance.cpu;
 
 import config.Config;
@@ -19,19 +23,19 @@ import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
 
 public class CpuPanel extends JPanel {
-	private Measurements<Long> cpuUsage;
+	private final Measurements<Long> cpuUsage;
 
-	private JPanel containerPanel;
+	private final JPanel containerPanel;
 
-	private GraphPanel singleCpuPanel;
-	private MultiCpuPanel multiCpuPanel;
-	private TimelineGraphPanel timelineGraph;
+	private final GraphPanel singleCpuPanel;
+	private final MultiCpuPanel multiCpuPanel;
+	private final TimelineGraphPanel timelineGraph;
 
-	private InformationItemPanel utilizationLabel;
-	private InformationItemPanel processesLabel;
-	private InformationItemPanel handlesLabel;
-	private InformationItemPanel threadsLabel;
-	private InformationItemPanel uptimeLabel;
+	private final InformationItemPanel utilizationLabel;
+	private final InformationItemPanel processesLabel;
+	private final InformationItemPanel handlesLabel;
+	private final InformationItemPanel threadsLabel;
+	private final InformationItemPanel uptimeLabel;
 
 	private GraphTypeButton connectedButton;
 
@@ -47,7 +51,7 @@ public class CpuPanel extends JPanel {
 		JLabel labelMaxTime = new JLabel("Displaying 60 seconds");
 		JLabel labelMaxCpu = new JLabel("100%");
 
-		singleCpuPanel = new GraphPanel(GraphType.Cpu, true);
+		singleCpuPanel = new GraphPanel(GraphType.Cpu, ValueType.Percentage);
 		timelineGraph = new TimelineGraphPanel(singleCpuPanel, labelMaxTime);
 		multiCpuPanel = new MultiCpuPanel(timelineGraph, systemInformation);
 
@@ -97,7 +101,7 @@ public class CpuPanel extends JPanel {
 		singleCpuPanel.setMaxDatapointValue(total);
 		singleCpuPanel.newDatapoint();
 
-		multiCpuPanel.update(systemInformation);
+		multiCpuPanel.update();
 
 		timelineGraph.setMaxDatapointValue(total);
 		connectedButton.setMaxDatapointValue(total);
@@ -127,8 +131,8 @@ public class CpuPanel extends JPanel {
 	}
 
 
-	public GraphTypeButton createCpuButton() {
-		connectedButton = new GraphTypeButton(GraphType.Cpu, "CPU");
+	public GraphTypeButton createGraphButton() {
+		connectedButton = new GraphTypeButton(GraphType.Cpu, ValueType.Percentage, "CPU");
 		connectedButton.setIsLogarithmic(singleCpuPanel.isLogarithmic());
 		connectedButton.addGraph(cpuUsage);
 		return connectedButton;

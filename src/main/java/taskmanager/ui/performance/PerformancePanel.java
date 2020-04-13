@@ -1,9 +1,14 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui.performance;
 
 import config.Config;
 import taskmanager.SystemInformation;
 import taskmanager.ui.performance.cpu.CpuPanel;
 import taskmanager.ui.performance.disks.DiskPanel;
+import taskmanager.ui.performance.gpus.GpuPanel;
 import taskmanager.ui.performance.memory.MemoryPanel;
 import taskmanager.ui.performance.network.NetworkPanel;
 
@@ -13,14 +18,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PerformancePanel extends JSplitPane implements PerformanceButtonListener {
-	private GraphSelectionPanel graphSelectionPanel;
+	private final GraphSelectionPanel graphSelectionPanel;
 
-	private JScrollPane selectedPanelContainer;
+	private final JScrollPane selectedPanelContainer;
 
-	private MemoryPanel memoryPanel;
-	private CpuPanel cpuPanel;
-	private DiskPanel[] diskPanels;
-	private NetworkPanel[] networkPanels;
+	private final MemoryPanel memoryPanel;
+	private final CpuPanel cpuPanel;
+	private final DiskPanel[] diskPanels;
+	private final NetworkPanel[] networkPanels;
+	private final GpuPanel[] gpuPanels;
 
 	public PerformancePanel(SystemInformation systemInformation) {
 		super(JSplitPane.HORIZONTAL_SPLIT);
@@ -34,6 +40,7 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 		cpuPanel = new CpuPanel(timelineGroup, systemInformation);
 		diskPanels = new DiskPanel[systemInformation.disks.length];
 		networkPanels = new NetworkPanel[systemInformation.networks.length];
+		gpuPanels = new GpuPanel[systemInformation.gpus.length];
 
 		for (int i = 0; i < diskPanels.length; i++) {
 			diskPanels[i] = new DiskPanel(timelineGroup, systemInformation.disks[i]);
@@ -41,18 +48,25 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 		for (int i = 0; i < networkPanels.length; i++) {
 			networkPanels[i] = new NetworkPanel(timelineGroup, systemInformation.networks[i]);
 		}
+		for (int i = 0; i < networkPanels.length; i++) {
+			gpuPanels[i] = new GpuPanel(timelineGroup, systemInformation.gpus[i]);
+		}
 
 		List<GraphTypeButton> buttons = new ArrayList<>();
-		buttons.add(cpuPanel.createCpuButton());
+		buttons.add(cpuPanel.createGraphButton());
 		buttons.add(memoryPanel.createMemoryButton());
 		for (int i = 0; i < diskPanels.length; i++) {
-			GraphTypeButton button = diskPanels[i].createNetworkButton(i);
+			GraphTypeButton button = diskPanels[i].createGraphButton(i);
 			buttons.add(button); // TODO make this more versatile so that you can continuously add/remove disks
 		}
 		for (int i = 0; i < networkPanels.length; i++) {
-			GraphTypeButton button = networkPanels[i].createNetworkButton(i);
+			GraphTypeButton button = networkPanels[i].createGraphButton(i);
 			if (systemInformation.networks[i].isEnabled) // TODO make this more versatile so that you can continuously add/remove interfaces
 				buttons.add(button);
+		}
+		for (int i = 0; i < gpuPanels.length; i++) {
+			GraphTypeButton button = gpuPanels[i].createGraphButton(i);
+			buttons.add(button);
 		}
 
 		graphSelectionPanel = new GraphSelectionPanel(this, buttons.toArray(new GraphTypeButton[0]));
@@ -69,10 +83,13 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 		cpuPanel.update(systemInformation);
 
 		for (DiskPanel diskPanel : diskPanels) {
-			diskPanel.update(systemInformation);
+			diskPanel.update();
 		}
 		for (NetworkPanel networkPanel : networkPanels) {
-			networkPanel.update(systemInformation);
+			networkPanel.update();
+		}
+		for (GpuPanel gpuPanel : gpuPanels) {
+			gpuPanel.update();
 		}
 	}
 
@@ -87,6 +104,8 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 			selectedPanelContainer.setViewportView(diskPanels[index]);
 		else if (type == GraphType.Network)
 			selectedPanelContainer.setViewportView(networkPanels[index]);
+		else if (type == GraphType.Gpu)
+			selectedPanelContainer.setViewportView(gpuPanels[index]);
 
 		revalidate();
 		repaint();

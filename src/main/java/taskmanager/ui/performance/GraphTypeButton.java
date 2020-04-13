@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui.performance;
 
 import taskmanager.Measurements;
@@ -12,27 +16,27 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class GraphTypeButton extends JButton {
-	private GraphPanel graph;
-	private JLabel valueLabel;
+	private final GraphPanel graph;
+	private final JLabel valueLabel;
 
-	private GraphType type;
-	private int index;
+	private final GraphType type;
+	private final int index;
 	private long measurementMaximumValue;
 
 	private PerformanceButtonListener listener;
 
-	public GraphTypeButton(GraphType type, String header) {
-		this(type, header, 0);
+	public GraphTypeButton(GraphType type, ValueType valueType, String header) {
+		this(type, valueType, header, 0);
 	}
 
-	public GraphTypeButton(GraphType type, String header, int index) {
+	public GraphTypeButton(GraphType type, ValueType valueType, String header, int index) {
 		this.type = type;
 		this.index = index;
 
 		setBackground(Color.WHITE);
 		addActionListener(actionListener);
 
-		graph = new GraphPanel(type, false);
+		graph = new GraphPanel(type, valueType, false);
 		valueLabel = new JLabel();
 		JLabel headerLabel = new JLabel(header);
 
@@ -76,6 +80,8 @@ public class GraphTypeButton extends JButton {
 					TextUtils.valueToString(currentValues[0], ValueType.BitsPerSecond),
 					TextUtils.valueToString(currentValues[1], ValueType.BitsPerSecond)));
 		} else if (type == GraphType.Disk) {
+			valueLabel.setText(TextUtils.valueToString(currentValues[0], ValueType.Percentage));
+		} else if (type == GraphType.Gpu) {
 			valueLabel.setText(TextUtils.valueToString(currentValues[0], ValueType.Percentage));
 		}
 		graph.newDatapoint();

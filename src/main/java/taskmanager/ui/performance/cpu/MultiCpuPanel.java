@@ -1,8 +1,13 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui.performance.cpu;
 
 import config.Config;
 import taskmanager.Measurements;
 import taskmanager.SystemInformation;
+import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
 import taskmanager.ui.performance.GraphPanel.ShortToLong;
 import taskmanager.ui.performance.GraphType;
@@ -12,8 +17,8 @@ import javax.swing.JPanel;
 import java.awt.GridLayout;
 
 public class MultiCpuPanel extends JPanel {
-	private Measurements<Long>[] measurements;
-	private GraphPanel[] graphs;
+	private final Measurements<Long>[] measurements;
+	private final GraphPanel[] graphs;
 
 	@SuppressWarnings("unchecked")
 	public MultiCpuPanel(TimelineGraphPanel timeline, SystemInformation systemInformation) {
@@ -23,7 +28,7 @@ public class MultiCpuPanel extends JPanel {
 
 		for (int i = 0; i < numCores; i++) {
 			measurements[i] = new ShortToLong(systemInformation.cpuUsagePerCore[i]);
-			graphs[i] = new GraphPanel(GraphType.Cpu, true);
+			graphs[i] = new GraphPanel(GraphType.Cpu, ValueType.Percentage);
 			graphs[i].addGraph(measurements[i]);
 		}
 
@@ -39,11 +44,11 @@ public class MultiCpuPanel extends JPanel {
 		timeline.connectGraphs(graphs);
 	}
 
-	public void update(SystemInformation systemInformation) {
+	public void update() {
 		final int total = Config.DOUBLE_TO_LONG;
-		for (int i = 0; i < graphs.length; i++) {
-			graphs[i].setMaxDatapointValue(total);
-			graphs[i].newDatapoint();
+		for (GraphPanel graph : graphs) {
+			graph.setMaxDatapointValue(total);
+			graph.newDatapoint();
 		}
 	}
 }

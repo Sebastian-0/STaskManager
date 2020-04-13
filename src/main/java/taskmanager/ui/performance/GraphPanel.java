@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui.performance;
 
 import config.Config;
@@ -24,10 +28,11 @@ import java.util.Iterator;
 import java.util.List;
 
 public class GraphPanel extends JPanel {
-	private List<Graph> graphs;
+	private final List<Graph> graphs;
 	private long measurementMaximumValue;
 
-	protected GraphType graphType;
+	protected final GraphType graphType;
+	private final ValueType valueType;
 
 	protected int dataStartIndex;
 	protected int dataEndIndex;
@@ -40,9 +45,14 @@ public class GraphPanel extends JPanel {
 	private int mouseX;
 	private int mouseY;
 
-	public GraphPanel(GraphType graphType, boolean renderValueMarker) {
+	public GraphPanel(GraphType graphType, ValueType valueType) {
+		this (graphType, valueType, true);
+	}
+
+	public GraphPanel(GraphType graphType, ValueType valueType, boolean renderValueMarker) {
 		this.graphs = new ArrayList<>();
 		this.graphType = graphType;
+		this.valueType = valueType;
 		this.renderValueMarker = renderValueMarker;
 		isLogarithmic = false;
 
@@ -289,18 +299,25 @@ public class GraphPanel extends JPanel {
 		FontMetrics metrics = g2d.getFontMetrics();
 		List<String> labelLines = new ArrayList<>();
 		if (graphType == GraphType.Cpu) {
-			labelLines.add(TextUtils.valueToString(selectedValues.get(0), ValueType.Percentage));
+			labelLines.add(TextUtils.valueToString(selectedValues.get(0), valueType));
 		} else if (graphType == GraphType.Memory) {
-			labelLines.add(TextUtils.valueToString(selectedValues.get(0), ValueType.Bytes));
+			labelLines.add(TextUtils.valueToString(selectedValues.get(0), valueType));
 		} else if (graphType == GraphType.Network) {
-			labelLines.add("S: " + TextUtils.valueToString(selectedValues.get(1), ValueType.BitsPerSecond));
-			labelLines.add("R: " + TextUtils.valueToString(selectedValues.get(0), ValueType.BitsPerSecond));
+			labelLines.add("S: " + TextUtils.valueToString(selectedValues.get(1), valueType));
+			labelLines.add("R: " + TextUtils.valueToString(selectedValues.get(0), valueType));
 		} else if (graphType == GraphType.Disk) {
 			if (graphs.size() == 1) {
-				labelLines.add(TextUtils.valueToString(selectedValues.get(0), ValueType.Percentage));
+				labelLines.add(TextUtils.valueToString(selectedValues.get(0), valueType));
 			} else {
-				labelLines.add("W: " + TextUtils.valueToString(selectedValues.get(0), ValueType.BytesPerSecond));
-				labelLines.add("R: " + TextUtils.valueToString(selectedValues.get(1), ValueType.BytesPerSecond));
+				labelLines.add("W: " + TextUtils.valueToString(selectedValues.get(0), valueType));
+				labelLines.add("R: " + TextUtils.valueToString(selectedValues.get(1), valueType));
+			}
+		} else if (graphType == GraphType.Gpu) {
+			if (graphs.size() == 1) {
+				labelLines.add(TextUtils.valueToString(selectedValues.get(0), valueType));
+			} else {
+				labelLines.add("E: " + TextUtils.valueToString(selectedValues.get(0), valueType));
+				labelLines.add("D: " + TextUtils.valueToString(selectedValues.get(1), valueType));
 			}
 		}
 
@@ -422,7 +439,7 @@ public class GraphPanel extends JPanel {
 	}
 
 
-	private MouseAdapter mouseListener = new MouseAdapter() {
+	private final MouseAdapter mouseListener = new MouseAdapter() {
 		@Override
 		public void mouseMoved(MouseEvent e) {
 			if (renderValueMarker) {
@@ -441,16 +458,18 @@ public class GraphPanel extends JPanel {
 
 
 	private static class Graph {
-		private Measurements<Long> measurements;
-		private MeasurementAverager<Long> measurementAverager;
-		private MeasurementAverager<TopList> topListAverager;
-		private boolean isDashed;
+		private final Measurements<Long> measurements;
+		private final MeasurementAverager<Long> measurementAverager;
+		private final MeasurementAverager<TopList> topListAverager;
+		private final boolean isDashed;
 
 		public Graph(Measurements<Long> measurements, Measurements<TopList> topLists, boolean isDashed) {
 			this.measurements = measurements;
 			this.measurementAverager = new MeasurementAveragerForLong(measurements);
 			if (topLists != null) {
 				this.topListAverager = new MeasurementAveragerForTopList(topLists);
+			} else {
+				this.topListAverager = null;
 			}
 			this.isDashed = isDashed;
 		}
@@ -458,7 +477,7 @@ public class GraphPanel extends JPanel {
 
 
 	public static class DoubleToLong implements Measurements<Long> {
-		private Measurements<Double> iterable;
+		private final Measurements<Double> iterable;
 
 		public DoubleToLong(Measurements<Double> iterable) {
 			this.iterable = iterable;
@@ -515,7 +534,7 @@ public class GraphPanel extends JPanel {
 		}
 
 		private static class ConversionIterator implements Iterator<Long> {
-			private Iterator<Double> sourceIterator;
+			private final Iterator<Double> sourceIterator;
 
 			ConversionIterator(Iterator<Double> sourceIterator) {
 				this.sourceIterator = sourceIterator;
@@ -535,7 +554,7 @@ public class GraphPanel extends JPanel {
 
 
 	public static class ShortToLong implements Measurements<Long> {
-		private Measurements<Short> iterable;
+		private final Measurements<Short> iterable;
 
 		public ShortToLong(Measurements<Short> iterable) {
 			this.iterable = iterable;
@@ -592,7 +611,7 @@ public class GraphPanel extends JPanel {
 		}
 
 		private static class ConversionIterator implements Iterator<Long> {
-			private Iterator<Short> sourceIterator;
+			private final Iterator<Short> sourceIterator;
 
 			ConversionIterator(Iterator<Short> sourceIterator) {
 				this.sourceIterator = sourceIterator;

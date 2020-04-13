@@ -1,6 +1,9 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui.performance;
 
-public interface PerformanceButtonListener
-{
-  public void swapTo(GraphType type, int index);
+public interface PerformanceButtonListener {
+	void swapTo(GraphType type, int index);
 }

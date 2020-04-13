@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui.performance;
 
 import config.Config;
@@ -17,7 +21,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MeasurementAveragerForTopList extends MeasurementAverager<TopList> {
-
 	private static final float MISSING_PROCESS_USAGE_FRACTION = 0.1f;
 
 	public MeasurementAveragerForTopList(Measurements<TopList> measurements) {

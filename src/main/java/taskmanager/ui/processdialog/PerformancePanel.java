@@ -12,6 +12,7 @@ import taskmanager.ui.performance.TimelineGroup;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
@@ -20,18 +21,18 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 public class PerformancePanel extends JPanel {
-	private Process process;
+	private final Process process;
 
-	private JLabel labelCpuCurrent;
-	private JLabel labelMemoryCurrent;
+	private final JLabel labelCpuCurrent;
+	private final JLabel labelMemoryCurrent;
 
-	private GraphPanel cpuGraph;
-	private GraphPanel memoryGraph;
+	private final GraphPanel cpuGraph;
+	private final GraphPanel memoryGraph;
 
-	private TimelineGraphPanel cpuTimeline;
-	private TimelineGraphPanel memoryTimeline;
+	private final TimelineGraphPanel cpuTimeline;
+	private final TimelineGraphPanel memoryTimeline;
 
-	private JPanel containerPanel;
+	private final JPanel containerPanel;
 	private JPanel currentTimeline;
 
 	public PerformancePanel(Process process) {
@@ -40,11 +41,16 @@ public class PerformancePanel extends JPanel {
 		JLabel labelCpu = new JLabel("CPU utilization");
 		JLabel labelMemory = new JLabel("Memory utilization");
 
-		labelCpuCurrent = new JLabel("100%");
-		labelMemoryCurrent = new JLabel("10 MB");
+		labelCpuCurrent = new JLabel("100%", SwingConstants.RIGHT);
+		labelMemoryCurrent = new JLabel("999999 MB", SwingConstants.RIGHT);
 
-		cpuGraph = new GraphPanel(GraphType.Cpu, true);
-		memoryGraph = new GraphPanel(GraphType.Memory, true);
+		// Set preferred sizes to stop GBL from giving the graphs different widths
+		labelCpu.setPreferredSize(labelMemory.getPreferredSize());
+		labelCpuCurrent.setPreferredSize(labelMemoryCurrent.getPreferredSize());
+		labelMemoryCurrent.setPreferredSize(labelMemoryCurrent.getPreferredSize());
+
+		cpuGraph = new GraphPanel(GraphType.Cpu, ValueType.Percentage);
+		memoryGraph = new GraphPanel(GraphType.Memory, ValueType.Bytes);
 
 		cpuGraph.addGraph(process.cpuUsage);
 		cpuGraph.setPreferredSize(new Dimension(cpuGraph.getPreferredSize().width * 2, cpuGraph.getPreferredSize().height * 2));
@@ -116,7 +122,7 @@ public class PerformancePanel extends JPanel {
 		memoryTimeline.newDatapoint();
 	}
 
-	private MouseListener mouseListener = new MouseAdapter() {
+	private final MouseListener mouseListener = new MouseAdapter() {
 		@Override
 		public void mousePressed(MouseEvent e) {
 			if (e.getButton() == MouseEvent.BUTTON1) {

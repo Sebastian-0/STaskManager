@@ -13,6 +13,7 @@ import taskmanager.ui.performance.GraphPanel;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
 import taskmanager.ui.performance.InformationItemPanel;
+import taskmanager.ui.performance.RatioItemPanel;
 import taskmanager.ui.performance.TimelineGraphPanel;
 import taskmanager.ui.performance.TimelineGroup;
 
@@ -22,20 +23,20 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 
 public class MemoryPanel extends JPanel {
-	private Measurements<Long> memoryAvailable;
+	private final Measurements<Long> memoryAvailable;
 
-	private JLabel labelMaxMemory;
+	private final JLabel labelMaxMemory;
 
-	private GraphPanel memoryGraph;
-	private TimelineGraphPanel timelineGraph;
-	private MemoryCompositionPanel memoryComposition;
+	private final GraphPanel memoryGraph;
+	private final TimelineGraphPanel timelineGraph;
+	private final MemoryCompositionPanel memoryComposition;
 
-	private InformationItemPanel inUsePanel;
-	private InformationItemPanel availablePanel;
-	private InformationItemPanel committedPanel;
-	private InformationItemPanel cachedPanel;
-	private InformationItemPanel pagedPoolPanel;
-	private InformationItemPanel nonpagedPoolPanel;
+	private final InformationItemPanel inUsePanel;
+	private final InformationItemPanel availablePanel;
+	private final InformationItemPanel committedPanel;
+	private final InformationItemPanel cachedPanel;
+	private final InformationItemPanel pagedPoolPanel;
+	private final InformationItemPanel nonpagedPoolPanel;
 
 	private GraphTypeButton connectedButton;
 
@@ -52,7 +53,7 @@ public class MemoryPanel extends JPanel {
 		labelMaxMemory = new JLabel("XX GB");
 		JLabel labelComposition = new JLabel("Memory composition");
 
-		memoryGraph = new GraphPanel(GraphType.Memory, true);
+		memoryGraph = new GraphPanel(GraphType.Memory, ValueType.Bytes);
 		timelineGraph = new TimelineGraphPanel(memoryGraph, labelMaxTime);
 		memoryComposition = new MemoryCompositionPanel();
 
@@ -64,7 +65,7 @@ public class MemoryPanel extends JPanel {
 		JPanel realTimePanel = new JPanel();
 		inUsePanel = new InformationItemPanel("In use", ValueType.Bytes);
 		availablePanel = new InformationItemPanel("Available", ValueType.Bytes);
-		committedPanel = new CommitItemPanel("Committed", systemInformation.commitLimit);
+		committedPanel = new RatioItemPanel("Committed", systemInformation.commitLimit);
 		cachedPanel = new InformationItemPanel("Cached", ValueType.Bytes);
 		pagedPoolPanel = new InformationItemPanel("Paged pool", ValueType.Bytes);
 		nonpagedPoolPanel = new InformationItemPanel("Non-paged pool", ValueType.Bytes);
@@ -130,7 +131,7 @@ public class MemoryPanel extends JPanel {
 
 
 	public GraphTypeButton createMemoryButton() {
-		connectedButton = new GraphTypeButton(GraphType.Memory, "Memory");
+		connectedButton = new GraphTypeButton(GraphType.Memory, ValueType.Bytes, "Memory");
 		connectedButton.setIsLogarithmic(memoryGraph.isLogarithmic());
 		connectedButton.addGraph(memoryAvailable);
 		return connectedButton;

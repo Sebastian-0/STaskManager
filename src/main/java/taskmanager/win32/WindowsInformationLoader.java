@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.win32;
 
 import com.sun.jna.Memory;
@@ -306,8 +310,9 @@ public class WindowsInformationLoader extends InformationLoader {
 				status == NtDllExt.STATUS_INFO_LENGTH_MISMATCH) {
 			memory = new Memory(size.getValue());
 			status = NtDllExt.INSTANCE.NtQuerySystemInformation(5, memory, (int) memory.size(), size);
-			if (status != 0) // TODO; Possibly add loop to account for processes disappearing
+			if (status != 0) { // TODO; Possibly add loop to account for processes disappearing
 				System.out.println("fetchProcessList(): NtQuerySystemInformation failed with: " + Integer.toHexString(status));
+			}
 		} else {
 			System.out.println("fetchProcessList(): NtQuerySystemInformation failed with: " + Integer.toHexString(status));
 		}

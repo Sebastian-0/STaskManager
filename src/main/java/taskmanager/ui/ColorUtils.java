@@ -1,6 +1,10 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class ColorUtils {
 	public static Color blend(Color a, Color b, float alpha) {

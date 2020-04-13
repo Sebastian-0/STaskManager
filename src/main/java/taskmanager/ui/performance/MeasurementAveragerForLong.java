@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui.performance;
 
 import taskmanager.Measurements;
@@ -5,7 +9,6 @@ import taskmanager.Measurements;
 import java.util.Iterator;
 
 public class MeasurementAveragerForLong extends MeasurementAverager<Long> {
-
 	public MeasurementAveragerForLong(Measurements<Long> measurements) {
 		super(measurements);
 	}
