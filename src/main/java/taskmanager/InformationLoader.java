@@ -54,7 +54,7 @@ public abstract class InformationLoader {
 		initDisks(systemInformation);
 		initGpus(systemInformation);
 
-		systemInformation.userName = System.getProperty("user.name");
+		systemInformation.userName = System.getProperty("user.name", "");
 	}
 
 	private void initNetworkInterfaces(SystemInformation systemInformation) {

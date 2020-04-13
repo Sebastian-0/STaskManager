@@ -68,7 +68,7 @@ public class WindowsInformationLoader extends InformationLoader {
 		char[] userName = new char[1024];
 		IntByReference size = new IntByReference(userName.length);
 		if (Advapi32.INSTANCE.GetUserNameW(userName, size)) {
-			systemInformation.userName = new String(Arrays.copyOf(userName, size.getValue()));
+			systemInformation.userName = new String(Arrays.copyOf(userName, size.getValue() - 1));
 		} else {
 			System.out.println("Failed to read username, using fallback instead! Error: " + Integer.toHexString(Native.getLastError()));
 		}
