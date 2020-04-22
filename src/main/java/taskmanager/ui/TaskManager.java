@@ -6,6 +6,8 @@ package taskmanager.ui;
 
 import config.Config;
 import config.TextureStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import taskmanager.DataCollector;
 import taskmanager.InformationUpdateCallback;
 import taskmanager.Process;
@@ -39,6 +41,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 public class TaskManager extends JFrame implements InformationUpdateCallback, ProcessDetailsCallback, ApplicationCallback {
+	private static final Logger LOGGER = LoggerFactory.getLogger(TaskManager.class);
+
 	private DataCollector dataCollector;
 	private SystemInformation systemInformation;
 
@@ -71,14 +75,16 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		addComponentListener(componentListener);
 
 		if (!SystemTray.isSupported()) {
-			System.out.println("No system tray support!");
+			// TODO When we have settings in the program we should disable the tray minimization setting if this happens
+			LOGGER.warn("No system tray support! Disabling minimize to tray...");
+			Config.put(Config.KEY_MINIMIZE_TO_TRAY, "false"); // Force no tray minimization when we have no tray
 		} else {
 			try {
 				trayIcon = new Tray(this, TextureStorage.instance().getTexture("icon_small"));
 				SystemTray.getSystemTray().add(trayIcon);
 			} catch (AWTException e) {
-				System.out.println("Failed to create tray icon");
-				e.printStackTrace();
+				LOGGER.error("Failed to create tray icon", e);
+				Config.put(Config.KEY_MINIMIZE_TO_TRAY, "false"); // Force no tray minimization when we have no tray
 			}
 		}
 
@@ -275,7 +281,7 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 //		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 //		UIManager.put("Panel.background", Color.white);
 
-//		System.out.println("Running with PID: " + ProcessHandle.current().pid());
+		LOGGER.info("Running with PID: {}", ProcessHandle.current().pid());
 
 		System.setProperty("awt.useSystemAAFontSettings","on");
 		System.setProperty("swing.aatext", "true");

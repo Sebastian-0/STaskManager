@@ -12,6 +12,8 @@ import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface Nvml extends Library {
 	int NVML_SUCCESS = 0;
@@ -29,6 +31,7 @@ public interface Nvml extends Library {
 	Nvml INSTANCE = load();
 
 	static Nvml load() {
+		Logger logger = LoggerFactory.getLogger(Nvml.class);
 		try {
 			if (Platform.isLinux()) {
 				return Native.load("nvidia-ml", Nvml.class);
@@ -36,10 +39,9 @@ public interface Nvml extends Library {
 			if (Platform.isWindows()) {
 				return Native.load("nvml", Nvml.class);
 			}
-			System.out.println("Unsupported platform for Nvidia library");
+			logger.warn("Unsupported platform for Nvidia ML library");
 		} catch (UnsatisfiedLinkError e) {
-			System.err.println("No Nvidia card present");
-			e.printStackTrace();
+			logger.error("Nvidia driver not present, perhaps no card is installed?", e);
 		}
 		return null;
 	}

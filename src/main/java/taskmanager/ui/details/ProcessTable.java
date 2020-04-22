@@ -1,21 +1,39 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package taskmanager.ui.details;
 
 import config.Config;
 import taskmanager.Process;
 import taskmanager.Process.ProcessComparator;
 import taskmanager.SystemInformation;
-import taskmanager.ui.ColorUtils;
-import taskmanager.ui.TextUtils;
-import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.filter.AndFilter;
 import taskmanager.filter.Filter;
 import taskmanager.filter.concrete.UserNameFilter;
+import taskmanager.ui.ColorUtils;
+import taskmanager.ui.TextUtils;
+import taskmanager.ui.TextUtils.ValueType;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.*;
-import javax.swing.table.*;
-import java.awt.*;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Point;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -160,8 +178,9 @@ public class ProcessTable extends JTable {
 						ColumnHeader header = headers[i];
 						if (header != null) {
 							if (header.header.equals(name)) {
-								if (header.isSelected)
+								if (header.isSelected) {
 									header.comparator.invert();
+								}
 								processDetailsCallback.setComparator(header.comparator, showDeadProcesses);
 								header.isSelected = true;
 								if (showDeadProcesses) {
@@ -249,8 +268,9 @@ public class ProcessTable extends JTable {
 			selectionInverted = Config.getBoolean(Config.KEY_LAST_DEAD_SELECTION_INVERTED);
 		}
 		headers[selectedColumn].isSelected = true;
-		if (selectionInverted)
+		if (selectionInverted) {
 			headers[selectedColumn].comparator.invert();
+		}
 		processCallback.setComparator(headers[selectedColumn].comparator, showDeadProcesses);
 	}
 
@@ -308,8 +328,6 @@ public class ProcessTable extends JTable {
 
 			revalidate();
 			repaint();
-		} else {
-			System.out.println("SKIP");
 		}
 	}
 
@@ -361,45 +379,48 @@ public class ProcessTable extends JTable {
 	}
 
 	private Color selectColorCpu(double fraction) {
-		if (fraction > 0.8)
+		if (fraction > 0.8) {
 			return Load.Extreme.color;
-		if (fraction > 0.6)
+		} else if (fraction > 0.6) {
 			return Load.VeryLarge.color;
-		if (fraction > 0.4)
+		} else if (fraction > 0.4) {
 			return Load.Large.color;
-		if (fraction > 0.2)
+		} else if (fraction > 0.2) {
 			return Load.Medium.color;
-		if (fraction > 0.003)
+		} else if (fraction > 0.003) {
 			return Load.Small.color;
+		}
 		return Load.None.color;
 	}
 
 	private Color selectColorMemory(double fraction) {
-		if (fraction > 0.2)
+		if (fraction > 0.2) {
 			return Load.Extreme.color;
-		if (fraction > 0.1)
+		} else if (fraction > 0.1) {
 			return Load.VeryLarge.color;
-		if (fraction > 0.05)
+		} else if (fraction > 0.05) {
 			return Load.Large.color;
-		if (fraction > 0.03)
+		} else if (fraction > 0.03) {
 			return Load.Medium.color;
-		if (fraction > 0.01)
+		} else if (fraction > 0.01) {
 			return Load.Small.color;
+		}
 		return Load.None.color;
 	}
 
 	private Color selectColorDeath(float seconds) {
 		float fraction = seconds / Config.getInt(Config.KEY_DEAD_PROCESS_KEEP_TIME);
-		if (fraction > 0.83)
+		if (fraction > 0.83) {
 			return Time.VeryMuch.color;
-		if (fraction > 0.67)
+		} else if (fraction > 0.67) {
 			return Time.Much.color;
-		if (fraction > 0.5)
+		} else if (fraction > 0.5) {
 			return Time.Halfway.color;
-		if (fraction > 0.33)
+		} else if (fraction > 0.33) {
 			return Time.Little.color;
-		if (fraction > 0.17)
+		} else if (fraction > 0.17) {
 			return Time.VeryLittle.color;
+		}
 		return Time.None.color;
 	}
 
@@ -479,7 +500,7 @@ public class ProcessTable extends JTable {
 
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-																	  int row, int column) {
+													   int row, int column) {
 			JComponent result = (JComponent) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
 			int realColumn = 0;
@@ -547,8 +568,9 @@ public class ProcessTable extends JTable {
 
 		@Override
 		public String getColumnName(int column) {
-			if (column >= 0)
+			if (column >= 0) {
 				return columns[column];
+			}
 			return "Undefined";
 		}
 
@@ -578,7 +600,7 @@ public class ProcessTable extends JTable {
 	}
 
 
-	private KeyAdapter keyListener = new KeyAdapter() {
+	private final KeyAdapter keyListener = new KeyAdapter() {
 		private String search;
 		private long lastClick;
 
@@ -587,12 +609,14 @@ public class ProcessTable extends JTable {
 			ColumnHeader fileNameHeader = headers[Columns.FileName.ordinal()];
 			if (fileNameHeader != null) {
 				long time = System.currentTimeMillis();
-				if (time - lastClick > 1000)
+				if (time - lastClick > 1000) {
 					search = "";
+				}
 
 				boolean isRepeatedSingleChar = search.length() == 1 && search.charAt(0) == e.getKeyChar();
-				if (!isRepeatedSingleChar)
+				if (!isRepeatedSingleChar) {
 					search += e.getKeyChar();
+				}
 
 				int startIndex = getSelectedRow();
 				for (int i = (search.length() == 1) ? 1 : 0; i < getRowCount(); i++) {
@@ -623,7 +647,7 @@ public class ProcessTable extends JTable {
 	};
 
 
-	private MouseAdapter mouseListener = new MouseAdapter() {
+	private final MouseAdapter mouseListener = new MouseAdapter() {
 		private int lastRowHover = -1;
 		private int lastColumnHover = -1;
 
@@ -678,7 +702,7 @@ public class ProcessTable extends JTable {
 		}
 	};
 
-	private PopupMenuListener popupListener = new PopupMenuListener() {
+	private final PopupMenuListener popupListener = new PopupMenuListener() {
 		@Override
 		public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
 			SwingUtilities.invokeLater(() -> {

@@ -1,4 +1,12 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
+
 package config;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import taskmanager.ui.TaskManager;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -7,6 +15,8 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class Config {
+	private static final Logger LOGGER = LoggerFactory.getLogger(Config.class);
+
 	private static final String CONFIG_FILE = "config.ini";
 
 	public static final int DOUBLE_TO_LONG = 1000;
@@ -95,7 +105,7 @@ public class Config {
 			try (FileInputStream in = new FileInputStream(config)) {
 				PROPERTIES.load(in);
 			} catch (IOException e) {
-				System.out.println("Config <static>: Failed to load config: " + e.getMessage());
+				LOGGER.warn("Failed to load the config", e);
 			}
 		} else {
 			// Save default settings
@@ -123,7 +133,7 @@ public class Config {
 		try (FileOutputStream out = new FileOutputStream(new File(CONFIG_FILE))) {
 			PROPERTIES.store(out, "Taskmanager ini-file. Do not change manually\n");
 		} catch (IOException e) {
-			System.out.println("Config <static>: Failed to save config: " + e.getMessage());
+			LOGGER.warn("Failed to save the config", e);
 		}
 	}
 }

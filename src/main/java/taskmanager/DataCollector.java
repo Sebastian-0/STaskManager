@@ -1,29 +1,48 @@
+/*
+ * Copyright (c) 2020. Sebastian Hjelm
+ */
 
 package taskmanager;
 
 import com.sun.jna.Platform;
 import config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import taskmanager.platform.linux.LinuxInformationLoader;
 import taskmanager.platform.win32.WindowsInformationLoader;
 
 import javax.swing.SwingUtilities;
 
 public class DataCollector extends Thread {
+	private static final Logger LOGGER = LoggerFactory.getLogger(DataCollector.class);
+
+	private final InformationUpdateCallback uiCallback;
+
+	private final SystemInformation systemInformationPrivate;
+	private final SystemInformation systemInformationShared;
 	private boolean isTransferLocked;
 
-	private InformationUpdateCallback ui;
+	private final InformationLoader loader;
 
-	private InformationLoader loader;
+	private int numDataFetches = 0;
+	private long totalDataFetchTime = 0;
 
-	private SystemInformation systemInformationPrivate;
-	private SystemInformation systemInformationShared;
-
-	public DataCollector(InformationUpdateCallback ui) {
-		this.ui = ui;
-		systemInformationPrivate = new SystemInformation();
-		systemInformationShared = new SystemInformation();
+	public DataCollector(InformationUpdateCallback uiCallback) {
+		this.uiCallback = uiCallback;
+		this.systemInformationPrivate = new SystemInformation();
+		this.systemInformationShared = new SystemInformation();
+		this.loader = createInformationLoader();
 	}
 
+	private InformationLoader createInformationLoader() {
+		if (Platform.isWindows()) {
+			return new WindowsInformationLoader();
+		} else if (Platform.isLinux()) {
+			return new LinuxInformationLoader();
+		} else {
+			throw new UnsupportedOperationException("You are running an unsupported operating system!");
+		}
+	}
 
 	public synchronized void lockTransfer() {
 		while (isTransferLocked) {
@@ -42,35 +61,21 @@ public class DataCollector extends Thread {
 		notifyAll();
 	}
 
-
 	public void init() {
-		if (Platform.isWindows()) {
-			loader = new WindowsInformationLoader();
-		} else if (Platform.isLinux()) {
-			loader = new LinuxInformationLoader();
-		} else {
-			throw new UnsupportedOperationException("You are running an unsupported operating system!");
-		}
-
 		loader.init(systemInformationPrivate);
-
-		updateInformation(true); // TODO This adds an extra measurement which causes the first two to have a time difference of 0 sec. Is this bad? Could be a good thing since the first measurements are 0 or incorrect?
+		collectSystemInformation(true); // TODO This adds an extra measurement which causes the first two to have a time difference of 0 sec. Is this bad? Could be a good thing since the first measurements are 0 or incorrect?
 	}
-
-
-	int count = 0;
-	long totalTime = 0;
 
 	@Override
 	public void run() {
 		do {
-			// Fetch all process info
 			long startTime = System.currentTimeMillis();
-			updateInformation(false);
+			collectSystemInformation(false);
 			long delta = System.currentTimeMillis() - startTime;
-			totalTime += delta;
-			if (++count % 1000 == 0) {
-				System.out.println(String.format("Data collection time: %dms (avg: %.1fms, runs: %d)", delta, totalTime / (float) count, count));
+			totalDataFetchTime += delta;
+			if (numDataFetches++ % 1000 == 0) {
+				LOGGER.info("Data collection duration: {}ms (avg: {}ms, runs: {})",
+						delta, String.format("%.1f", totalDataFetchTime / (float) numDataFetches), numDataFetches);
 			}
 
 			try {
@@ -78,11 +83,10 @@ public class DataCollector extends Thread {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-		} while (!ui.hasTerminated());
+		} while (!uiCallback.hasTerminated());
 	}
 
-
-	private void updateInformation(boolean isInit) {
+	private void collectSystemInformation(boolean isInit) {
 		loader.update(systemInformationPrivate);
 		updateUi(isInit);
 	}
@@ -93,9 +97,9 @@ public class DataCollector extends Thread {
 		unlockTransfer();
 
 		if (isInit) {
-			ui.init(systemInformationShared);
+			uiCallback.init(systemInformationShared);
 		} else if (systemInformationShared.processes.size() > 0) {
-			SwingUtilities.invokeLater(() -> ui.update(systemInformationShared)); // TODO Move the SwingUtilities-call to the UI!
+			SwingUtilities.invokeLater(() -> uiCallback.update(systemInformationShared)); // TODO Move the SwingUtilities-call to the UI!
 		}
 	}
 }

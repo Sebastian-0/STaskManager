@@ -4,12 +4,14 @@
 
 package taskmanager.ui.details.filter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import taskmanager.filter.Filter;
 import taskmanager.filter.FilterCompiler;
-import taskmanager.ui.details.ProcessTable;
 import taskmanager.filter.FilterCompiler.CompiledFilter;
 import taskmanager.filter.FilterCompiler.Highlight;
 import taskmanager.filter.FilterCompiler.Tag;
+import taskmanager.ui.details.ProcessTable;
 
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
@@ -18,12 +20,13 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
 import java.awt.Color;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Arrays;
 
 public class FilterTextField extends JTextField {
+	private static final Logger LOGGER = LoggerFactory.getLogger(FilterTextField.class);
+
 	private static final String FILTER_STRING = "Filter processes";
 	private static final Color FILTER_COLOR = new Color(110, 110, 110);
 
@@ -43,7 +46,7 @@ public class FilterTextField extends JTextField {
 		setBackground(null);
 		setForeground(FILTER_COLOR);
 		addFocusListener(focusListener);
-		addActionListener(actionListener);
+		addActionListener(e -> processTables[0].requestFocus());
 		getDocument().addDocumentListener(documentListener);
 
 		filterCompiler = new FilterCompiler();
@@ -76,8 +79,7 @@ public class FilterTextField extends JTextField {
 					highlighter.addHighlight(highlight.start, highlight.end, new DefaultHighlighter.DefaultHighlightPainter(highlight.color));
 				}
 			} catch (BadLocationException e) {
-				System.err.println("Failed to apply highlight");
-				e.printStackTrace();
+				LOGGER.error("Failed to apply highlight", e);
 			}
 
 			Arrays.stream(processTables).forEach(table -> table.setFilter(compiledFilter.filter));
@@ -86,7 +88,7 @@ public class FilterTextField extends JTextField {
 		}
 	}
 
-	private FocusListener focusListener = new FocusListener() {
+	private final FocusListener focusListener = new FocusListener() {
 		@Override
 		public void focusGained(FocusEvent e) {
 			if (hasDefault) {
@@ -106,7 +108,7 @@ public class FilterTextField extends JTextField {
 		}
 	};
 
-	private DocumentListener documentListener = new DocumentListener() {
+	private final DocumentListener documentListener = new DocumentListener() {
 		@Override
 		public void insertUpdate(DocumentEvent e) {
 			update();
@@ -126,6 +128,4 @@ public class FilterTextField extends JTextField {
 			compileFilter();
 		}
 	};
-
-	private ActionListener actionListener = e -> processTables[0].requestFocus();
 }

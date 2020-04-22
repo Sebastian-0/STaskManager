@@ -13,7 +13,6 @@ public class AwtRadioButtonMenuItem extends CheckboxMenuItem {
 	public AwtRadioButtonMenuItem(String label) {
 		super(label);
 		super.addItemListener(e -> {
-			System.out.println("RUN");
 			if (manualListener != null) {
 				if (e.getStateChange() == ItemEvent.DESELECTED) {
 					setState(true);

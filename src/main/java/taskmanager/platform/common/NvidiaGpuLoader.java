@@ -9,42 +9,45 @@ import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import taskmanager.SystemInformation;
 import taskmanager.SystemInformation.Gpu;
 import taskmanager.SystemInformation.Gpu.Type;
 import taskmanager.platform.common.Nvml.nvmlMemory_t;
 import taskmanager.platform.common.Nvml.nvmlPciInfo_t;
 import taskmanager.platform.common.Nvml.nvmlUtilization_t;
+import taskmanager.ui.TaskManager;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class NvidiaGpuLoader {
+	private static final Logger LOGGER = LoggerFactory.getLogger(NvidiaGpuLoader.class);
+
 	public void update(SystemInformation systemInformation) {
 		try {
 			doUpdate(systemInformation);
 		} catch (IllegalArgumentException e) {
-			System.err.println("Failed to load NVIDIA GPU information");
-			e.printStackTrace();
+			LOGGER.error("Failed to load NVIDIA GPU information", e);
 		}
 	}
 
 	private void doUpdate(SystemInformation systemInformation) {
 		if (Nvml.INSTANCE != null) {
 			check(Nvml.INSTANCE.nvmlInit());
-
-			byte[] version = new byte[80];
-			check(Nvml.INSTANCE.nvmlSystemGetDriverVersion(version, version.length));
-			int idx = 0;
-			for (int i = 0; i < version.length; i++) {
-				if (version[i] == 0) {
-					idx = i-1;
-					break;
-				}
-			}
-			String driverVersion = new String(version, 0, idx, StandardCharsets.US_ASCII);
-
 			try {
+				byte[] version = new byte[80];
+				check(Nvml.INSTANCE.nvmlSystemGetDriverVersion(version, version.length));
+				int idx = 0;
+				for (int i = 0; i < version.length; i++) {
+					if (version[i] == 0) {
+						idx = i-1;
+						break;
+					}
+				}
+				String driverVersion = new String(version, 0, idx, StandardCharsets.US_ASCII);
+
 				IntByReference deviceCount = new IntByReference();
 				check(Nvml.INSTANCE.nvmlDeviceGetCount(deviceCount));
 
@@ -59,12 +62,12 @@ public class NvidiaGpuLoader {
 
 					int deviceId = pci.pciDeviceId >> 16;
 					Gpu gpu = Arrays.stream(systemInformation.gpus)
-							.filter(g -> g.deviceId == deviceId)
-							.findAny()
-							.orElse(null);
+									.filter(g -> g.deviceId == deviceId)
+									.findAny()
+									.orElse(null);
 
 					if (gpu == null) {
-						System.out.println("Failed to find matching GPU for pci device: " + Integer.toHexString(pci.pciDeviceId));
+						LOGGER.warn("Failed to find matching GPU for pci device: {}", Integer.toHexString(pci.pciDeviceId));
 						continue;
 					}
 
