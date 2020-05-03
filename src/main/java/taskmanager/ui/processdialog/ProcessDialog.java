@@ -17,9 +17,6 @@ public class ProcessDialog extends JDialog {
 		this.process = process;
 
 		setTitle("Process: " + process.fileName + " (" + process.id + ")");
-		if (process.isDead) {
-			processEnded();
-		}
 
 		setModalityType(ModalityType.MODELESS);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -27,6 +24,10 @@ public class ProcessDialog extends JDialog {
 		performancePanel = new PerformancePanel(process);
 		informationPanel = new InformationPanel(process);
 		CommandLinePanel commandLinePanel = new CommandLinePanel(process);
+
+		if (process.isDead) {
+			processEnded();
+		}
 
 		SimpleGridBagLayout gbl = new SimpleGridBagLayout(this);
 		gbl.addToGrid(performancePanel, 0, 0, 1, 1, GridBagConstraints.BOTH, 1, 1);
