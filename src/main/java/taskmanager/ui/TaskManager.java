@@ -20,8 +20,8 @@ import taskmanager.ui.tray.Tray;
 
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import java.awt.AWTException;
 import java.awt.Dimension;
 import java.awt.Image;
@@ -30,6 +30,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -277,7 +278,7 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 	};
 
 
-	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
+	public static void main(String[] args) throws InvocationTargetException, InterruptedException {
 //		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 //		UIManager.put("Panel.background", Color.white);
 
@@ -287,6 +288,8 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		System.setProperty("swing.aatext", "true");
 
 		ToolTipManager.sharedInstance().setDismissDelay(8000);
+
+		SwingUtilities.invokeAndWait(() -> Thread.currentThread().setUncaughtExceptionHandler(new LoggedUncaughtExceptionHandler()));
 
 		new TaskManager();
 	}
