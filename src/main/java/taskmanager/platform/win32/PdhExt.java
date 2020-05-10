@@ -21,5 +21,5 @@ public interface PdhExt extends Pdh {
   PdhExt INSTANCE = Native.load("Pdh", PdhExt.class, W32APIOptions.DEFAULT_OPTIONS);
   
   int PdhEnumObjects(String szDataSource, String szMachineName, Pointer mszObjectList, DWORDByReference pcchBufferSize,
-      int dwDetailLevel, boolean bRefresh);
+	  int dwDetailLevel, boolean bRefresh);
 }

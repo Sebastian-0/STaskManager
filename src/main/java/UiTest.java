@@ -15,18 +15,18 @@ import javax.swing.WindowConstants;
 
 public class UiTest {
 
-    public static void main(String[] args) {
+	public static void main(String[] args) {
 
-        JTextPane area = new JTextPane();
-        area.setContentType("text/html");
-        area.setText("<html>Some <b>text</b></html>");
+		JTextPane area = new JTextPane();
+		area.setContentType("text/html");
+		area.setText("<html>Some <b>text</b></html>");
 
-        JFrame frame = new JFrame();
-        frame.add(area);
+		JFrame frame = new JFrame();
+		frame.add(area);
 
-        frame.pack();
-        frame.setVisible(true);
-        frame.setLocationRelativeTo(null);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-    }
+		frame.pack();
+		frame.setVisible(true);
+		frame.setLocationRelativeTo(null);
+		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+	}
 }

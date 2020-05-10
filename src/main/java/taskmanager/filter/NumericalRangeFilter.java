@@ -14,19 +14,19 @@ package taskmanager.filter;
 import taskmanager.Process;
 
 public abstract class NumericalRangeFilter implements Filter {
-    private final long lowerBound;
-    private final long upperBound;
+	private final long lowerBound;
+	private final long upperBound;
 
-    public NumericalRangeFilter(long lowerBound, long upperBound) {
-        this.lowerBound = lowerBound;
-        this.upperBound = upperBound;
-    }
+	public NumericalRangeFilter(long lowerBound, long upperBound) {
+		this.lowerBound = lowerBound;
+		this.upperBound = upperBound;
+	}
 
-    @Override
-    public boolean apply(Process process) {
-        long value = valueToFilter(process);
-        return value >= lowerBound && value <= upperBound;
-    }
+	@Override
+	public boolean apply(Process process) {
+		long value = valueToFilter(process);
+		return value >= lowerBound && value <= upperBound;
+	}
 
-    protected abstract long valueToFilter(Process process);
+	protected abstract long valueToFilter(Process process);
 }

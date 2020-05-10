@@ -15,12 +15,12 @@ import taskmanager.Process;
 import taskmanager.filter.TextContainsFilter;
 
 public class UserNameFilter extends TextContainsFilter {
-    public UserNameFilter(String name) {
-        super(name);
-    }
+	public UserNameFilter(String name) {
+		super(name);
+	}
 
-    @Override
-    protected String textToFilter(Process process) {
-        return process.userName;
-    }
+	@Override
+	protected String textToFilter(Process process) {
+		return process.userName;
+	}
 }

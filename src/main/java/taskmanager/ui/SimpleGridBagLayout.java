@@ -59,12 +59,12 @@ public class SimpleGridBagLayout {
 			int fill, double wx, double wy, int anchor) {
 		constraints.gridx = x;
 		constraints.gridy = y;
-		constraints.gridwidth  = width;
+		constraints.gridwidth = width;
 		constraints.gridheight = height;
 		constraints.weightx = wx;
 		constraints.weighty = wy;
-		constraints.anchor  = anchor;
-		constraints.fill    = fill;
+		constraints.anchor = anchor;
+		constraints.fill = fill;
 		
 		gridBagLayout.setConstraints(comp, constraints);
 		component.add(comp);

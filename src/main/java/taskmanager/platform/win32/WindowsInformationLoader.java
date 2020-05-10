@@ -332,10 +332,10 @@ public class WindowsInformationLoader extends InformationLoader {
 				processes.add(proccessInformation);
 
 				// Fetch thread information
-//          if (procInfo.NumberOfThreads > 0) {
-//            SYSTEM_THREAD_INFORMATION thread = (SYSTEM_THREAD_INFORMATION) Structure.newInstance(NtDllExt.SYSTEM_THREAD_INFORMATION.class, memory.share(offset + procInfo.size()));
-//            System.out.println(thread.CreateTime);
-//          }
+//				if (procInfo.NumberOfThreads > 0) {
+//					SYSTEM_THREAD_INFORMATION thread = (SYSTEM_THREAD_INFORMATION) Structure.newInstance(NtDllExt.SYSTEM_THREAD_INFORMATION.class, memory.share(offset + procInfo.size()));
+//					System.out.println(thread.CreateTime);
+//				}
 
 				if (proccessInformation.NextEntryOffset == 0)
 					offset = 0;

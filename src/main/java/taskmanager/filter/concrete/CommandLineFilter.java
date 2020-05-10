@@ -15,12 +15,12 @@ import taskmanager.Process;
 import taskmanager.filter.TextContainsFilter;
 
 public class CommandLineFilter extends TextContainsFilter {
-    public CommandLineFilter(String cmd) {
-        super(cmd);
-    }
+	public CommandLineFilter(String cmd) {
+		super(cmd);
+	}
 
-    @Override
-    protected String textToFilter(Process process) {
-        return process.commandLine;
-    }
+	@Override
+	protected String textToFilter(Process process) {
+		return process.commandLine;
+	}
 }

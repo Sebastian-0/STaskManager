@@ -14,7 +14,7 @@ package taskmanager.filter;
 import taskmanager.Process;
 
 public interface Filter {
-    Filter UNIVERSE = p -> true;
+	Filter UNIVERSE = p -> true;
 
-    boolean apply(Process process);
+	boolean apply(Process process);
 }

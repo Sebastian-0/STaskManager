@@ -15,12 +15,12 @@ import taskmanager.Process;
 import taskmanager.filter.NumericalRangeFilter;
 
 public class CpuFilter extends NumericalRangeFilter {
-    public CpuFilter(long lowerBound, long upperBound) {
-        super(lowerBound, upperBound);
-    }
+	public CpuFilter(long lowerBound, long upperBound) {
+		super(lowerBound, upperBound);
+	}
 
-    @Override
-    protected long valueToFilter(Process process) {
-        return process.cpuUsage.newest();
-    }
+	@Override
+	protected long valueToFilter(Process process) {
+		return process.cpuUsage.newest();
+	}
 }

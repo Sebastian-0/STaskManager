@@ -24,7 +24,7 @@ public class RatioItemPanel extends InformationItemPanel {
 
 	public void setMaximum(long maximum) {
 		this.maximum = maximum;
-    }
+	}
 	
 	@Override
 	public void updateValue(long value) {
