@@ -1,5 +1,10 @@
 /*
  * Copyright (c) 2020. Sebastian Hjelm
+ *
+ * The layouts of some of the data structures in this file are based on code from the processhacker repo:
+ * https://github.com/processhacker/processhacker
+ *
+ * All credits for figuring out the API goes to them.
  */
 
 package taskmanager.platform.win32;
@@ -30,196 +35,24 @@ public interface NtDllExt extends NtDll {
 	int NtQueryInformationProcess(WinNT.HANDLE hProcess, int informationClass, Pointer informationOut, int informationLength, IntByReference returnLength);
 	int NtQuerySystemInformation(int informationClass, Pointer informationOut, int informationLength, IntByReference returnLength);
 
-	int NtSuspendProcess(WinNT.HANDLE hProcess); // TODO Does pausing work? (se ntsapi.h for other functions)
+	int NtSuspendProcess(WinNT.HANDLE hProcess); // TODO Does pausing work? (see ntpsapi.h in processhacker for other functions)
 	int NtResumeProcess(WinNT.HANDLE hProcess);
 
 	enum SYSTEM_INFORMATION_CLASS {
-		SystemBasicInformation,
-		SystemProcessorInformation,
-		SystemPerformanceInformation,
-		SystemTimeOfDayInformation,
-		SystemPathInformation,
-		SystemProcessInformation,
-		SystemCallCountInformation,
-		SystemDeviceInformation,
-		SystemProcessorPerformanceInformation,
-		SystemFlagsInformation,
-		SystemCallTimeInformation,
-		SystemModuleInformation,
-		SystemLocksInformation,
-		SystemStackTraceInformation,
-		SystemPagedPoolInformation,
-		SystemNonPagedPoolInformation,
-		SystemHandleInformation,
-		SystemObjectInformation,
-		SystemPageFileInformation,
-		SystemVdmInstemulInformation,
-		SystemVdmBopInformation,
-		SystemFileCacheInformation,
-		SystemPoolTagInformation,
-		SystemInterruptInformation,
-		SystemDpcBehaviorInformation,
-		SystemFullMemoryInformation,
-		SystemLoadGdiDriverInformation,
-		SystemUnloadGdiDriverInformation,
-		SystemTimeAdjustmentInformation,
-		SystemSummaryMemoryInformation,
-		SystemMirrorMemoryInformation,
-		SystemPerformanceTraceInformation,
-		SystemObsolete0,
-		SystemExceptionInformation,
-		SystemCrashDumpStateInformation,
-		SystemKernelDebuggerInformation,
-		SystemContextSwitchInformation,
-		SystemRegistryQuotaInformation,
-		SystemExtendServiceTableInformation,
-		SystemPrioritySeperation,
-		SystemVerifierAddDriverInformation,
-		SystemVerifierRemoveDriverInformation,
-		SystemProcessorIdleInformation,
-		SystemLegacyDriverInformation,
-		SystemCurrentTimeZoneInformation,
-		SystemLookasideInformation,
-		SystemTimeSlipNotification,
-		SystemSessionCreate,
-		SystemSessionDetach,
-		SystemSessionInformation,
-		SystemRangeStartInformation,
-		SystemVerifierInformation,
-		SystemVerifierThunkExtend,
-		SystemSessionProcessInformation,
-		SystemLoadGdiDriverInSystemSpace,
-		SystemNumaProcessorMap,
-		SystemPrefetcherInformation,
-		SystemExtendedProcessInformation,
-		SystemRecommendedSharedDataAlignment,
-		SystemComPlusPackage,
-		SystemNumaAvailableMemory,
-		SystemProcessorPowerInformation,
-		SystemEmulationBasicInformation,
-		SystemEmulationProcessorInformation,
-		SystemExtendedHandleInformation,
-		SystemLostDelayedWriteInformation,
-		SystemBigPoolInformation,
-		SystemSessionPoolTagInformation,
-		SystemSessionMappedViewInformation,
-		SystemHotpatchInformation,
-		SystemObjectSecurityMode,
-		SystemWatchdogTimerHandler,
-		SystemWatchdogTimerInformation,
-		SystemLogicalProcessorInformation,
-		SystemWow64SharedInformationObsolete,
-		SystemRegisterFirmwareTableInformationHandler,
-		SystemFirmwareTableInformation,
-		SystemModuleInformationEx,
-		SystemVerifierTriageInformation,
-		SystemSuperfetchInformation,
-		SystemMemoryListInformation,
-		SystemFileCacheInformationEx,
-		SystemThreadPriorityClientIdInformation,
-		SystemProcessorIdleCycleTimeInformation,
-		SystemVerifierCancellationInformation,
-		SystemProcessorPowerInformationEx,
-		SystemRefTraceInformation,
-		SystemSpecialPoolInformation,
-		SystemProcessIdInformation,
-		SystemErrorPortInformation,
-		SystemBootEnvironmentInformation,
-		SystemHypervisorInformation,
-		SystemVerifierInformationEx,
-		SystemTimeZoneInformation,
-		SystemImageFileExecutionOptionsInformation,
-		SystemCoverageInformation,
-		SystemPrefetchPatchInformation,
-		SystemVerifierFaultsInformation,
-		SystemSystemPartitionInformation,
-		SystemSystemDiskInformation,
-		SystemProcessorPerformanceDistribution,
-		SystemNumaProximityNodeInformation,
-		SystemDynamicTimeZoneInformation,
-		SystemCodeIntegrityInformation,
-		SystemProcessorMicrocodeUpdateInformation,
-		SystemProcessorBrandString,
-		SystemVirtualAddressInformation,
-		SystemLogicalProcessorAndGroupInformation,
-		SystemProcessorCycleTimeInformation,
-		SystemStoreInformation,
-		SystemRegistryAppendString,
-		SystemAitSamplingValue,
-		SystemVhdBootInformation,
-		SystemCpuQuotaInformation,
-		SystemNativeBasicInformation,
-		SystemSpare1,
-		SystemLowPriorityIoInformation,
-		SystemTpmBootEntropyInformation,
-		SystemVerifierCountersInformation,
-		SystemPagedPoolInformationEx,
-		SystemSystemPtesInformationEx,
-		SystemNodeDistanceInformation,
-		SystemAcpiAuditInformation,
-		SystemBasicPerformanceInformation,
-		SystemQueryPerformanceCounterInformation,
-		SystemSessionBigPoolInformation,
-		SystemBootGraphicsInformation,
-		SystemScrubPhysicalMemoryInformation,
-		SystemBadPageInformation,
-		SystemProcessorProfileControlArea,
-		SystemCombinePhysicalMemoryInformation,
-		SystemEntropyInterruptTimingCallback,
-		SystemConsoleInformation,
-		SystemPlatformBinaryInformation,
-		SystemThrottleNotificationInformation,
-		SystemHypervisorProcessorCountInformation,
-		SystemDeviceDataInformation,
-		SystemDeviceDataEnumerationInformation,
-		SystemMemoryTopologyInformation,
-		SystemMemoryChannelInformation,
-		SystemBootLogoInformation,
-		SystemProcessorPerformanceInformationEx,
-		SystemSpare0,
-		SystemSecureBootPolicyInformation,
-		SystemPageFileInformationEx,
-		SystemSecureBootInformation,
-		SystemEntropyInterruptTimingRawInformation,
-		SystemPortableWorkspaceEfiLauncherInformation,
-		SystemFullProcessInformation,
-		SystemKernelDebuggerInformationEx,
-		SystemBootMetadataInformation,
-		SystemSoftRebootInformation,
-		SystemElamCertificateInformation,
-		SystemOfflineDumpConfigInformation,
-		SystemProcessorFeaturesInformation,
-		SystemRegistryReconciliationInformation,
-		SystemEdidInformation,
-		SystemManufacturingInformation,
-		SystemEnergyEstimationConfigInformation,
-		SystemHypervisorDetailInformation,
-		SystemProcessorCycleStatsInformation,
-		SystemVmGenerationCountInformation,
-		SystemTrustedPlatformModuleInformation,
-		SystemKernelDebuggerFlags,
-		SystemCodeIntegrityPolicyInformation,
-		SystemIsolatedUserModeInformation,
-		SystemHardwareSecurityTestInterfaceResultsInformation,
-		SystemSingleModuleInformation,
-		SystemAllowedCpuSetsInformation,
-		SystemDmaProtectionInformation,
-		SystemInterruptCpuSetsInformation,
-		SystemSecureBootPolicyFullInformation,
-		SystemCodeIntegrityPolicyFullInformation,
-		SystemAffinitizedInterruptProcessorInformation,
-		SystemRootSiloInformation,
-		SystemCpuSetInformation,
-		SystemCpuSetTagInformation,
-		SystemWin32WerStartCallout,
-		SystemSecureKernelProfileInformation,
-		MaxSystemInfoClass
+		SystemProcessInformation(5),
+		SystemMemoryListInformation(80);
+
+		final int code;
+
+		SYSTEM_INFORMATION_CLASS(int code) {
+			this.code = code;
+		}
 	}
 
 	@FieldOrder({"Length", "MaximumLength", "Buffer"})
 	class UNICODE_STRING extends Structure {
-		public short Length = 0;
-		public short MaximumLength = 0;
+		public short Length;
+		public short MaximumLength;
 		public Pointer Buffer;
 	}
 
@@ -242,7 +75,7 @@ public interface NtDllExt extends NtDll {
 		public int       BasePriority;
 		public int       ContextSwitches;
 		public int       ThreadState;
-		public int       WaitReason;     // Should be an enum
+		public int       WaitReason; // Should be an enum
 	}
 
 	@FieldOrder({"NextEntryOffset", "NumberOfThreads", "WorkingSetPrivateSize", "HardFaultCount",
@@ -255,10 +88,10 @@ public interface NtDllExt extends NtDll {
     class SYSTEM_PROCESS_INFORMATION extends Structure { // TODO Try to speed up by removing replacing Types with primitives?
 		public int            NextEntryOffset;
 		public int            NumberOfThreads;
-		public long           WorkingSetPrivateSize;        // since VISTA
-		public int            HardFaultCount;               // since WIN7
-		public int            NumberOfThreadsHighWatermark; // since WIN7
-		public long           CycleTime;                    // since WIN7
+		public long           WorkingSetPrivateSize;
+		public int            HardFaultCount;
+		public int            NumberOfThreadsHighWatermark;
+		public long           CycleTime;
 		public LARGE_INTEGER  CreateTime;
 		public LARGE_INTEGER  UserTime;
 		public LARGE_INTEGER  KernelTime;
@@ -268,7 +101,7 @@ public interface NtDllExt extends NtDll {
 		public long           InheritedFromUniqueProcessId; // HANDLE
 		public int            HandleCount;
 		public int            SessionId;
-		public Pointer        UniqueProcessKey;             // since VISTA (requires SystemExtendedProcessInformation)
+		public Pointer        UniqueProcessKey;
 		public SIZE_T         PeakVirtualSize;
 		public SIZE_T         VirtualSize;
 		public int            PageFaultCount;

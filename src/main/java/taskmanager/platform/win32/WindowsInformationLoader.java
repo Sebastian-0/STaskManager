@@ -115,7 +115,7 @@ public class WindowsInformationLoader extends InformationLoader {
 
 		Memory memory = new Memory(new SYSTEM_MEMORY_LIST_INFORMATION().size());
 		int status = NtDllExt.INSTANCE.NtQuerySystemInformation(
-				SYSTEM_INFORMATION_CLASS.SystemMemoryListInformation.ordinal(), memory, (int) memory.size(), null);
+				SYSTEM_INFORMATION_CLASS.SystemMemoryListInformation.code, memory, (int) memory.size(), null);
 		if (status == 0) {
 			SYSTEM_MEMORY_LIST_INFORMATION memoryInfo = Structure.newInstance(NtDllExt.SYSTEM_MEMORY_LIST_INFORMATION.class, memory);
 			memoryInfo.read();
@@ -304,7 +304,7 @@ public class WindowsInformationLoader extends InformationLoader {
 
 		Memory memory = new Memory(1);
 		IntByReference size = new IntByReference();
-		int status = NtDllExt.INSTANCE.NtQuerySystemInformation(SYSTEM_INFORMATION_CLASS.SystemProcessInformation.ordinal(), memory, (int) memory.size(), size);
+		int status = NtDllExt.INSTANCE.NtQuerySystemInformation(SYSTEM_INFORMATION_CLASS.SystemProcessInformation.code, memory, (int) memory.size(), size);
 		if (status == NtDllExt.STATUS_BUFFER_OVERFLOW ||
 				status == NtDllExt.STATUS_BUFFER_TOO_SMALL ||
 				status == NtDllExt.STATUS_INFO_LENGTH_MISMATCH) {
