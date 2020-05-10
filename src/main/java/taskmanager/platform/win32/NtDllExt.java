@@ -51,156 +51,156 @@ public interface NtDllExt extends NtDll {
 		}
 	}
 
-	@FieldOrder({"Length", "MaximumLength", "Buffer"})
+	@FieldOrder({"length", "maximumLength", "buffer"})
 	class UNICODE_STRING extends Structure {
-		public short Length;
-		public short MaximumLength;
-		public Pointer Buffer;
+		public short length;
+		public short maximumLength;
+		public Pointer buffer;
 	}
 
-	@FieldOrder({"UniqueProcess", "UniqueThread"})
+	@FieldOrder({"uniqueProcess", "uniqueThread"})
 	class CLIENT_ID extends Structure {
-		public long UniqueProcess; // HANDLE
-		public long UniqueThread;  // HANDLE
+		public long uniqueProcess; // HANDLE
+		public long uniqueThread;  // HANDLE
 	}
 
-	@FieldOrder({"KernelTime", "UserTime", "CreateTime", "WaitTime", "StartAddress", "ClientId", "Priority",
-			"BasePriority", "ContextSwitches", "ThreadState", "WaitReason"})
+	@FieldOrder({"kernelTime", "userTime", "createTime", "waitTime", "startAddress", "clientId", "priority",
+			"basePriority", "contextSwitches", "threadState", "waitReason"})
 	class SYSTEM_THREAD_INFORMATION extends Structure {
-		public long      KernelTime;
-		public long      UserTime;
-		public long      CreateTime;
-		public int       WaitTime;
-		public PVOID     StartAddress;
-		public CLIENT_ID ClientId;
-		public int       Priority;
-		public int       BasePriority;
-		public int       ContextSwitches;
-		public int       ThreadState;
-		public int       WaitReason; // Should be an enum
+		public long kernelTime;
+		public long userTime;
+		public long createTime;
+		public int waitTime;
+		public PVOID startAddress;
+		public CLIENT_ID clientId;
+		public int priority;
+		public int basePriority;
+		public int contextSwitches;
+		public int threadState;
+		public int waitReason; // Should be an enum
 	}
 
-	@FieldOrder({"NextEntryOffset", "NumberOfThreads", "WorkingSetPrivateSize", "HardFaultCount",
-			"NumberOfThreadsHighWatermark", "CycleTime", "CreateTime", "UserTime", "KernelTime", "ImageName", "BasePriority",
-			"UniqueProcessId", "InheritedFromUniqueProcessId", "HandleCount", "SessionId", "UniqueProcessKey",
-			"PeakVirtualSize", "VirtualSize", "PageFaultCount", "PeakWorkingSetSize", "WorkingSetSize",
-			"QuotaPeakPagedPoolUsage", "QuotaPagedPoolUsage", "QuotaPeakNonPagedPoolUsage", "QuotaNonPagedPoolUsage",
-			"PagefileUsage", "PeakPagefileUsage", "PrivatePageCount", "ReadOperationCount", "WriteOperationCount",
-			"OtherOperationCount", "ReadTransferCount", "WriteTransferCount", "OtherTransferCount"})
+	@FieldOrder({"nextEntryOffset", "numberOfThreads", "workingSetPrivateSize", "hardFaultCount",
+			"numberOfThreadsHighWatermark", "cycleTime", "createTime", "userTime", "kernelTime", "imageName", "basePriority",
+			"uniqueProcessId", "inheritedFromUniqueProcessId", "handleCount", "sessionId", "uniqueProcessKey",
+			"peakVirtualSize", "virtualSize", "pageFaultCount", "peakWorkingSetSize", "workingSetSize",
+			"quotaPeakPagedPoolUsage", "quotaPagedPoolUsage", "quotaPeakNonPagedPoolUsage", "quotaNonPagedPoolUsage",
+			"pagefileUsage", "peakPagefileUsage", "privatePageCount", "readOperationCount", "writeOperationCount",
+			"otherOperationCount", "readTransferCount", "writeTransferCount", "otherTransferCount"})
     class SYSTEM_PROCESS_INFORMATION extends Structure { // TODO Try to speed up by removing replacing Types with primitives?
-		public int            NextEntryOffset;
-		public int            NumberOfThreads;
-		public long           WorkingSetPrivateSize;
-		public int            HardFaultCount;
-		public int            NumberOfThreadsHighWatermark;
-		public long           CycleTime;
-		public LARGE_INTEGER  CreateTime;
-		public LARGE_INTEGER  UserTime;
-		public LARGE_INTEGER  KernelTime;
-		public UNICODE_STRING ImageName;
-		public int            BasePriority;
-		public long           UniqueProcessId;              // HANDLE
-		public long           InheritedFromUniqueProcessId; // HANDLE
-		public int            HandleCount;
-		public int            SessionId;
-		public Pointer        UniqueProcessKey;
-		public SIZE_T         PeakVirtualSize;
-		public SIZE_T         VirtualSize;
-		public int            PageFaultCount;
-		public SIZE_T         PeakWorkingSetSize;
-		public SIZE_T         WorkingSetSize;
-		public SIZE_T         QuotaPeakPagedPoolUsage;
-		public SIZE_T         QuotaPagedPoolUsage;
-		public SIZE_T         QuotaPeakNonPagedPoolUsage;
-		public SIZE_T         QuotaNonPagedPoolUsage;
-		public SIZE_T         PagefileUsage;
-		public SIZE_T         PeakPagefileUsage;
-		public SIZE_T         PrivatePageCount;
-		public long           ReadOperationCount;
-		public long           WriteOperationCount;
-		public long           OtherOperationCount;
-		public long           ReadTransferCount;
-		public long           WriteTransferCount;
-		public long           OtherTransferCount;
+		public int nextEntryOffset;
+		public int numberOfThreads;
+		public long workingSetPrivateSize;
+		public int hardFaultCount;
+		public int numberOfThreadsHighWatermark;
+		public long cycleTime;
+		public LARGE_INTEGER createTime;
+		public LARGE_INTEGER userTime;
+		public LARGE_INTEGER kernelTime;
+		public UNICODE_STRING imageName;
+		public int basePriority;
+		public long uniqueProcessId;              // HANDLE
+		public long inheritedFromUniqueProcessId; // HANDLE
+		public int handleCount;
+		public int sessionId;
+		public Pointer uniqueProcessKey;
+		public SIZE_T peakVirtualSize;
+		public SIZE_T virtualSize;
+		public int pageFaultCount;
+		public SIZE_T peakWorkingSetSize;
+		public SIZE_T workingSetSize;
+		public SIZE_T quotaPeakPagedPoolUsage;
+		public SIZE_T quotaPagedPoolUsage;
+		public SIZE_T quotaPeakNonPagedPoolUsage;
+		public SIZE_T quotaNonPagedPoolUsage;
+		public SIZE_T pagefileUsage;
+		public SIZE_T peakPagefileUsage;
+		public SIZE_T privatePageCount;
+		public long readOperationCount;
+		public long writeOperationCount;
+		public long otherOperationCount;
+		public long readTransferCount;
+		public long writeTransferCount;
+		public long otherTransferCount;
 	}
 
-	@FieldOrder({"ExitStatus", "PebBaseAddress", "AffinityMask", "BasePriority", "UniqueProcessId",
-			"InheritedFromUniqueProcessId"})
+	@FieldOrder({"exitStatus", "pebBaseAddress", "affinityMask", "basePriority", "uniqueProcessId",
+			"inheritedFromUniqueProcessId"})
 	class PROCESS_BASIC_INFORMATION extends Structure
 	{
-		public int          ExitStatus;
-		public Pointer      PebBaseAddress; // PPEB
-		public ULONG_PTR    AffinityMask;
-		public int          BasePriority;
-		public WinNT.HANDLE UniqueProcessId;
-		public WinNT.HANDLE InheritedFromUniqueProcessId;
+		public int exitStatus;
+		public Pointer pebBaseAddress; // PPEB
+		public ULONG_PTR affinityMask;
+		public int basePriority;
+		public WinNT.HANDLE uniqueProcessId;
+		public WinNT.HANDLE inheritedFromUniqueProcessId;
 	}
 
-	@FieldOrder({"Reserved", "TimerResolution", "PageSize", "NumberOfPhysicalPages", "LowestPhysicalPageNumber",
-	"HighestPhysicalPageNumber", "AllocationGranularity", "MinimumUserModeAddress", "MaximumUserModeAddress",
-	"ActiveProcessorsAffinityMask", "NumberOfProcessors"})
+	@FieldOrder({"reserved", "timerResolution", "pageSize", "numberOfPhysicalPages", "lowestPhysicalPageNumber",
+	"highestPhysicalPageNumber", "allocationGranularity", "minimumUserModeAddress", "maximumUserModeAddress",
+	"activeProcessorsAffinityMask", "numberOfProcessors"})
 	class SYSTEM_BASIC_INFORMATION extends Structure {
-		public ULONG Reserved;
-		public ULONG TimerResolution;
-		public ULONG PageSize;
-		public ULONG NumberOfPhysicalPages;
-		public ULONG LowestPhysicalPageNumber;
-		public ULONG HighestPhysicalPageNumber;
-		public ULONG AllocationGranularity;
-		public ULONG_PTR MinimumUserModeAddress;
-		public ULONG_PTR MaximumUserModeAddress;
-		public ULONG_PTR ActiveProcessorsAffinityMask;
-		public CHAR NumberOfProcessors;
+		public ULONG reserved;
+		public ULONG timerResolution;
+		public ULONG pageSize;
+		public ULONG numberOfPhysicalPages;
+		public ULONG lowestPhysicalPageNumber;
+		public ULONG highestPhysicalPageNumber;
+		public ULONG allocationGranularity;
+		public ULONG_PTR minimumUserModeAddress;
+		public ULONG_PTR maximumUserModeAddress;
+		public ULONG_PTR activeProcessorsAffinityMask;
+		public CHAR numberOfProcessors;
 	}
 
-	@FieldOrder({"ZeroPageCount", "FreePageCount", "ModifiedPageCount", "ModifiedNoWritePageCount", "BadPageCount",
-			"PageCountByPriority", "RepurposedPagesByPriority", "ModifiedPageCountPageFile"})
+	@FieldOrder({"zeroPageCount", "freePageCount", "modifiedPageCount", "modifiedNoWritePageCount", "badPageCount",
+			"pageCountByPriority", "repurposedPagesByPriority", "modifiedPageCountPageFile"})
 	class SYSTEM_MEMORY_LIST_INFORMATION extends Structure {
-		public ULONG_PTR ZeroPageCount;
-		public ULONG_PTR FreePageCount;
-		public ULONG_PTR ModifiedPageCount;
-		public ULONG_PTR ModifiedNoWritePageCount;
-		public ULONG_PTR BadPageCount;
-		public ULONG_PTR[] PageCountByPriority = new ULONG_PTR[8];
-		public ULONG_PTR[] RepurposedPagesByPriority = new ULONG_PTR[8];
-		public ULONG_PTR ModifiedPageCountPageFile;
+		public ULONG_PTR zeroPageCount;
+		public ULONG_PTR freePageCount;
+		public ULONG_PTR modifiedPageCount;
+		public ULONG_PTR modifiedNoWritePageCount;
+		public ULONG_PTR badPageCount;
+		public ULONG_PTR[] pageCountByPriority = new ULONG_PTR[8];
+		public ULONG_PTR[] repurposedPagesByPriority = new ULONG_PTR[8];
+		public ULONG_PTR modifiedPageCountPageFile;
 	}
 
-	@FieldOrder({"Reserved1", "Reserved1_2", "BeingDebugged", "Reserved2", "Reserved3", "Reserved3_2", "Ldr",
-			"ProcessParameters", "Reserved4", "Reserved4_2", "Reserved4_3", "AtlThunkSListPtr", "Reserved5", "Reserved6",
-			"Reserved7", "Reserved8", "AtlThunkSListPtr32", "Reserved9", "Reserved10", "PostProcessInitRoutine", "Reserved11",
-			"Reserved12", "SessionId"})
+	@FieldOrder({"reserved1", "reserved1_2", "beingDebugged", "reserved2", "reserved3", "reserved3_2", "ldr",
+			"processParameters", "reserved4", "reserved4_2", "reserved4_3", "atlThunkSListPtr", "reserved5", "reserved6",
+			"reserved7", "reserved8", "atlThunkSListPtr32", "reserved9", "reserved10", "postProcessInitRoutine", "reserved11",
+			"reserved12", "sessionId"})
 	class PEB extends Structure	{
-		public BYTE    Reserved1;
-		public BYTE    Reserved1_2;
-		public BYTE    BeingDebugged;
-		public BYTE    Reserved2;
-		public PVOID   Reserved3;
-		public PVOID   Reserved3_2;
+		public BYTE reserved1;
+		public BYTE reserved1_2;
+		public BYTE beingDebugged;
+		public BYTE reserved2;
+		public PVOID reserved3;
+		public PVOID reserved3_2;
 		public Pointer Ldr; // PPEB_LDR_DATA
-		public Pointer ProcessParameters; // PRTL_USER_PROCESS_PARAMETERS
-		public PVOID   Reserved4;
-		public PVOID   Reserved4_2;
-		public PVOID   Reserved4_3;
-		public PVOID   AtlThunkSListPtr;
-		public PVOID   Reserved5;
-		public ULONG   Reserved6;
-		public PVOID   Reserved7;
-		public ULONG   Reserved8;
-		public ULONG   AtlThunkSListPtr32;
-		public PVOID[] Reserved9 = new PVOID[45];
-		public BYTE[]  Reserved10 = new BYTE[96];
-		public Pointer PostProcessInitRoutine; // PPS_POST_PROCESS_INIT_ROUTINE
-		public BYTE[]  Reserved11 = new BYTE[128];
-		public PVOID   Reserved12;
-		public ULONG   SessionId;
+		public Pointer processParameters; // PRTL_USER_PROCESS_PARAMETERS
+		public PVOID reserved4;
+		public PVOID reserved4_2;
+		public PVOID reserved4_3;
+		public PVOID atlThunkSListPtr;
+		public PVOID reserved5;
+		public ULONG reserved6;
+		public PVOID reserved7;
+		public ULONG reserved8;
+		public ULONG atlThunkSListPtr32;
+		public PVOID[] reserved9 = new PVOID[45];
+		public BYTE[] reserved10 = new BYTE[96];
+		public Pointer postProcessInitRoutine; // PPS_POST_PROCESS_INIT_ROUTINE
+		public BYTE[]reserved11 = new BYTE[128];
+		public PVOID reserved12;
+		public ULONG sessionId;
 	}
 
-	@FieldOrder({"Reserved1", "Reserved2", "ImagePathName", "CommandLine"})
+	@FieldOrder({"reserved1", "reserved2", "imagePathName", "commandLine"})
 	class RTL_USER_PROCESS_PARAMETERS extends Structure	{
-		public BYTE[]         Reserved1 = new BYTE[16];
-		public PVOID[]        Reserved2 = new PVOID[10];
-		public UNICODE_STRING ImagePathName;
-		public UNICODE_STRING CommandLine;
+		public BYTE[] reserved1 = new BYTE[16];
+		public PVOID[] reserved2 = new PVOID[10];
+		public UNICODE_STRING imagePathName;
+		public UNICODE_STRING commandLine;
 	}
 }

@@ -126,11 +126,11 @@ public class WindowsInformationLoader extends InformationLoader {
 		if (status == 0) {
 			SYSTEM_MEMORY_LIST_INFORMATION memoryInfo = Structure.newInstance(NtDllExt.SYSTEM_MEMORY_LIST_INFORMATION.class, memory);
 			memoryInfo.read();
-			systemInformation.modifiedMemory = memoryInfo.ModifiedPageCount.longValue() * systemInformation.pageSize;
+			systemInformation.modifiedMemory = memoryInfo.modifiedPageCount.longValue() * systemInformation.pageSize;
 			systemInformation.standbyMemory = 0;
-			systemInformation.freeMemory = (memoryInfo.FreePageCount.longValue() + memoryInfo.ZeroPageCount.longValue()) * systemInformation.pageSize;
-			for (int i = 0; i < memoryInfo.PageCountByPriority.length; i++) {
-				systemInformation.standbyMemory += memoryInfo.PageCountByPriority[i].longValue() * systemInformation.pageSize;
+			systemInformation.freeMemory = (memoryInfo.freePageCount.longValue() + memoryInfo.zeroPageCount.longValue()) * systemInformation.pageSize;
+			for (int i = 0; i < memoryInfo.pageCountByPriority.length; i++) {
+				systemInformation.standbyMemory += memoryInfo.pageCountByPriority[i].longValue() * systemInformation.pageSize;
 			}
 		} else {
 			System.out.println("update(): Failed to read SYSTEM_MEMORY_LIST_INFORMATION: " + Integer.toHexString(status));
@@ -153,10 +153,10 @@ public class WindowsInformationLoader extends InformationLoader {
 		}
 
 		for (SYSTEM_PROCESS_INFORMATION newProcess : newProcesses) {
-			processIds.add(newProcess.UniqueProcessId);
-			Process process = systemInformation.getProcessById(newProcess.UniqueProcessId);
+			processIds.add(newProcess.uniqueProcessId);
+			Process process = systemInformation.getProcessById(newProcess.uniqueProcessId);
 			if (process == null) {
-				process = new Process(nextProcessId++, newProcess.UniqueProcessId);
+				process = new Process(nextProcessId++, newProcess.uniqueProcessId);
 				systemInformation.processes.add(process);
 			}
 
@@ -165,7 +165,7 @@ public class WindowsInformationLoader extends InformationLoader {
 					process.fileName = "System Idle Process";
 					process.userName = "SYSTEM";
 				} else {
-					process.fileName = newProcess.ImageName.Buffer.getWideString(0);
+					process.fileName = newProcess.imageName.buffer.getWideString(0);
 				}
 
 				if (readProcessFileNameCommandLineAndUser(process)) {
@@ -176,13 +176,13 @@ public class WindowsInformationLoader extends InformationLoader {
 					process.description = process.fileName;
 			}
 
-			process.privateWorkingSet.addValue(newProcess.WorkingSetPrivateSize);
+			process.privateWorkingSet.addValue(newProcess.workingSetPrivateSize);
 
 			// For some reason we need to extract the value and then put it back inside a new LONG_INTEGER instance before using
 			// it otherwise the FILETIME becomes corrupted. Does this have something to do with the memory the NT-call returns?
 			process.updateCpu(
-					new FILETIME(new LARGE_INTEGER(newProcess.KernelTime.getValue())).toTime(),
-					new FILETIME(new LARGE_INTEGER(newProcess.UserTime.getValue())).toTime(),
+					new FILETIME(new LARGE_INTEGER(newProcess.kernelTime.getValue())).toTime(),
+					new FILETIME(new LARGE_INTEGER(newProcess.userTime.getValue())).toTime(),
 					(currentCpuTime - lastCpuTime), systemInformation.logicalProcessorCount);
 
 			process.hasReadOnce = true;
@@ -223,27 +223,27 @@ public class WindowsInformationLoader extends InformationLoader {
 			processInfo.read();
 
 			mem = new Memory(new PEB().size());
-			if (!readProcessMemory(handle, mem, processInfo.PebBaseAddress, process, "PEB"))
+			if (!readProcessMemory(handle, mem, processInfo.pebBaseAddress, process, "PEB"))
 				return false;
 
 			PEB peb = Structure.newInstance(NtDllExt.PEB.class, mem);
 			peb.read();
 
 			mem = new Memory(new RTL_USER_PROCESS_PARAMETERS().size());
-			if (!readProcessMemory(handle, mem, peb.ProcessParameters, process, "RTL_USER_PROCESS_PARAMETERS"))
+			if (!readProcessMemory(handle, mem, peb.processParameters, process, "RTL_USER_PROCESS_PARAMETERS"))
 				return false;
 
 			RTL_USER_PROCESS_PARAMETERS parameters = Structure.newInstance(NtDllExt.RTL_USER_PROCESS_PARAMETERS.class, mem);
 			parameters.read();
 
-			mem = new Memory(parameters.ImagePathName.Length + 2);
-			if (!readProcessMemory(handle, mem, parameters.ImagePathName.Buffer, process, "image path"))
+			mem = new Memory(parameters.imagePathName.length + 2);
+			if (!readProcessMemory(handle, mem, parameters.imagePathName.buffer, process, "image path"))
 				return false;
 
 			process.filePath = mem.getWideString(0);
 
-			mem = new Memory(parameters.CommandLine.Length + 2);
-			if (!readProcessMemory(handle, mem, parameters.CommandLine.Buffer, process, "command line"))
+			mem = new Memory(parameters.commandLine.length + 2);
+			if (!readProcessMemory(handle, mem, parameters.commandLine.buffer, process, "command line"))
 				return false;
 
 			process.commandLine = mem.getWideString(0);
@@ -291,7 +291,6 @@ public class WindowsInformationLoader extends InformationLoader {
 			return false;
 		}
 
-		int nLangs = size.getValue() / new LANGANDCODEPAGE().size();
 		LANGANDCODEPAGE language = Structure.newInstance(VersionExt.LANGANDCODEPAGE.class, pointerRef.getValue());
 		language.read();
 		String query = "\\StringFileInfo\\" + String.format("%04x%04x", language.wLanguage.intValue(), language.wCodePage.intValue()).toUpperCase() + "\\FileDescription";
@@ -337,10 +336,10 @@ public class WindowsInformationLoader extends InformationLoader {
 //					System.out.println(thread.CreateTime);
 //				}
 
-				if (proccessInformation.NextEntryOffset == 0)
+				if (proccessInformation.nextEntryOffset == 0)
 					offset = 0;
 				else
-					offset += proccessInformation.NextEntryOffset;
+					offset += proccessInformation.nextEntryOffset;
 			} while (offset > 0);
 		}
 

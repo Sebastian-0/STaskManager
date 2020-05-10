@@ -20,8 +20,8 @@ public enum GraphType {
 	Disk(new Color(77, 166, 12), "Disk"),
 	Gpu(new Color(167, 1, 7), "Gpu");
 	
-	public Color color;
-	public String header;
+	public final Color color;
+	public final String header;
 	
 	GraphType(Color color, String header) {
 		this.color = color;

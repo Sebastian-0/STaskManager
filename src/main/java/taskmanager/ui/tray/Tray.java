@@ -110,7 +110,7 @@ public class Tray extends TrayIcon {
 	public void update(SystemInformation info) {
 		latestInfo = info;
 
-		setToolTip(String.format(" CPU: %s\n Memory: %s / %s",
+		setToolTip(String.format(" CPU: %s%n Memory: %s / %s",
 				TextUtils.valueToString(info.cpuUsageTotal.newest(), ValueType.Percentage),
 				TextUtils.valueToString(info.physicalMemoryUsed.newest(), ValueType.Bytes),
 				TextUtils.valueToString(info.physicalMemoryTotal, ValueType.Bytes)));

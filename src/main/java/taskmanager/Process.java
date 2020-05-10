@@ -122,12 +122,12 @@ public class Process {
 	public static class DeadTimestampsComparator extends ProcessComparator {
 		@Override
 		public int doCompare(Process o1, Process o2) {
-			return -Long.compare(o2.deathTimestamp, o1.deathTimestamp);
+			return Long.compare(o1.deathTimestamp, o2.deathTimestamp);
 		}
 	}
 
 	public static class FileNameComparator extends ProcessComparator {
-		private Collator collator;
+		private final Collator collator;
 
 		public FileNameComparator() {
 			collator = Collator.getInstance();
@@ -141,7 +141,7 @@ public class Process {
 	}
 
 	public static class CommandLineComparator extends ProcessComparator {
-		private Collator collator;
+		private final Collator collator;
 
 		public CommandLineComparator() {
 			collator = Collator.getInstance();
@@ -155,7 +155,7 @@ public class Process {
 	}
 
 	public static class DescriptionComparator extends ProcessComparator {
-		private Collator collator;
+		private final Collator collator;
 
 		public DescriptionComparator() {
 			collator = Collator.getInstance();
@@ -169,7 +169,7 @@ public class Process {
 	}
 
 	public static class UserNameComparator extends ProcessComparator {
-		private Collator collator;
+		private final Collator collator;
 
 		public UserNameComparator() {
 			collator = Collator.getInstance();

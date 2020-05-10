@@ -604,6 +604,19 @@ public class ProcessTable extends JTable {
 		public int compareTo(ColumnHeader o) {
 			return index - o.index;
 		}
+
+		@Override
+		public int hashCode() {
+			return index;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof ColumnHeader) {
+				return compareTo((ColumnHeader) obj) == 0;
+			}
+			return false;
+		}
 	}
 
 

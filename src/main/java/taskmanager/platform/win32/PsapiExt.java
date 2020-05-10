@@ -27,20 +27,20 @@ public interface PsapiExt extends Psapi {
 	boolean GetProcessMemoryInfo(WinNT.HANDLE Process,
 								 PROCESS_MEMORY_COUNTERS ppsmemCounters, int cb);
 
-	@FieldOrder({"cb", "PageFaultCount", "PeakWorkingSetSize", "WorkingSetSize", "QuotaPeakPagedPoolUsage",
-			"QuotaPagedPoolUsage", "QuotaPeakNonPagedPoolUsage", "QuotaNonPagedPoolUsage", "PagefileUsage", "PeakPagefileUsage",
-			"PrivateUsage"})
+	@FieldOrder({"cb", "pageFaultCount", "peakWorkingSetSize", "workingSetSize", "quotaPeakPagedPoolUsage",
+			"quotaPagedPoolUsage", "quotaPeakNonPagedPoolUsage", "quotaNonPagedPoolUsage", "pagefileUsage", "peakPagefileUsage",
+			"privateUsage"})
 	class PROCESS_MEMORY_COUNTERS extends Structure {
 		public DWORD cb;
-		public DWORD PageFaultCount;
-		public SIZE_T PeakWorkingSetSize;
-		public SIZE_T WorkingSetSize;
-		public SIZE_T QuotaPeakPagedPoolUsage;
-		public SIZE_T QuotaPagedPoolUsage;
-		public SIZE_T QuotaPeakNonPagedPoolUsage;
-		public SIZE_T QuotaNonPagedPoolUsage;
-		public SIZE_T PagefileUsage;
-		public SIZE_T PeakPagefileUsage;
-		public SIZE_T PrivateUsage;
+		public DWORD pageFaultCount;
+		public SIZE_T peakWorkingSetSize;
+		public SIZE_T workingSetSize;
+		public SIZE_T quotaPeakPagedPoolUsage;
+		public SIZE_T quotaPagedPoolUsage;
+		public SIZE_T quotaPeakNonPagedPoolUsage;
+		public SIZE_T quotaNonPagedPoolUsage;
+		public SIZE_T pagefileUsage;
+		public SIZE_T peakPagefileUsage;
+		public SIZE_T privateUsage;
 	}
 }

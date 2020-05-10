@@ -22,23 +22,23 @@ public class VersionExt {
 		public WORD wCodePage;
 	}
 	
-	@FieldOrder({"wLength", "wValueLength", "wType", "szKey", "Padding", "Children"})
+	@FieldOrder({"wLength", "wValueLength", "wType", "szKey", "padding", "children"})
 	public static class STRING_TABLE extends Structure {
-		public WORD   wLength;
-		public WORD   wValueLength;
-		public WORD   wType;
-		public char   szKey;
-		public WORD   Padding;
-		public STRING Children;
+		public WORD wLength;
+		public WORD wValueLength;
+		public WORD wType;
+		public char szKey;
+		public WORD padding;
+		public STRING children;
 	}
 	
-	@FieldOrder({"wLength", "wValueLength", "wType", "szKey", "Padding", "Value"})
+	@FieldOrder({"wLength", "wValueLength", "wType", "szKey", "padding", "value"})
 	public static class STRING extends Structure {
 		public WORD wLength;
 		public WORD wValueLength;
 		public WORD wType;
 		public char szKey;
-		public WORD Padding;
-		public WORD Value;
+		public WORD padding;
+		public WORD value;
 	}
 }
