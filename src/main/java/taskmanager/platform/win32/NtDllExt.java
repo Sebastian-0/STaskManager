@@ -188,7 +188,7 @@ public interface NtDllExt extends NtDll {
 		public BYTE reserved2;
 		public PVOID reserved3;
 		public PVOID reserved3_2;
-		public Pointer Ldr; // PPEB_LDR_DATA
+		public Pointer ldr; // PPEB_LDR_DATA
 		public Pointer processParameters; // PRTL_USER_PROCESS_PARAMETERS
 		public PVOID reserved4;
 		public PVOID reserved4_2;
