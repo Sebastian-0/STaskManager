@@ -10,4 +10,7 @@ Extra functionality includes:
 * Read/Write speed graphs are logarithmic to make them easier to interpret   
 
 ## Building
-This project is built using Gradle, the result ends up in `build/libs`.
+This project is built using Gradle, running `gradle build` will generate a zip containing the program in the `build` folder.
+
+## License
+This program is licensed under GPLv3 (see the LICENSE file for more details).
