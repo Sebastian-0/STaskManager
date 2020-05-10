@@ -32,11 +32,14 @@ import com.sun.jna.platform.win32.WinNT.LUID_AND_ATTRIBUTES;
 import com.sun.jna.platform.win32.WinNT.TOKEN_PRIVILEGES;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import taskmanager.InformationLoader;
 import taskmanager.Process;
 import taskmanager.SystemInformation;
 import taskmanager.platform.win32.NtDllExt.PEB;
 import taskmanager.platform.win32.NtDllExt.PROCESS_BASIC_INFORMATION;
+import taskmanager.platform.win32.NtDllExt.PROCESS_INFORMATION_CLASS;
 import taskmanager.platform.win32.NtDllExt.RTL_USER_PROCESS_PARAMETERS;
 import taskmanager.platform.win32.NtDllExt.SYSTEM_INFORMATION_CLASS;
 import taskmanager.platform.win32.NtDllExt.SYSTEM_MEMORY_LIST_INFORMATION;
@@ -51,6 +54,8 @@ import java.util.ListIterator;
 import java.util.Set;
 
 public class WindowsInformationLoader extends InformationLoader {
+	private static final Logger LOGGER = LoggerFactory.getLogger(WindowsInformationLoader.class);
+
 	private long lastCpuTime;
 	private long currentCpuTime;
 
@@ -60,45 +65,48 @@ public class WindowsInformationLoader extends InformationLoader {
 	public void init(SystemInformation systemInformation) {
 		super.init(systemInformation);
 
-		ULONGLONGByReference totalInstalledMemory = new ULONGLONGByReference();
-		Kernel32Ext.INSTANCE.GetPhysicallyInstalledSystemMemory(totalInstalledMemory);
-		systemInformation.physicalMemoryTotalInstalled = totalInstalledMemory.getValue().longValue() * 1024;
-
+		systemInformation.physicalMemoryTotalInstalled = readPhysicalMemory();
 		systemInformation.reservedMemory = systemInformation.physicalMemoryTotalInstalled - systemInformation.physicalMemoryTotal;
 
-		readUsername(systemInformation);
+		setUsername(systemInformation);
 
 		enableSeDebugNamePrivilege();
 	}
 
-	private void readUsername(SystemInformation systemInformation) {
+	private long readPhysicalMemory() {
+		ULONGLONGByReference totalInstalledMemory = new ULONGLONGByReference();
+		Kernel32Ext.INSTANCE.GetPhysicallyInstalledSystemMemory(totalInstalledMemory);
+		return totalInstalledMemory.getValue().longValue() * 1024;
+	}
+
+	private void setUsername(SystemInformation systemInformation) {
 		char[] userName = new char[1024];
 		IntByReference size = new IntByReference(userName.length);
 		if (Advapi32.INSTANCE.GetUserNameW(userName, size)) {
 			systemInformation.userName = new String(Arrays.copyOf(userName, size.getValue() - 1));
 		} else {
-			System.out.println("Failed to read username, using fallback instead! Error: " + Integer.toHexString(Native.getLastError()));
+			LOGGER.warn("Failed to read username, using fallback instead, error code: {}", Integer.toHexString(Native.getLastError()));
 		}
 	}
 
+	// TODO Verify if getting debug privileges is really necessary or if it can be done another way
 	private void enableSeDebugNamePrivilege() {
 		HANDLEByReference hToken = new HANDLEByReference();
-		TOKEN_PRIVILEGES tokenPriv = new TOKEN_PRIVILEGES(1);
-		LUID luidDebug = new LUID();
-
 		if (Advapi32.INSTANCE.OpenProcessToken(Kernel32.INSTANCE.GetCurrentProcess(), WinNT.TOKEN_ADJUST_PRIVILEGES, hToken)) {
-			if (Advapi32.INSTANCE.LookupPrivilegeValue(null, WinNT.SE_DEBUG_NAME, luidDebug)) {
-				tokenPriv.Privileges[0] = new LUID_AND_ATTRIBUTES(luidDebug, new DWORD(WinNT.SE_PRIVILEGE_ENABLED));
-				if (Advapi32.INSTANCE.AdjustTokenPrivileges(hToken.getValue(), false, tokenPriv, 0, null, null)) {
-					// Always successful, even in the cases which lead to OpenProcess failure
-					System.out.println("SUCCESSFULLY CHANGED TOKEN PRIVILEGES");
-				} else {
-					System.out.println("FAILED TO CHANGE TOKEN PRIVILEGES, CODE: " + Native.getLastError());
+			LUID luid = new LUID();
+			if (Advapi32.INSTANCE.LookupPrivilegeValue(null, WinNT.SE_DEBUG_NAME, luid)) {
+				TOKEN_PRIVILEGES tokenPriv = new TOKEN_PRIVILEGES(1);
+				tokenPriv.Privileges[0] = new LUID_AND_ATTRIBUTES(luid, new DWORD(WinNT.SE_PRIVILEGE_ENABLED));
+				if (!Advapi32.INSTANCE.AdjustTokenPrivileges(hToken.getValue(), false, tokenPriv, 0, null, null)) {
+					LOGGER.error("Failed to enable SE_DEBUG_NAME privilege, error code: {}", Native.getLastError());
 				}
+			} else {
+				LOGGER.error("Failed to fetch LUID for SE_DEBUG_NAME privilege, error code: {}", Native.getLastError());
 			}
+			Kernel32.INSTANCE.CloseHandle(hToken.getValue());
+		} else {
+			LOGGER.error("Failed to open task manager process for token privilege adjustment, error code: {}", Native.getLastError());
 		}
-
-		Kernel32.INSTANCE.CloseHandle(hToken.getValue());
 	}
 
 
@@ -123,7 +131,7 @@ public class WindowsInformationLoader extends InformationLoader {
 		Memory memory = new Memory(new SYSTEM_MEMORY_LIST_INFORMATION().size());
 		int status = NtDllExt.INSTANCE.NtQuerySystemInformation(
 				SYSTEM_INFORMATION_CLASS.SystemMemoryListInformation.code, memory, (int) memory.size(), null);
-		if (status == 0) {
+		if (status == NtDllExt.STATUS_SUCCESS) {
 			SYSTEM_MEMORY_LIST_INFORMATION memoryInfo = Structure.newInstance(NtDllExt.SYSTEM_MEMORY_LIST_INFORMATION.class, memory);
 			memoryInfo.read();
 			systemInformation.modifiedMemory = memoryInfo.modifiedPageCount.longValue() * systemInformation.pageSize;
@@ -133,7 +141,7 @@ public class WindowsInformationLoader extends InformationLoader {
 				systemInformation.standbyMemory += memoryInfo.pageCountByPriority[i].longValue() * systemInformation.pageSize;
 			}
 		} else {
-			System.out.println("update(): Failed to read SYSTEM_MEMORY_LIST_INFORMATION: " + Integer.toHexString(status));
+			LOGGER.error("Failed to read detailed memory information, error code: {}", Integer.toHexString(status));
 		}
 	}
 
@@ -207,15 +215,15 @@ public class WindowsInformationLoader extends InformationLoader {
 				false,
 				(int) process.id);
 		if (handle == null) {
-			System.out.println("readProcessCommandLine(): Failed to open " + process.fileName + ": " + Integer.toHexString(Native.getLastError()));
+			LOGGER.warn("Failed to open process {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
 			return false;
 		}
 
 		try {
 			Memory mem = new Memory(new PROCESS_BASIC_INFORMATION().size());
-			int status = NtDllExt.INSTANCE.NtQueryInformationProcess(handle, 0, mem, (int) mem.size(), null);
+			int status = NtDllExt.INSTANCE.NtQueryInformationProcess(handle, PROCESS_INFORMATION_CLASS.ProcessBasicInformation.code, mem, (int) mem.size(), null);
 			if (status != 0) {
-				System.out.println("readProcessCommandLine(): Failed to read process information for " + process.fileName + ": " + Integer.toHexString(status));
+				LOGGER.warn("Failed to read basic process information for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(status));
 				return false;
 			}
 
@@ -223,29 +231,26 @@ public class WindowsInformationLoader extends InformationLoader {
 			processInfo.read();
 
 			mem = new Memory(new PEB().size());
-			if (!readProcessMemory(handle, mem, processInfo.pebBaseAddress, process, "PEB"))
+			if (!readProcessMemory(handle, mem, processInfo.pebBaseAddress, process, PEB.class.getSimpleName())) {
 				return false;
-
+			}
 			PEB peb = Structure.newInstance(NtDllExt.PEB.class, mem);
 			peb.read();
 
 			mem = new Memory(new RTL_USER_PROCESS_PARAMETERS().size());
-			if (!readProcessMemory(handle, mem, peb.processParameters, process, "RTL_USER_PROCESS_PARAMETERS"))
+			if (!readProcessMemory(handle, mem, peb.processParameters, process, RTL_USER_PROCESS_PARAMETERS.class.getSimpleName()))
 				return false;
-
 			RTL_USER_PROCESS_PARAMETERS parameters = Structure.newInstance(NtDllExt.RTL_USER_PROCESS_PARAMETERS.class, mem);
 			parameters.read();
 
 			mem = new Memory(parameters.imagePathName.length + 2);
 			if (!readProcessMemory(handle, mem, parameters.imagePathName.buffer, process, "image path"))
 				return false;
-
 			process.filePath = mem.getWideString(0);
 
 			mem = new Memory(parameters.commandLine.length + 2);
 			if (!readProcessMemory(handle, mem, parameters.commandLine.buffer, process, "command line"))
 				return false;
-
 			process.commandLine = mem.getWideString(0);
 
 			HANDLEByReference tokenRef = new HANDLEByReference();
@@ -253,6 +258,7 @@ public class WindowsInformationLoader extends InformationLoader {
 				Account account = Advapi32Util.getTokenAccount(tokenRef.getValue());
 				process.userName = account.name;
 			} else {
+				LOGGER.warn("Failed to get process user for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
 				return false;
 			}
 		} finally {
@@ -265,8 +271,7 @@ public class WindowsInformationLoader extends InformationLoader {
 	private boolean readProcessMemory(WinNT.HANDLE handle, Memory mem, Pointer address, Process process, String targetStruct) {
 		boolean success = Kernel32.INSTANCE.ReadProcessMemory(handle, address, mem, (int) mem.size(), null);
 		if (!success) {
-			System.out.println("readProcessCommandLine(): Failed to read " + targetStruct + " information for " + process.fileName + ": " + Integer.toHexString(Native.getLastError()));
-			Kernel32.INSTANCE.CloseHandle(handle);
+			LOGGER.warn("Failed to read {} information for {} ({}), error code: {}", targetStruct, process.fileName, process.id, Integer.toHexString(Native.getLastError()));
 		}
 		return success;
 	}
@@ -275,28 +280,29 @@ public class WindowsInformationLoader extends InformationLoader {
 		IntByReference size = new IntByReference();
 		int versionInfoSize = Version.INSTANCE.GetFileVersionInfoSize(process.filePath, size);
 		if (versionInfoSize == 0) {
-			System.out.println("readFileDescription(): Failed to read FileVersionSize for " + process.filePath + ": " + Integer.toHexString(Native.getLastError()));
+			LOGGER.warn("Failed to read file version info size for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
 			return false;
 		}
 
 		Memory mem = new Memory(versionInfoSize);
 		if (!Version.INSTANCE.GetFileVersionInfo(process.filePath, 0, (int) mem.size(), mem)) {
-			System.out.println("readFileDescription(): Failed to read FileVersionInfo for " + process.filePath + ": " + Integer.toHexString(Native.getLastError()));
+			LOGGER.warn("Failed to read file version info for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
 			return false;
 		}
 
 		PointerByReference pointerRef = new PointerByReference();
 		if (!Version.INSTANCE.VerQueryValue(mem, "\\VarFileInfo\\Translation", pointerRef, size)) {
-			System.out.println("readFileDescription(): Failed to read Translations for " + process.filePath + ": " + Integer.toHexString(Native.getLastError()));
+			LOGGER.warn("Failed to find Translations in file version info for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
 			return false;
 		}
 
+		// TODO Read the proper language in the future (nLangs = size.getValue() / new LANGANDCODEPAGE().size())
 		LANGANDCODEPAGE language = Structure.newInstance(VersionExt.LANGANDCODEPAGE.class, pointerRef.getValue());
 		language.read();
 		String query = "\\StringFileInfo\\" + String.format("%04x%04x", language.wLanguage.intValue(), language.wCodePage.intValue()).toUpperCase() + "\\FileDescription";
 
 		if (!Version.INSTANCE.VerQueryValue(mem, query, pointerRef, size)) {
-			System.out.println("readFileDescription(): Failed to read FileDescription for " + process.filePath + ": " + Integer.toHexString(Native.getLastError()));
+			LOGGER.warn("Failed to find FileDescription in file version info for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
 			return false;
 		}
 
@@ -306,8 +312,6 @@ public class WindowsInformationLoader extends InformationLoader {
 	}
 
 	private List<SYSTEM_PROCESS_INFORMATION> fetchProcessList() {
-		List<SYSTEM_PROCESS_INFORMATION> processes = new ArrayList<>();
-
 		Memory memory = new Memory(1);
 		IntByReference size = new IntByReference();
 		int status = NtDllExt.INSTANCE.NtQuerySystemInformation(SYSTEM_INFORMATION_CLASS.SystemProcessInformation.code, memory, (int) memory.size(), size);
@@ -315,33 +319,34 @@ public class WindowsInformationLoader extends InformationLoader {
 				status == NtDllExt.STATUS_BUFFER_TOO_SMALL ||
 				status == NtDllExt.STATUS_INFO_LENGTH_MISMATCH) {
 			memory = new Memory(size.getValue());
-			status = NtDllExt.INSTANCE.NtQuerySystemInformation(5, memory, (int) memory.size(), size);
-			if (status != 0) { // TODO; Possibly add loop to account for processes disappearing
-				System.out.println("fetchProcessList(): NtQuerySystemInformation failed with: " + Integer.toHexString(status));
+			status = NtDllExt.INSTANCE.NtQuerySystemInformation(SYSTEM_INFORMATION_CLASS.SystemProcessInformation.code, memory, (int) memory.size(), size);
+			if (status != 0) {
+				LOGGER.error("Failed to read process list, NtQuerySystemInformation failed with error code: {}", Integer.toHexString(status));
+				return new ArrayList<>();
 			}
 		} else {
-			System.out.println("fetchProcessList(): NtQuerySystemInformation failed with: " + Integer.toHexString(status));
+			LOGGER.error("Failed to read process list size, NtQuerySystemInformation failed with error code: {}", Integer.toHexString(status));
+			return new ArrayList<>();
 		}
 
-		if (status == 0) {
-			int offset = 0;
-			do {
-				SYSTEM_PROCESS_INFORMATION proccessInformation = Structure.newInstance(NtDllExt.SYSTEM_PROCESS_INFORMATION.class, memory.share(offset));
-				proccessInformation.read();
-				processes.add(proccessInformation);
+		List<SYSTEM_PROCESS_INFORMATION> processes = new ArrayList<>();
+		int offset = 0;
+		do {
+			SYSTEM_PROCESS_INFORMATION processInformation = Structure.newInstance(NtDllExt.SYSTEM_PROCESS_INFORMATION.class, memory.share(offset));
+			processInformation.read();
+			processes.add(processInformation);
 
-				// Fetch thread information
+			// Fetch thread information
 //				if (procInfo.NumberOfThreads > 0) {
 //					SYSTEM_THREAD_INFORMATION thread = (SYSTEM_THREAD_INFORMATION) Structure.newInstance(NtDllExt.SYSTEM_THREAD_INFORMATION.class, memory.share(offset + procInfo.size()));
-//					System.out.println(thread.CreateTime);
 //				}
 
-				if (proccessInformation.nextEntryOffset == 0)
-					offset = 0;
-				else
-					offset += proccessInformation.nextEntryOffset;
-			} while (offset > 0);
-		}
+			if (processInformation.nextEntryOffset == 0) {
+				offset = 0;
+			} else {
+				offset += processInformation.nextEntryOffset;
+			}
+		} while (offset > 0);
 
 		return processes;
 	}

@@ -28,6 +28,7 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.W32APIOptions;
 
 public interface NtDllExt extends NtDll {
+	int STATUS_SUCCESS = 0;
 	int STATUS_BUFFER_OVERFLOW = 0x80000005;
 	int STATUS_BUFFER_TOO_SMALL = 0xC0000023;
 	int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
@@ -47,6 +48,16 @@ public interface NtDllExt extends NtDll {
 		final int code;
 
 		SYSTEM_INFORMATION_CLASS(int code) {
+			this.code = code;
+		}
+	}
+
+	enum PROCESS_INFORMATION_CLASS {
+		ProcessBasicInformation(0);
+
+		final int code;
+
+		PROCESS_INFORMATION_CLASS(int code) {
 			this.code = code;
 		}
 	}

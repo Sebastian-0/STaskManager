@@ -11,16 +11,21 @@
 
 package taskmanager.platform.linux;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 
 public class LinuxProcess {
+	private static final Logger LOGGER = LoggerFactory.getLogger(LinuxProcess.class);
+
 	public static boolean kill(long pid) {
 		try {
 			Runtime.getRuntime().exec("kill -9 " + pid);
 		} catch (IOException e) {
+			LOGGER.error("Failed to kill process {}", pid, e);
 			return false;
 		}
-
 		return true;
 	}
 }

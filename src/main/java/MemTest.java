@@ -17,15 +17,11 @@ import java.text.MessageFormat;
 public class MemTest {
 	private static final Logger LOGGER = LoggerFactory.getLogger(MemTest.class);
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		LOGGER.info("Double {} {}", 1, 1);
 		System.out.println(MessageFormat.format("{0} hello", "10"));
 
 		double[] tmp = new double[1024 * 1024 * 1024 / 5];
-		try {
-			Thread.sleep(1000000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		Thread.currentThread().join();
 	}
 }

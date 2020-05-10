@@ -14,9 +14,7 @@ import javax.swing.JTextPane;
 import javax.swing.WindowConstants;
 
 public class UiTest {
-
 	public static void main(String[] args) {
-
 		JTextPane area = new JTextPane();
 		area.setContentType("text/html");
 		area.setText("<html>Some <b>text</b></html>");

@@ -15,18 +15,22 @@ import com.sun.jna.Native;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WindowsProcess {
+	private static final Logger LOGGER = LoggerFactory.getLogger(WindowsProcess.class);
+
 	public static boolean kill(long pid) {
 		HANDLE handle = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_TERMINATE, false, (int) pid);
-		boolean success = Kernel32.INSTANCE.TerminateProcess(handle, 1);
-		Kernel32.INSTANCE.CloseHandle(handle);
-
-		if (!success) {
-			System.out.println("WindowsProcess: kill(): Failed to kill process (" + pid + "): " + Integer.toHexString(Native.getLastError()));
-			return false;
+		try {
+			if (!Kernel32.INSTANCE.TerminateProcess(handle, 1)) {
+				LOGGER.error("Failed to kill process {}, error code: {}", pid, Integer.toHexString(Native.getLastError()));
+				return false;
+			}
+		} finally {
+			Kernel32.INSTANCE.CloseHandle(handle);
 		}
-
 		return true;
 	}
 }
