@@ -1,10 +1,12 @@
 /*
  * Copyright (c) 2020. Sebastian Hjelm
  *
- * The layouts of some of the data structures in this file are based on code from the processhacker repo:
- * https://github.com/processhacker/processhacker
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 3
+ * of the License, or (at your option) any later version.
  *
- * All credits for figuring out the API goes to them.
+ * See LICENSE for further details.
  */
 
 package taskmanager.platform.win32;
