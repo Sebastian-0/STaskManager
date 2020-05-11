@@ -35,8 +35,9 @@ import com.sun.jna.ptr.PointerByReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import taskmanager.InformationLoader;
-import taskmanager.Process;
-import taskmanager.SystemInformation;
+import taskmanager.data.Process;
+import taskmanager.data.Status;
+import taskmanager.data.SystemInformation;
 import taskmanager.platform.win32.NtDllExt.PEB;
 import taskmanager.platform.win32.NtDllExt.PROCESS_BASIC_INFORMATION;
 import taskmanager.platform.win32.NtDllExt.PROCESS_INFORMATION_CLASS;
@@ -201,7 +202,7 @@ public class WindowsInformationLoader extends InformationLoader {
 		while (itr.hasNext()) {
 			Process process = itr.next();
 			if (!processIds.contains(process.id)) {
-				process.isDead = true;
+				process.status = Status.Dead;
 				process.deathTimestamp = System.currentTimeMillis();
 				itr.remove();
 				systemInformation.deadProcesses.add(process);

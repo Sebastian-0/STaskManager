@@ -11,7 +11,7 @@
 
 package taskmanager.ui.performance.memory;
 
-import taskmanager.SystemInformation;
+import taskmanager.data.SystemInformation;
 import taskmanager.ui.ColorUtils;
 import taskmanager.ui.performance.GraphType;
 

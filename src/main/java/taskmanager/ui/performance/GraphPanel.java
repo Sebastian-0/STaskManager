@@ -13,7 +13,7 @@ package taskmanager.ui.performance;
 
 import config.Config;
 import taskmanager.Measurements;
-import taskmanager.SystemInformation.TopList;
+import taskmanager.data.SystemInformation.TopList;
 import taskmanager.ui.ColorUtils;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;

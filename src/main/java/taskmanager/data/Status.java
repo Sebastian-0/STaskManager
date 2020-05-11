@@ -9,12 +9,14 @@
  * See LICENSE for further details.
  */
 
-package taskmanager.filter;
+package taskmanager.data;
 
-import taskmanager.data.Process;
-
-public interface Filter {
-	Filter UNIVERSE = p -> true;
-
-	boolean apply(Process process);
+public enum Status {
+	Running,
+	Sleeping,
+	Waiting,
+	Zombie,
+	Suspended,
+	Dead;
 }
+

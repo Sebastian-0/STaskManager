@@ -12,7 +12,7 @@
 package taskmanager.ui.performance.disks;
 
 import config.Config;
-import taskmanager.SystemInformation.Disk;
+import taskmanager.data.SystemInformation.Disk;
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;

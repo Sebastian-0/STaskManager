@@ -11,7 +11,8 @@
 
 package taskmanager.ui.processdialog;
 
-import taskmanager.Process;
+import taskmanager.data.Process;
+import taskmanager.data.Status;
 import taskmanager.ui.SimpleGridBagLayout;
 
 import javax.swing.JDialog;
@@ -19,13 +20,11 @@ import javax.swing.JFrame;
 import java.awt.GridBagConstraints;
 
 public class ProcessDialog extends JDialog {
-	private Process process;
-	private PerformancePanel performancePanel;
+	private final PerformancePanel performancePanel;
 	private final InformationPanel informationPanel;
 
 	public ProcessDialog(JFrame parent, Process process) {
 		super(parent);
-		this.process = process;
 
 		setTitle("Process: " + process.fileName + " (" + process.id + ")");
 
@@ -36,7 +35,7 @@ public class ProcessDialog extends JDialog {
 		informationPanel = new InformationPanel(process);
 		CommandLinePanel commandLinePanel = new CommandLinePanel(process);
 
-		if (process.isDead) {
+		if (process.status == Status.Dead) {
 			processEnded();
 		}
 
@@ -53,6 +52,7 @@ public class ProcessDialog extends JDialog {
 
 	public void update() {
 		performancePanel.update();
+		informationPanel.update();
 	}
 
 	public void processEnded() {

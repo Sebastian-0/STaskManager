@@ -12,7 +12,7 @@
 package taskmanager.ui.performance.gpus;
 
 import config.Config;
-import taskmanager.SystemInformation.Gpu;
+import taskmanager.data.SystemInformation.Gpu;
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;

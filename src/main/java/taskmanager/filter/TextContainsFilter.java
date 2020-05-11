@@ -11,7 +11,7 @@
 
 package taskmanager.filter;
 
-import taskmanager.Process;
+import taskmanager.data.Process;
 
 public abstract class TextContainsFilter implements Filter {
 	private final String textToContain;

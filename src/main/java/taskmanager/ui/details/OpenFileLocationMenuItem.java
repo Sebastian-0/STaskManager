@@ -11,7 +11,7 @@
 
 package taskmanager.ui.details;
 
-import taskmanager.Process;
+import taskmanager.data.Process;
 import taskmanager.ui.AbstractMenuItem;
 
 import javax.swing.JOptionPane;

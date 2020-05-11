@@ -17,11 +17,12 @@ import oshi.hardware.GraphicsCard;
 import oshi.hardware.HWDiskStore;
 import oshi.hardware.HWPartition;
 import oshi.hardware.NetworkIF;
-import taskmanager.SystemInformation.Disk;
-import taskmanager.SystemInformation.Gpu;
-import taskmanager.SystemInformation.Gpu.Type;
-import taskmanager.SystemInformation.Network;
-import taskmanager.SystemInformation.TopList;
+import taskmanager.data.SystemInformation;
+import taskmanager.data.SystemInformation.Disk;
+import taskmanager.data.SystemInformation.Gpu;
+import taskmanager.data.SystemInformation.Gpu.Type;
+import taskmanager.data.SystemInformation.Network;
+import taskmanager.data.SystemInformation.TopList;
 import taskmanager.platform.common.NvidiaGpuLoader;
 
 import java.net.SocketException;

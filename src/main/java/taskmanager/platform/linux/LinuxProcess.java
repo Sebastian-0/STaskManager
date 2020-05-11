@@ -28,4 +28,24 @@ public class LinuxProcess {
 		}
 		return true;
 	}
+
+	public static boolean suspend(long pid) {
+		try {
+			Runtime.getRuntime().exec("kill -STOP " + pid);
+		} catch (IOException e) {
+			LOGGER.error("Failed to suspend process {}", pid, e);
+			return false;
+		}
+		return true;
+	}
+
+	public static boolean resume(long pid) {
+		try {
+			Runtime.getRuntime().exec("kill -CONT " + pid);
+		} catch (IOException e) {
+			LOGGER.error("Failed to resume process {}", pid, e);
+			return false;
+		}
+		return true;
+	}
 }

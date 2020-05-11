@@ -12,9 +12,9 @@
 package taskmanager.ui.details;
 
 import config.Config;
-import taskmanager.Process;
-import taskmanager.Process.ProcessComparator;
-import taskmanager.SystemInformation;
+import taskmanager.data.Process;
+import taskmanager.data.Process.ProcessComparator;
+import taskmanager.data.SystemInformation;
 import taskmanager.filter.AndFilter;
 import taskmanager.filter.Filter;
 import taskmanager.filter.concrete.UserNameFilter;

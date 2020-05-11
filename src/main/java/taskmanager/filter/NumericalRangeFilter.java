@@ -11,7 +11,7 @@
 
 package taskmanager.filter;
 
-import taskmanager.Process;
+import taskmanager.data.Process;
 
 public abstract class NumericalRangeFilter implements Filter {
 	private final long lowerBound;

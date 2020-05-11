@@ -9,9 +9,11 @@
  * See LICENSE for further details.
  */
 
-package taskmanager;
+package taskmanager.data;
 
 import config.Config;
+import taskmanager.MeasurementContainer;
+import taskmanager.Measurements;
 
 import java.text.Collator;
 import java.util.Comparator;
@@ -27,7 +29,7 @@ public class Process {
 	public String userName;
 	public Measurements<Long> cpuUsage;
 	public Measurements<Long> cpuTime;
-	public boolean isDead;
+	public Status status;
 	public long deathTimestamp;
 
 	public boolean hasReadOnce;
@@ -46,6 +48,7 @@ public class Process {
 		userName = "Unknown";
 		cpuUsage = new MeasurementContainer<>(0L);
 		cpuTime = new MeasurementContainer<>(0L);
+		status = Status.Running;
 	}
 
 	public void copyFrom(Process other, boolean doFullCopy) {
@@ -56,7 +59,7 @@ public class Process {
 		commandLine = other.commandLine;
 		description = other.description;
 		userName = other.userName;
-		isDead = other.isDead;
+		status = other.status;
 		deathTimestamp = other.deathTimestamp;
 
 		if (doFullCopy) {

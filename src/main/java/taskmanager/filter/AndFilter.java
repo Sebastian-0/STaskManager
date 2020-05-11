@@ -11,7 +11,7 @@
 
 package taskmanager.filter;
 
-import taskmanager.Process;
+import taskmanager.data.Process;
 
 public class AndFilter implements Filter {
 	private final Filter[] filters;

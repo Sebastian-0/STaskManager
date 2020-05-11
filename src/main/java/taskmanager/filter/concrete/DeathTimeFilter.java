@@ -11,7 +11,7 @@
 
 package taskmanager.filter.concrete;
 
-import taskmanager.Process;
+import taskmanager.data.Process;
 import taskmanager.filter.NumericalRangeFilter;
 
 public class DeathTimeFilter extends NumericalRangeFilter {

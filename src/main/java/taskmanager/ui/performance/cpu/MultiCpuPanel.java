@@ -13,7 +13,7 @@ package taskmanager.ui.performance.cpu;
 
 import config.Config;
 import taskmanager.Measurements;
-import taskmanager.SystemInformation;
+import taskmanager.data.SystemInformation;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
 import taskmanager.ui.performance.GraphPanel.ShortToLong;

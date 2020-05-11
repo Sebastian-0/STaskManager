@@ -11,7 +11,8 @@
 
 package taskmanager.ui.processdialog;
 
-import taskmanager.Process;
+import taskmanager.data.Process;
+import taskmanager.data.Status;
 import taskmanager.ui.SimpleGridBagLayout;
 
 import javax.swing.JLabel;
@@ -20,13 +21,16 @@ import javax.swing.border.TitledBorder;
 import java.awt.GridBagConstraints;
 
 public class InformationPanel extends JPanel {
+	private final Process process;
 	private final JLabel statusLabel;
 
 	public InformationPanel(Process process) {
+		this.process = process;
 		setBorder(new TitledBorder("General"));
 
-		// TODO Extend this with more statuses, also make the status colored!
-		statusLabel = new JLabel("Status: " + (process.isDead ? "DEAD" : "Running"));
+		// TODO Make the status colored!
+		statusLabel = new JLabel();
+		updateStatusLabelText();
 
 		SimpleGridBagLayout gbl = new SimpleGridBagLayout(this);
 		gbl.setInsets(5, 5, 5, 15);
@@ -39,7 +43,32 @@ public class InformationPanel extends JPanel {
 		gbl.addToGrid(statusLabel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
 	}
 
+	private void updateStatusLabelText() {
+		statusLabel.setText("Status: " + statusToText(process.status));
+	}
+
+	private String statusToText(Status status) {
+		switch (status) {
+			case Running:
+			case Sleeping:
+				return "Running";
+			case Waiting:
+				return "Disk sleep";
+			case Zombie:
+				return "Zombie";
+			case Suspended:
+				return "Suspended";
+			case Dead:
+				return "DEAD";
+		}
+		return "Unknown";
+	}
+
 	public void processDied() {
-		statusLabel.setText("Status: DEAD");
+		updateStatusLabelText();
+	}
+
+	public void update() {
+		updateStatusLabelText();
 	}
 }

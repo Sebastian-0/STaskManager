@@ -12,7 +12,7 @@
 package taskmanager.ui.processdialog;
 
 import config.Config;
-import taskmanager.Process;
+import taskmanager.data.Process;
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;

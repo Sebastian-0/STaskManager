@@ -13,9 +13,9 @@ package taskmanager.ui.performance;
 
 import config.Config;
 import taskmanager.Measurements;
-import taskmanager.Process;
-import taskmanager.SystemInformation.TopList;
-import taskmanager.SystemInformation.TopList.Entry;
+import taskmanager.data.Process;
+import taskmanager.data.SystemInformation.TopList;
+import taskmanager.data.SystemInformation.TopList.Entry;
 
 import java.util.ArrayList;
 import java.util.Arrays;

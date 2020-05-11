@@ -12,7 +12,7 @@
 package taskmanager.ui.performance.memory;
 
 import taskmanager.Measurements;
-import taskmanager.SystemInformation;
+import taskmanager.data.SystemInformation;
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;

@@ -33,4 +33,32 @@ public class WindowsProcess {
 		}
 		return true;
 	}
+
+	public static boolean suspend(long pid) {
+		HANDLE handle = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_SUSPEND_RESUME, false, (int) pid);
+		try {
+			int status = NtDllExt.INSTANCE.NtSuspendProcess(handle);
+			if (status != NtDllExt.STATUS_SUCCESS) {
+				LOGGER.error("Failed to suspend process {}, error code: {}", pid, Integer.toHexString(status));
+				return false;
+			}
+		} finally {
+			Kernel32.INSTANCE.CloseHandle(handle);
+		}
+		return true;
+	}
+
+	public static boolean resume(long pid) {
+		HANDLE handle = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_SUSPEND_RESUME, false, (int) pid);
+		try {
+			int status = NtDllExt.INSTANCE.NtResumeProcess(handle);
+			if (status != NtDllExt.STATUS_SUCCESS) {
+				LOGGER.error("Failed to resume process {}, error code: {}", pid, Integer.toHexString(status));
+				return false;
+			}
+		} finally {
+			Kernel32.INSTANCE.CloseHandle(handle);
+		}
+		return true;
+	}
 }

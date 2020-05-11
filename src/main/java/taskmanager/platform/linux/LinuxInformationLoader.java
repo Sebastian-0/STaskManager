@@ -16,8 +16,9 @@ import org.slf4j.LoggerFactory;
 import oshi.software.os.linux.LinuxUserGroupInfo;
 import oshi.util.FileUtil;
 import taskmanager.InformationLoader;
-import taskmanager.Process;
-import taskmanager.SystemInformation;
+import taskmanager.data.Process;
+import taskmanager.data.Status;
+import taskmanager.data.SystemInformation;
 
 import java.io.File;
 import java.io.IOException;
@@ -90,9 +91,9 @@ public class LinuxInformationLoader extends InformationLoader {
 			}
 
 			String processPath = PROC_PATH + "/" + pid;
+			Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
 
 			if (!process.hasReadOnce) {
-				Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
 				if (!status.isEmpty()) {
 					String userId = status.getOrDefault("Uid", "-1").split("\\s+")[0];
 					process.userName = userGroupInfo.getGroupName(userId);
@@ -122,7 +123,6 @@ public class LinuxInformationLoader extends InformationLoader {
 //					process.description = process.fileName;
 			}
 
-			Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
 			process.privateWorkingSet.addValue(Long.parseLong(removeUnit(status.getOrDefault("RssAnon", "0 kb"))) * 1024);
 
 			String stat = FileUtil.getStringFromFile(processPath + "/stat");
@@ -136,6 +136,8 @@ public class LinuxInformationLoader extends InformationLoader {
 				long stime = Long.parseLong(tokens[14]);
 				// TODO Maybe use a delta of the process uptime (like LinuxOperatingSystem#getProcess():286)?
 				process.updateCpu(stime, utime, (currentCpuTime - lastCpuTime), 1); // Set cores to 1 since the total time is already divided by cores
+
+				process.status = parseStatus(tokens[2]);
 			}
 		}
 
@@ -144,12 +146,37 @@ public class LinuxInformationLoader extends InformationLoader {
 		while (itr.hasNext()) {
 			Process process = itr.next();
 			if (!newProcessIds.contains(process.id)) {
-				process.isDead = true;
+				process.status = Status.Dead;
 				process.deathTimestamp = System.currentTimeMillis();
 				itr.remove();
 				systemInformation.deadProcesses.add(process);
 			}
 		}
+	}
+
+	private Set<Long> fetchProcessIds() {
+		Set<Long> processIds = new HashSet<>();
+		File processDir = new File(PROC_PATH);
+		File[] files = processDir.listFiles();
+		if (files != null) {
+			for (File file : files) {
+				String fileName = file.getName();
+				if (file.isDirectory() && fileName.matches("[0-9]+")) {
+					Long pid = Long.parseLong(fileName);
+					processIds.add(pid);
+				}
+			}
+		}
+		return processIds;
+	}
+
+	private Process findProcess(List<Process> processes, long processId) {
+		for (Process process : processes) {
+			if (process.id == processId) {
+				return process;
+			}
+		}
+		return null;
 	}
 
 	private void processFileNameAndPathFallback(Process process, String processPath, Map<String, String> status) {
@@ -206,28 +233,18 @@ public class LinuxInformationLoader extends InformationLoader {
 		return vmRSS.substring(0, vmRSS.length() - 3);
 	}
 
-	private Set<Long> fetchProcessIds() {
-		Set<Long> processIds = new HashSet<>();
-		File processDir = new File(PROC_PATH);
-		File[] files = processDir.listFiles();
-		if (files != null) {
-			for (File file : files) {
-				String fileName = file.getName();
-				if (file.isDirectory() && fileName.matches("[0-9]+")) {
-					Long pid = Long.parseLong(fileName);
-					processIds.add(pid);
-				}
-			}
+	private Status parseStatus(String token) {
+		switch (token.toUpperCase()) {
+			case "D":
+				return Status.Waiting;
+			case "Z":
+				return Status.Zombie;
+			case "T":
+				return Status.Suspended;
+			case "X":
+				return Status.Dead;
+			default:
+				return Status.Running;
 		}
-		return processIds;
-	}
-
-	private Process findProcess(List<Process> processes, long processId) {
-		for (Process process : processes) {
-			if (process.id == processId) {
-				return process;
-			}
-		}
-		return null;
 	}
 }

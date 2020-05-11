@@ -9,7 +9,10 @@
  * See LICENSE for further details.
  */
 
-package taskmanager;
+package taskmanager.data;
+
+import taskmanager.MeasurementContainer;
+import taskmanager.Measurements;
 
 import java.util.ArrayList;
 import java.util.Arrays;

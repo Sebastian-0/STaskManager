@@ -15,6 +15,7 @@ import com.sun.jna.Platform;
 import config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import taskmanager.data.SystemInformation;
 import taskmanager.platform.linux.LinuxInformationLoader;
 import taskmanager.platform.win32.WindowsInformationLoader;
 

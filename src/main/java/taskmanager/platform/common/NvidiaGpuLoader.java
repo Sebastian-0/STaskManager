@@ -18,13 +18,12 @@ import com.sun.jna.ptr.LongByReference;
 import config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import taskmanager.SystemInformation;
-import taskmanager.SystemInformation.Gpu;
-import taskmanager.SystemInformation.Gpu.Type;
+import taskmanager.data.SystemInformation;
+import taskmanager.data.SystemInformation.Gpu;
+import taskmanager.data.SystemInformation.Gpu.Type;
 import taskmanager.platform.common.Nvml.nvmlMemory_t;
 import taskmanager.platform.common.Nvml.nvmlPciInfo_t;
 import taskmanager.platform.common.Nvml.nvmlUtilization_t;
-import taskmanager.ui.TaskManager;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;

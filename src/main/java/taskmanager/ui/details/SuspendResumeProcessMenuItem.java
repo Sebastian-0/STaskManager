@@ -21,24 +21,28 @@ import taskmanager.ui.AbstractMenuItem;
 import javax.swing.JOptionPane;
 import java.awt.Component;
 
-public class DeleteProcessMenuItem extends AbstractMenuItem {
+public class SuspendResumeProcessMenuItem extends AbstractMenuItem {
 	private final Component parent;
 	private Process process;
 
-	public DeleteProcessMenuItem(Component parent) {
-		super("End process");
+	public SuspendResumeProcessMenuItem(Component parent) {
+		super("Suspend process");
 		this.parent = parent;
 	}
 
 	@Override
 	protected void doAction() {
-		int result = JOptionPane.showConfirmDialog(parent, "<html>Do you want to end \"" + process.fileName + "\"?<br> All unsaved data in the process will be lost.</html>", "Killing process", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+		String action = "suspend";
+		if (process.status == Status.Suspended) {
+			action = "resume";
+		}
+		int result = JOptionPane.showConfirmDialog(parent, "<html>Do you want to " + action + " \"" + process.fileName + "\"?</html>", "Killing process", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 		if (result == JOptionPane.YES_OPTION) {
-			boolean succeeded = false;
+			boolean succeeded;
 			if (Platform.isWindows()) {
-				succeeded = WindowsProcess.kill(process.id);
+				succeeded = (process.status == Status.Suspended) ? WindowsProcess.resume(process.id) : WindowsProcess.suspend(process.id);
 			} else if (Platform.isLinux()) {
-				succeeded = LinuxProcess.kill(process.id);
+				succeeded = (process.status == Status.Suspended) ? LinuxProcess.resume(process.id) : LinuxProcess.suspend(process.id);
 			} else {
 				throw new UnsupportedOperationException("You are running an unsupported operating system!");
 			}
@@ -52,5 +56,10 @@ public class DeleteProcessMenuItem extends AbstractMenuItem {
 	public void setProcess(Process process) {
 		this.process = process;
 		setEnabled(process.status != Status.Dead);
+		if (process.status == Status.Suspended) {
+			setText("Resume process");
+		} else {
+			setText("Suspend process");
+		}
 	}
 }

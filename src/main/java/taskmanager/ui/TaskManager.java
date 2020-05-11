@@ -17,8 +17,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import taskmanager.DataCollector;
 import taskmanager.InformationUpdateCallback;
-import taskmanager.Process;
-import taskmanager.SystemInformation;
+import taskmanager.data.Process;
+import taskmanager.data.Status;
+import taskmanager.data.SystemInformation;
 import taskmanager.ui.details.ProcessDetailsCallback;
 import taskmanager.ui.details.ProcessPanel;
 import taskmanager.ui.performance.PerformancePanel;
@@ -229,13 +230,13 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 	@Override
 	public void openDialog(Process process) {
 		ProcessDialog dialog = processDialogs.get(process.uniqueId);
-		if (process.isDead) {
+		if (process.status == Status.Dead) {
 			dialog = deadProcessDialogs.get(process.uniqueId);
 		}
 		if (dialog == null || !dialog.isVisible()) {
 			dialog = new ProcessDialog(this, process);
 			dialog.setVisible(true);
-			if (process.isDead) {
+			if (process.status == Status.Dead) {
 				deadProcessDialogs.put(process.uniqueId, dialog);
 			} else {
 				processDialogs.put(process.uniqueId, dialog);

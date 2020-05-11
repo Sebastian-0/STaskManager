@@ -11,7 +11,7 @@
 
 package taskmanager.ui.processdialog;
 
-import taskmanager.Process;
+import taskmanager.data.Process;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
