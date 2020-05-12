@@ -45,6 +45,7 @@ import taskmanager.platform.win32.NtDllExt.RTL_USER_PROCESS_PARAMETERS;
 import taskmanager.platform.win32.NtDllExt.SYSTEM_INFORMATION_CLASS;
 import taskmanager.platform.win32.NtDllExt.SYSTEM_MEMORY_LIST_INFORMATION;
 import taskmanager.platform.win32.NtDllExt.SYSTEM_PROCESS_INFORMATION;
+import taskmanager.platform.win32.NtDllExt.SYSTEM_THREAD_INFORMATION;
 import taskmanager.platform.win32.VersionExt.LANGANDCODEPAGE;
 
 import java.util.ArrayList;
@@ -53,6 +54,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
+
+import static taskmanager.platform.win32.NtDllExt.THREAD_STATE_WAITING;
+import static taskmanager.platform.win32.NtDllExt.WAIT_REASON_SUSPENDED;
 
 public class WindowsInformationLoader extends InformationLoader {
 	private static final Logger LOGGER = LoggerFactory.getLogger(WindowsInformationLoader.class);
@@ -154,18 +158,18 @@ public class WindowsInformationLoader extends InformationLoader {
 	}
 
 	private void updateProcesses(SystemInformation systemInformation) {
-		List<SYSTEM_PROCESS_INFORMATION> newProcesses = fetchProcessList();
+		List<ProcessInfo> newProcesses = fetchProcessList();
 		Set<Long> processIds = new HashSet<>();
 
 		if (newProcesses.isEmpty()) {
 			return;
 		}
 
-		for (SYSTEM_PROCESS_INFORMATION newProcess : newProcesses) {
-			processIds.add(newProcess.uniqueProcessId);
-			Process process = systemInformation.getProcessById(newProcess.uniqueProcessId);
+		for (ProcessInfo newProcess : newProcesses) {
+			processIds.add(newProcess.process.uniqueProcessId);
+			Process process = systemInformation.getProcessById(newProcess.process.uniqueProcessId);
 			if (process == null) {
-				process = new Process(nextProcessId++, newProcess.uniqueProcessId);
+				process = new Process(nextProcessId++, newProcess.process.uniqueProcessId);
 				systemInformation.processes.add(process);
 			}
 
@@ -174,7 +178,7 @@ public class WindowsInformationLoader extends InformationLoader {
 					process.fileName = "System Idle Process";
 					process.userName = "SYSTEM";
 				} else {
-					process.fileName = newProcess.imageName.buffer.getWideString(0);
+					process.fileName = newProcess.process.imageName.buffer.getWideString(0);
 				}
 
 				if (readProcessFileNameCommandLineAndUser(process)) {
@@ -185,13 +189,15 @@ public class WindowsInformationLoader extends InformationLoader {
 					process.description = process.fileName;
 			}
 
-			process.privateWorkingSet.addValue(newProcess.workingSetPrivateSize);
+			process.status = readProcessStatus(newProcess);
+
+			process.privateWorkingSet.addValue(newProcess.process.workingSetPrivateSize);
 
 			// For some reason we need to extract the value and then put it back inside a new LONG_INTEGER instance before using
 			// it otherwise the FILETIME becomes corrupted. Does this have something to do with the memory the NT-call returns?
 			process.updateCpu(
-					new FILETIME(new LARGE_INTEGER(newProcess.kernelTime.getValue())).toTime(),
-					new FILETIME(new LARGE_INTEGER(newProcess.userTime.getValue())).toTime(),
+					new FILETIME(new LARGE_INTEGER(newProcess.process.kernelTime.getValue())).toTime(),
+					new FILETIME(new LARGE_INTEGER(newProcess.process.userTime.getValue())).toTime(),
 					(currentCpuTime - lastCpuTime), systemInformation.logicalProcessorCount);
 
 			process.hasReadOnce = true;
@@ -208,6 +214,22 @@ public class WindowsInformationLoader extends InformationLoader {
 				systemInformation.deadProcesses.add(process);
 			}
 		}
+	}
+
+	private Status readProcessStatus(ProcessInfo process) {
+		if (isSuspended(process)) {
+			return Status.Suspended;
+		}
+		return Status.Running;
+	}
+
+	private boolean isSuspended(ProcessInfo process) {
+		for (SYSTEM_THREAD_INFORMATION thread : process.threads) {
+			if (thread.threadState != THREAD_STATE_WAITING || thread.waitReason != WAIT_REASON_SUSPENDED) {
+				return false;
+			}
+		}
+		return process.threads.length != 0;
 	}
 
 	private boolean readProcessFileNameCommandLineAndUser(Process process) {
@@ -312,7 +334,7 @@ public class WindowsInformationLoader extends InformationLoader {
 		return true;
 	}
 
-	private List<SYSTEM_PROCESS_INFORMATION> fetchProcessList() {
+	private List<ProcessInfo> fetchProcessList() {
 		Memory memory = new Memory(1);
 		IntByReference size = new IntByReference();
 		int status = NtDllExt.INSTANCE.NtQuerySystemInformation(SYSTEM_INFORMATION_CLASS.SystemProcessInformation.code, memory, (int) memory.size(), size);
@@ -330,17 +352,23 @@ public class WindowsInformationLoader extends InformationLoader {
 			return new ArrayList<>();
 		}
 
-		List<SYSTEM_PROCESS_INFORMATION> processes = new ArrayList<>();
+		List<ProcessInfo> processes = new ArrayList<>();
 		int offset = 0;
 		do {
 			SYSTEM_PROCESS_INFORMATION processInformation = Structure.newInstance(NtDllExt.SYSTEM_PROCESS_INFORMATION.class, memory.share(offset));
 			processInformation.read();
-			processes.add(processInformation);
 
 			// Fetch thread information
-//				if (procInfo.NumberOfThreads > 0) {
-//					SYSTEM_THREAD_INFORMATION thread = (SYSTEM_THREAD_INFORMATION) Structure.newInstance(NtDllExt.SYSTEM_THREAD_INFORMATION.class, memory.share(offset + procInfo.size()));
-//				}
+			int threadSize = new SYSTEM_THREAD_INFORMATION().size();
+			SYSTEM_THREAD_INFORMATION[] threads = new SYSTEM_THREAD_INFORMATION[processInformation.numberOfThreads];
+			for (int i = 0; i < processInformation.numberOfThreads; i++) {
+				SYSTEM_THREAD_INFORMATION thread = Structure.newInstance(SYSTEM_THREAD_INFORMATION.class,
+						memory.share(offset + processInformation.size() + i * threadSize));
+				thread.read();
+				threads[i] = thread;
+			}
+
+			processes.add(new ProcessInfo(processInformation, threads));
 
 			if (processInformation.nextEntryOffset == 0) {
 				offset = 0;
@@ -356,5 +384,15 @@ public class WindowsInformationLoader extends InformationLoader {
 		PERFORMANCE_INFORMATION performanceInformation = new PERFORMANCE_INFORMATION();
 		PsapiExt.INSTANCE.GetPerformanceInfo(performanceInformation, performanceInformation.size());
 		return performanceInformation;
+	}
+
+	private static class ProcessInfo {
+		SYSTEM_PROCESS_INFORMATION process;
+		SYSTEM_THREAD_INFORMATION[] threads;
+
+		public ProcessInfo(SYSTEM_PROCESS_INFORMATION process, SYSTEM_THREAD_INFORMATION[] threads) {
+			this.process = process;
+			this.threads = threads;
+		}
 	}
 }

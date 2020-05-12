@@ -20,9 +20,11 @@ import com.sun.jna.platform.win32.BaseTSD.ULONG_PTR;
 import com.sun.jna.platform.win32.NtDll;
 import com.sun.jna.platform.win32.WinDef.BYTE;
 import com.sun.jna.platform.win32.WinDef.CHAR;
+import com.sun.jna.platform.win32.WinDef.LONG;
 import com.sun.jna.platform.win32.WinDef.PVOID;
 import com.sun.jna.platform.win32.WinDef.ULONG;
 import com.sun.jna.platform.win32.WinNT;
+import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.platform.win32.WinNT.LARGE_INTEGER;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.W32APIOptions;
@@ -32,6 +34,10 @@ public interface NtDllExt extends NtDll {
 	int STATUS_BUFFER_OVERFLOW = 0x80000005;
 	int STATUS_BUFFER_TOO_SMALL = 0xC0000023;
 	int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
+
+	int THREAD_STATE_WAITING = 5;
+
+	int WAIT_REASON_SUSPENDED = 5;
 
 	NtDllExt INSTANCE = Native.load("ntdll", NtDllExt.class, W32APIOptions.DEFAULT_OPTIONS);
 
@@ -71,24 +77,28 @@ public interface NtDllExt extends NtDll {
 
 	@FieldOrder({"uniqueProcess", "uniqueThread"})
 	class CLIENT_ID extends Structure {
-		public long uniqueProcess; // HANDLE
-		public long uniqueThread;  // HANDLE
+		public HANDLE uniqueProcess;
+		public HANDLE uniqueThread;
+
+		public CLIENT_ID() {
+			super (ALIGN_NONE);
+		}
 	}
 
 	@FieldOrder({"kernelTime", "userTime", "createTime", "waitTime", "startAddress", "clientId", "priority",
 			"basePriority", "contextSwitches", "threadState", "waitReason"})
 	class SYSTEM_THREAD_INFORMATION extends Structure {
-		public long kernelTime;
-		public long userTime;
-		public long createTime;
-		public int waitTime;
+		public LARGE_INTEGER kernelTime;
+		public LARGE_INTEGER userTime;
+		public LARGE_INTEGER createTime;
+		public ULONG waitTime;
 		public PVOID startAddress;
 		public CLIENT_ID clientId;
-		public int priority;
-		public int basePriority;
-		public int contextSwitches;
+		public LONG priority;
+		public LONG basePriority;
+		public ULONG contextSwitches;
 		public int threadState;
-		public int waitReason; // Should be an enum
+		public int waitReason;
 	}
 
 	@FieldOrder({"nextEntryOffset", "numberOfThreads", "workingSetPrivateSize", "hardFaultCount",
