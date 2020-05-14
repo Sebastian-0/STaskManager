@@ -14,6 +14,7 @@ package taskmanager.ui.processdialog;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
 import taskmanager.ui.SimpleGridBagLayout;
+import taskmanager.ui.StatusUtils;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -44,24 +45,7 @@ public class InformationPanel extends JPanel {
 	}
 
 	private void updateStatusLabelText() {
-		statusLabel.setText("Status: " + statusToText(process.status));
-	}
-
-	private String statusToText(Status status) {
-		switch (status) {
-			case Running:
-			case Sleeping:
-				return "Running";
-			case Waiting:
-				return "Disk sleep";
-			case Zombie:
-				return "Zombie";
-			case Suspended:
-				return "Suspended";
-			case Dead:
-				return "DEAD";
-		}
-		return "Unknown";
+		statusLabel.setText("Status: " + StatusUtils.name(process.status));
 	}
 
 	public void processDied() {

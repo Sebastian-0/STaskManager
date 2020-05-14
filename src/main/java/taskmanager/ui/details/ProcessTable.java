@@ -19,6 +19,7 @@ import taskmanager.filter.AndFilter;
 import taskmanager.filter.Filter;
 import taskmanager.filter.concrete.UserNameFilter;
 import taskmanager.ui.ColorUtils;
+import taskmanager.ui.StatusUtils;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 
@@ -57,8 +58,11 @@ import java.util.stream.IntStream;
 
 public class ProcessTable extends JTable {
 	public enum Columns {
+		// TODO For some reason both these constants and visibleColumns need to be in the same order to avoid problems.
+		//      this enum determines the default order and visibleColumns determine the default widths
 		FileName("Process name", 180, new Process.FileNameComparator()),
 		Pid("PID", 65, new Process.IdComparator()),
+		Status("Status", 30, new Process.StatusComparator()),
 		DeathTime("Death time", 100, new Process.DeadTimestampsComparator()),
 		UserName("User name", 75, new Process.UserNameComparator()),
 		Cpu("CPU", 75, new Process.CpuUsageComparator()),
@@ -145,6 +149,7 @@ public class ProcessTable extends JTable {
 		if (showDeadProcesses) {
 			visibleColumns.add(Columns.DeathTime); // TODO Can't disable Death Time
 		}
+		visibleColumns.add(Columns.Status);
 		visibleColumns.add(Columns.UserName);
 		visibleColumns.add(Columns.Cpu);
 		visibleColumns.add(Columns.PrivateWorkingSet);
@@ -306,6 +311,7 @@ public class ProcessTable extends JTable {
 				Process process = processes.get(i);
 				trySetData(Columns.FileName, i, process.fileName);
 				trySetData(Columns.Pid, i, process.id);
+				trySetData(Columns.Status, i, StatusUtils.letter(process.status));
 				trySetData(Columns.UserName, i, process.userName);
 				trySetData(Columns.DeathTime, i, TextUtils.valueToString(
 						(long) ((System.currentTimeMillis() - process.deathTimestamp) / 1000f * Config.DOUBLE_TO_LONG),

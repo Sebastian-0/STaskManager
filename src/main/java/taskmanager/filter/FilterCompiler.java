@@ -19,6 +19,7 @@ import taskmanager.filter.concrete.DescriptionFilter;
 import taskmanager.filter.concrete.MemoryFilter;
 import taskmanager.filter.concrete.PidFilter;
 import taskmanager.filter.concrete.ProcessNameFilter;
+import taskmanager.filter.concrete.StatusFilter;
 import taskmanager.filter.concrete.UserNameFilter;
 import taskmanager.ui.details.ProcessTable.Columns;
 
@@ -32,6 +33,7 @@ public class FilterCompiler { // TODO Get rid of dependency on ProcessTable.Colu
 	public enum Tag {
 		Pid("pid", Columns.Pid.name, new Color(230, 230, 230)),
 		ProcessName("name", Columns.FileName.name, new Color(230, 230, 230)),
+		Status("stat", Columns.Status.name, new Color(230, 230, 230)),
 		UserName("user", Columns.UserName.name, new Color(230, 230, 230)),
 		Cpu("cpu", Columns.Cpu.name, new Color(188, 231, 255)),
 		Memory("mem", Columns.PrivateWorkingSet.name, new Color(244, 205, 255)),
@@ -114,6 +116,8 @@ public class FilterCompiler { // TODO Get rid of dependency on ProcessTable.Colu
 				return new PidFilter(text);
 			case ProcessName:
 				return new ProcessNameFilter(text);
+			case Status:
+				return new StatusFilter(text);
 			case UserName:
 				return new UserNameFilter(text);
 			case Cpu:

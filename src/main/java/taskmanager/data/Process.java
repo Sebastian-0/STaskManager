@@ -185,6 +185,13 @@ public class Process {
 		}
 	}
 
+	public static class StatusComparator extends ProcessComparator {
+		@Override
+		public int doCompare(Process o1, Process o2) {
+			return Character.compare(o1.status.name().charAt(0), o2.status.name().charAt(0));
+		}
+	}
+
 	public abstract static class ProcessComparator implements Comparator<Process> {
 		private boolean isInverted;
 

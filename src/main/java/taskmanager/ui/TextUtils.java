@@ -49,8 +49,9 @@ public class TextUtils {
 			long minutes = (value / 60) % 60;
 			long hours = ((value / 60) / 60) % 24;
 			long days = ((value / 60) / 60) / 24;
-			if (days > 0)
+			if (days > 0) {
 				return String.format("%02d:%02d:%02d:%02d", days, hours, minutes, seconds);
+			}
 			return String.format("%02d:%02d:%02d", hours, minutes, seconds);
 		} else if (type == ValueType.Time) {
 			double trueValue = value / (double) Config.DOUBLE_TO_LONG;
