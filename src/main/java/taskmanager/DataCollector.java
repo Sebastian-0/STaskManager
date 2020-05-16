@@ -75,23 +75,27 @@ public class DataCollector extends Thread {
 	}
 
 	@Override
-	public void run() {
-		do {
-			long startTime = System.currentTimeMillis();
-			collectSystemInformation(false);
-			long delta = System.currentTimeMillis() - startTime;
-			totalDataFetchTime += delta;
-			if (numDataFetches++ % 1000 == 0) {
-				LOGGER.info("Data collection duration: {}ms (avg: {}ms, runs: {})",
-						delta, String.format("%.1f", totalDataFetchTime / (float) numDataFetches), numDataFetches);
-			}
+	public void run() { // TODO Properly handle termination here, also fix the sleep IE catch
+		try {
+			do {
+				long startTime = System.currentTimeMillis();
+				collectSystemInformation(false);
+				long delta = System.currentTimeMillis() - startTime;
+				totalDataFetchTime += delta;
+				if (numDataFetches++ % 1000 == 0) {
+					LOGGER.info("Data collection duration: {}ms (avg: {}ms, runs: {})",
+							delta, String.format("%.1f", totalDataFetchTime / (float) numDataFetches), numDataFetches);
+				}
 
-			try {
-				Thread.sleep(Math.max(0, (long) (1000 / Config.getFloat(Config.KEY_UPDATE_RATE) - delta)));
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		} while (!uiCallback.hasTerminated());
+				try {
+					Thread.sleep(Math.max(0, (long) (1000 / Config.getFloat(Config.KEY_UPDATE_RATE) - delta)));
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			} while (!uiCallback.hasTerminated());
+		} catch (Throwable e) {
+			LOGGER.error("Unexpected error during data collection", e);
+		}
 	}
 
 	private void collectSystemInformation(boolean isInit) {
