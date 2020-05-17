@@ -52,7 +52,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 
 import static taskmanager.platform.win32.NtDllExt.THREAD_STATE_WAITING;
@@ -159,14 +158,14 @@ public class WindowsInformationLoader extends InformationLoader {
 
 	private void updateProcesses(SystemInformation systemInformation) {
 		List<ProcessInfo> newProcesses = fetchProcessList();
-		Set<Long> processIds = new HashSet<>();
+		Set<Long> newProcessIds = new HashSet<>();
 
 		if (newProcesses.isEmpty()) {
 			return;
 		}
 
 		for (ProcessInfo newProcess : newProcesses) {
-			processIds.add(newProcess.process.uniqueProcessId);
+			newProcessIds.add(newProcess.process.uniqueProcessId);
 			Process process = systemInformation.getProcessById(newProcess.process.uniqueProcessId);
 			if (process == null) {
 				process = new Process(nextProcessId++, newProcess.process.uniqueProcessId);
@@ -203,17 +202,7 @@ public class WindowsInformationLoader extends InformationLoader {
 			process.hasReadOnce = true;
 		}
 
-		// Remove old processes
-		ListIterator<Process> itr = systemInformation.processes.listIterator();
-		while (itr.hasNext()) {
-			Process process = itr.next();
-			if (!processIds.contains(process.id)) {
-				process.status = Status.Dead;
-				process.deathTimestamp = System.currentTimeMillis();
-				itr.remove();
-				systemInformation.deadProcesses.add(process);
-			}
-		}
+		updateDeadProcesses(systemInformation, newProcessIds);
 	}
 
 	private Status readProcessStatus(ProcessInfo process) {

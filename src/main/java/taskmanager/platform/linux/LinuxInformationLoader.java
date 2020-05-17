@@ -26,7 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -142,16 +141,7 @@ public class LinuxInformationLoader extends InformationLoader {
 		}
 
 		// Remove old processes
-		ListIterator<Process> itr = systemInformation.processes.listIterator();
-		while (itr.hasNext()) {
-			Process process = itr.next();
-			if (!newProcessIds.contains(process.id)) {
-				process.status = Status.Dead;
-				process.deathTimestamp = System.currentTimeMillis();
-				itr.remove();
-				systemInformation.deadProcesses.add(process);
-			}
-		}
+		updateDeadProcesses(systemInformation, newProcessIds);
 	}
 
 	private Set<Long> fetchProcessIds() {

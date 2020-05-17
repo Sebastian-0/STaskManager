@@ -4,7 +4,7 @@ import taskmanager.data.Status;
 
 import java.awt.Color;
 
-public class StatusUtils { // TODO We will need colors too, create an enum that mirrors the one in the data collector?
+public class StatusUtils { // TODO Create an enum that mirrors the one in the data collector?
 	public static String name(Status status) {
 		switch (status) {
 			case Running:
@@ -17,7 +17,7 @@ public class StatusUtils { // TODO We will need colors too, create an enum that 
 			case Suspended:
 				return "Suspended";
 			case Dead:
-				return "DEAD";
+				return "Dead";
 		}
 		return "Unknown";
 	}

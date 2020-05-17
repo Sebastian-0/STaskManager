@@ -17,6 +17,8 @@ import oshi.hardware.GraphicsCard;
 import oshi.hardware.HWDiskStore;
 import oshi.hardware.HWPartition;
 import oshi.hardware.NetworkIF;
+import taskmanager.data.Process;
+import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
 import taskmanager.data.SystemInformation.Disk;
 import taskmanager.data.SystemInformation.Gpu;
@@ -28,6 +30,8 @@ import taskmanager.platform.common.NvidiaGpuLoader;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Set;
 
 public abstract class InformationLoader {
 	private SystemInfo systemInfoLoader;
@@ -241,5 +245,21 @@ public abstract class InformationLoader {
 			return -1;
 		}
 		return 0;
+	}
+
+	protected void updateDeadProcesses(SystemInformation systemInformation, Set<Long> processIds) {
+		ListIterator<Process> itr = systemInformation.processes.listIterator();
+		while (itr.hasNext()) {
+			Process process = itr.next();
+			if (!processIds.contains(process.id)) {
+				if (!systemInformation.deadProcesses.contains(process)) {
+					process.status = Status.Dead;
+					process.deathTimestamp = System.currentTimeMillis();
+					systemInformation.deadProcesses.add(process);
+				} else {
+					itr.remove();
+				}
+			}
+		}
 	}
 }
