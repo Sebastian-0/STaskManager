@@ -12,7 +12,6 @@
 package taskmanager.ui.processdialog;
 
 import taskmanager.data.Process;
-import taskmanager.data.Status;
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.StatusUtils;
 
@@ -45,7 +44,8 @@ public class InformationPanel extends JPanel {
 	}
 
 	private void updateStatusLabelText() {
-		statusLabel.setText("Status: " + StatusUtils.name(process.status));
+		String colorInHex = Integer.toHexString(StatusUtils.color(process.status).getRGB() & 0xFFFFFF);
+		statusLabel.setText("<html>Status: <font color=#" + colorInHex + ">" + StatusUtils.name(process.status) + "</font></html>");
 	}
 
 	public void processDied() {

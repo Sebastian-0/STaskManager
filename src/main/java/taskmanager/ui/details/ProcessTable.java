@@ -14,6 +14,7 @@ package taskmanager.ui.details;
 import config.Config;
 import taskmanager.data.Process;
 import taskmanager.data.Process.ProcessComparator;
+import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
 import taskmanager.filter.AndFilter;
 import taskmanager.filter.Filter;
@@ -120,6 +121,7 @@ public class ProcessTable extends JTable {
 	private final CustomTableModel tableModel;
 	private ColumnHeader[] headers;
 	private int[] tableColumnToDataColumn;
+	private Process[] tableRowToProcess;
 
 	private final FontMetrics metrics;
 
@@ -131,8 +133,8 @@ public class ProcessTable extends JTable {
 
 	private final ProcessContextMenu contextMenu;
 
-	public ProcessTable(final ProcessDetailsCallback processDetailsCallback, SystemInformation systemInformation,
-							  boolean showDeadProcesses) {
+	public ProcessTable(ProcessDetailsCallback processDetailsCallback, SystemInformation systemInformation,
+						boolean showDeadProcesses) {
 		this.processCallback = processDetailsCallback;
 		this.systemInformation = systemInformation;
 		this.showDeadProcesses = showDeadProcesses;
@@ -300,6 +302,7 @@ public class ProcessTable extends JTable {
 
 			tableModel.data = new Object[processes.size()][tableModel.columns.length];
 			tableModel.color = new Color[processes.size()][tableModel.columns.length];
+			tableRowToProcess = new Process[processes.size()];
 
 			DecimalFormatSymbols symbols = new DecimalFormatSymbols();
 			symbols.setGroupingSeparator(' ');
@@ -309,6 +312,7 @@ public class ProcessTable extends JTable {
 
 			for (int i = 0; i < processes.size(); i++) {
 				Process process = processes.get(i);
+				tableRowToProcess[i] = process;
 				trySetData(Columns.FileName, i, process.fileName);
 				trySetData(Columns.Pid, i, process.id);
 				trySetData(Columns.Status, i, StatusUtils.letter(process.status));
@@ -511,6 +515,8 @@ public class ProcessTable extends JTable {
 	public class ProcessTableCellRenderer extends DefaultTableCellRenderer {
 		public static final int CELL_PADDING = 8;
 
+		public final Color defaultForeground = new Color(51, 51, 51);
+
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
 													   int row, int column) {
@@ -525,14 +531,31 @@ public class ProcessTable extends JTable {
 				}
 			}
 
+			Color background;
 			if (tableModel.color[row][realColumn] != null) {
-				result.setBackground(tableModel.color[row][realColumn]);
+				background = tableModel.color[row][realColumn];
 			} else {
 				if (row % 2 == 0) {
-					result.setBackground(Color.WHITE);
+					background = Color.WHITE;
 				} else {
-					result.setBackground(new Color(243, 243, 243));
+					background = new Color(243, 243, 243);
 				}
+			}
+
+			Color statusColor = StatusUtils.color(tableRowToProcess[row].status);
+			if (tableRowToProcess[row].status == Status.Running || tableRowToProcess[row].status == Status.Sleeping) {
+				statusColor = Color.WHITE; // We don't want this table to be filled with colored text as the default
+			}
+
+			if (name.equals(Columns.Status.name)) {
+				result.setBackground(ColorUtils.blend(statusColor, background, 50f/255));
+			} else {
+				result.setBackground(background);
+			}
+			if (statusColor != Color.WHITE) {
+				result.setForeground(statusColor);
+			} else {
+				result.setForeground(defaultForeground);
 			}
 
 			if (isSelected) {
