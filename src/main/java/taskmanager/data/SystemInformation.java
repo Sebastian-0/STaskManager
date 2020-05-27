@@ -54,7 +54,6 @@ public class SystemInformation {
 
 	public int totalProcesses;
 	public int totalThreads;
-	public int totalHandles;
 
 	public List<Process> processes;
 	public List<Process> deadProcesses;
@@ -70,6 +69,8 @@ public class SystemInformation {
 
 	/* Other system data */
 	public String userName;
+
+	public ExtraInformation extraInformation;
 
 	@SuppressWarnings("unchecked")
 	public SystemInformation() {
@@ -137,7 +138,6 @@ public class SystemInformation {
 
 		totalProcesses = other.totalProcesses;
 		totalThreads = other.totalThreads;
-		totalHandles = other.totalHandles;
 
 		copyProcesses(other);
 		copyNetworks(other);
@@ -145,6 +145,14 @@ public class SystemInformation {
 		copyGpus(other);
 
 		userName = other.userName;
+
+		if (extraInformation == null) {
+			if (other.extraInformation != null) {
+				extraInformation = other.extraInformation.copy();
+			}
+		} else {
+			extraInformation.copyFrom(other.extraInformation);
+		}
 	}
 
 	private void copyNetworks(SystemInformation other) {

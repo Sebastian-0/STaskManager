@@ -72,7 +72,7 @@ public class MemoryPanel extends JPanel {
 		JPanel realTimePanel = new JPanel();
 		inUsePanel = new InformationItemPanel("In use", ValueType.Bytes);
 		availablePanel = new InformationItemPanel("Available", ValueType.Bytes);
-		committedPanel = new RatioItemPanel("Committed", systemInformation.commitLimit);
+		committedPanel = new RatioItemPanel("Committed", ValueType.Bytes, systemInformation.commitLimit);
 		cachedPanel = new InformationItemPanel("Cached", ValueType.Bytes);
 		pagedPoolPanel = new InformationItemPanel("Paged pool", ValueType.Bytes);
 		nonpagedPoolPanel = new InformationItemPanel("Non-paged pool", ValueType.Bytes);

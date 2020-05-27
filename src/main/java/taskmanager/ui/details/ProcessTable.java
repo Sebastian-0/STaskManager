@@ -49,7 +49,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.font.TextAttribute;
 import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -304,11 +303,7 @@ public class ProcessTable extends JTable {
 			tableModel.color = new Color[processes.size()][tableModel.columns.length];
 			tableRowToProcess = new Process[processes.size()];
 
-			DecimalFormatSymbols symbols = new DecimalFormatSymbols();
-			symbols.setGroupingSeparator(' ');
 			DecimalFormat dfCpu = new DecimalFormat("##0.0");
-			DecimalFormat dfMemory = new DecimalFormat("###,###.##");
-			dfMemory.setDecimalFormatSymbols(symbols);
 
 			for (int i = 0; i < processes.size(); i++) {
 				Process process = processes.get(i);
@@ -334,7 +329,7 @@ public class ProcessTable extends JTable {
 					} else {
 						trySetColor(Columns.Cpu, i, selectColorCpu(cpuUsage));
 					}
-					trySetData(Columns.PrivateWorkingSet, i, dfMemory.format(process.privateWorkingSet.newest() / 1024) + " K");
+					trySetData(Columns.PrivateWorkingSet, i, TextUtils.valueToString(process.privateWorkingSet.newest() / 1024, ValueType.Raw) + " K");
 					trySetColor(Columns.PrivateWorkingSet, i, selectColorMemory(process.privateWorkingSet.newest() / (double) systemInformation.physicalMemoryTotal));
 				}
 				trySetData(Columns.CommandLine, i, process.commandLine);

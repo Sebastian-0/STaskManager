@@ -68,8 +68,9 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 		}
 		for (int i = 0; i < networkPanels.length; i++) {
 			GraphTypeButton button = networkPanels[i].createGraphButton(i);
-			if (systemInformation.networks[i].isEnabled) // TODO make this more versatile so that you can continuously add/remove interfaces
+			if (systemInformation.networks[i].isEnabled) { // TODO make this more versatile so that you can continuously add/remove interfaces
 				buttons.add(button);
+			}
 		}
 		for (int i = 0; i < gpuPanels.length; i++) {
 			GraphTypeButton button = gpuPanels[i].createGraphButton(i);
@@ -103,16 +104,17 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 	@Override
 	public void swapTo(GraphType type, int index) {
 		graphSelectionPanel.deselectAll();
-		if (type == GraphType.Cpu)
+		if (type == GraphType.Cpu) {
 			selectedPanelContainer.setViewportView(cpuPanel);
-		else if (type == GraphType.Memory)
+		} else if (type == GraphType.Memory) {
 			selectedPanelContainer.setViewportView(memoryPanel);
-		else if (type == GraphType.Disk)
+		} else if (type == GraphType.Disk) {
 			selectedPanelContainer.setViewportView(diskPanels[index]);
-		else if (type == GraphType.Network)
+		} else if (type == GraphType.Network) {
 			selectedPanelContainer.setViewportView(networkPanels[index]);
-		else if (type == GraphType.Gpu)
+		} else if (type == GraphType.Gpu) {
 			selectedPanelContainer.setViewportView(gpuPanels[index]);
+		}
 
 		revalidate();
 		repaint();

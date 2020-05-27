@@ -14,6 +14,8 @@ package taskmanager.ui.performance.cpu;
 import config.Config;
 import taskmanager.Measurements;
 import taskmanager.data.SystemInformation;
+import taskmanager.platform.linux.LinuxExtraInformation;
+import taskmanager.platform.win32.WindowsExtraInformation;
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
@@ -21,6 +23,7 @@ import taskmanager.ui.performance.GraphPanel.ShortToLong;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
 import taskmanager.ui.performance.InformationItemPanel;
+import taskmanager.ui.performance.RatioItemPanel;
 import taskmanager.ui.performance.TimelineGraphPanel;
 import taskmanager.ui.performance.TimelineGroup;
 
@@ -40,9 +43,14 @@ public class CpuPanel extends JPanel {
 
 	private final InformationItemPanel utilizationLabel;
 	private final InformationItemPanel processesLabel;
-	private final InformationItemPanel handlesLabel;
 	private final InformationItemPanel threadsLabel;
 	private final InformationItemPanel uptimeLabel;
+
+	// Windows specific
+	private final InformationItemPanel handlesLabel;
+
+	// Linux specific
+	private final RatioItemPanel fileDescriptorsLabel;
 
 	private GraphTypeButton connectedButton;
 
@@ -74,15 +82,20 @@ public class CpuPanel extends JPanel {
 		utilizationLabel = new InformationItemPanel("Utilization", ValueType.Percentage);
 		processesLabel = new InformationItemPanel("Processes", ValueType.Raw);
 		threadsLabel = new InformationItemPanel("Threads", ValueType.Raw);
-		handlesLabel = new InformationItemPanel("Handles", ValueType.Raw);
 		uptimeLabel = new InformationItemPanel("Uptime", ValueType.TimeFull);
+		handlesLabel = new InformationItemPanel("Handles", ValueType.Raw);
+		fileDescriptorsLabel = new RatioItemPanel("Open file descriptors", ValueType.Raw);
 
 		SimpleGridBagLayout realTimeLayout = new SimpleGridBagLayout(realTimePanel);
 		realTimeLayout.addToGrid(utilizationLabel, 0, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
 		realTimeLayout.addToGrid(processesLabel, 1, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
 		realTimeLayout.addToGrid(threadsLabel, 0, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		realTimeLayout.addToGrid(handlesLabel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
 		realTimeLayout.addToGrid(uptimeLabel, 0, 2, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+		if (systemInformation.extraInformation instanceof WindowsExtraInformation) {
+			realTimeLayout.addToGrid(handlesLabel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
+			realTimeLayout.addToGrid(fileDescriptorsLabel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+		}
 
 		SimpleGridBagLayout layout = new SimpleGridBagLayout(this);
 		layout.addToGrid(labelHeader, 0, 0, 1, 1, GridBagConstraints.WEST);
@@ -118,8 +131,16 @@ public class CpuPanel extends JPanel {
 		utilizationLabel.updateValue(cpuUsage.newest());
 		processesLabel.updateValue(systemInformation.totalProcesses);
 		threadsLabel.updateValue(systemInformation.totalThreads);
-		handlesLabel.updateValue(systemInformation.totalHandles);
 		uptimeLabel.updateValue(systemInformation.uptime);
+
+		if (systemInformation.extraInformation instanceof WindowsExtraInformation) {
+			WindowsExtraInformation extraInformation = (WindowsExtraInformation) systemInformation.extraInformation;
+			handlesLabel.updateValue(extraInformation.handles);
+		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
+			LinuxExtraInformation extraInformation = (LinuxExtraInformation) systemInformation.extraInformation;
+			fileDescriptorsLabel.setMaximum(extraInformation.openFileDescriptorsLimit);
+			fileDescriptorsLabel.updateValue(extraInformation.openFileDescriptors);
+		}
 	}
 
 

@@ -16,9 +16,13 @@ import taskmanager.ui.TextUtils.ValueType;
 
 public class RatioItemPanel extends InformationItemPanel {
 	private long maximum;
-	
-	public RatioItemPanel(String header, long maximum) {
-		super(header, ValueType.Bytes);
+
+	public RatioItemPanel(String header, ValueType type) {
+		this(header, type, Long.MAX_VALUE);
+	}
+
+	public RatioItemPanel(String header, ValueType type, long maximum) {
+		super(header, type);
 		this.maximum = maximum;
 	}
 
@@ -28,6 +32,6 @@ public class RatioItemPanel extends InformationItemPanel {
 	
 	@Override
 	public void updateValue(long value) {
-		valueLabel.setText(TextUtils.ratioToString(value, maximum, ValueType.Bytes));
+		valueLabel.setText(TextUtils.ratioToString(value, maximum, type));
 	}
 }

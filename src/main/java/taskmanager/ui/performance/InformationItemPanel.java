@@ -27,7 +27,7 @@ import java.awt.GridBagConstraints;
 import java.awt.Stroke;
 
 public class InformationItemPanel extends JPanel {
-	private final ValueType type;
+	protected final ValueType type;
 	private final Stroke stroke;
 	private final Color color;
 

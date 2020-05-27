@@ -14,9 +14,19 @@ package taskmanager.ui;
 import config.Config;
 
 import java.awt.FontMetrics;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 
 public class TextUtils {
 	private static final String[] PREFIXES = {"", "K", "M", "G", "T", "P"};
+
+	private static final DecimalFormatSymbols FORMAT_SYMBOLS = new DecimalFormatSymbols();
+	public static final DecimalFormat FORMAT = new DecimalFormat("###,###.#");
+
+	static {
+		FORMAT_SYMBOLS.setGroupingSeparator(' ');
+		FORMAT.setDecimalFormatSymbols(FORMAT_SYMBOLS);
+	}
 
 	public enum ValueType {
 		Percentage,
@@ -43,7 +53,7 @@ public class TextUtils {
 		} else if (type == ValueType.BitsPerSecond) {
 			return bitsToString(value) + "ps";
 		} else if (type == ValueType.Millis) {
-			return value + "ms";
+			return formattedNumber(value) + "ms";
 		} else if (type == ValueType.TimeFull) {
 			long seconds = value % 60;
 			long minutes = (value / 60) % 60;
@@ -56,18 +66,18 @@ public class TextUtils {
 		} else if (type == ValueType.Time) {
 			double trueValue = value / (double) Config.DOUBLE_TO_LONG;
 			if (trueValue > 60*60*24) {
-				return String.format("%.1f d", trueValue / (60 * 60 * 24));
+				return formattedNumber(trueValue / (60 * 60 * 24)) + " d";
 			} else if (trueValue > 60*60) {
-				return String.format("%.1f h", trueValue / (60 * 60));
+				return formattedNumber(trueValue / (60 * 60)) + " h";
 			} else if (trueValue > 60) {
-				return String.format("%.1f m", trueValue / 60);
+				return formattedNumber(trueValue / 60) + " m";
 			} else {
-				return String.format("%.1f s", trueValue);
+				return formattedNumber(trueValue) + " s";
 			}
 		} else if (type == ValueType.Temperature) {
-			return value + " C";
+			return formattedNumber(value) + " C";
 		} else if (type == ValueType.Raw) {
-			return Long.toString(value);
+			return formattedNumber(value);
 		}
 		throw new UnsupportedOperationException("Not implemented for: " + type);
 	}
@@ -75,9 +85,9 @@ public class TextUtils {
 	public static String ratioToString(long value1, long value2, ValueType type) {
 		if (type == ValueType.Bytes) {
 			int factor = Math.max(getFactor(value1), getFactor(value2));
-			return applyFactor(value1, factor, 1) + "/" + applyFactor(value2, factor, 1) + " " + PREFIXES[factor] + "B";
+			return applyFactor(value1, factor, 1) + " / " + applyFactor(value2, factor, 1) + " " + PREFIXES[factor] + "B";
 		} else if (type == ValueType.Raw) {
-			return value1 + "/" + value2;
+			return formattedNumber(value1) + " / " + formattedNumber(value2);
 		}
 		throw new UnsupportedOperationException("Not implemented for: " + type);
 	}
@@ -119,7 +129,15 @@ public class TextUtils {
 		if (factor > 0) {
 			return String.format("%." + decimals + "f", value / 1024f);
 		}
-		return String.format("%d", value);
+		return formattedNumber(value);
+	}
+
+	private static String formattedNumber(long value) {
+		return FORMAT.format(value);
+	}
+
+	private static String formattedNumber(double value) {
+		return FORMAT.format(value);
 	}
 
 

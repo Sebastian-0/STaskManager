@@ -69,6 +69,7 @@ public class WindowsInformationLoader extends InformationLoader {
 	public void init(SystemInformation systemInformation) {
 		super.init(systemInformation);
 
+		systemInformation.extraInformation = new WindowsExtraInformation();
 		systemInformation.physicalMemoryTotalInstalled = readPhysicalMemory();
 		systemInformation.reservedMemory = systemInformation.physicalMemoryTotalInstalled - systemInformation.physicalMemoryTotal;
 
@@ -117,6 +118,7 @@ public class WindowsInformationLoader extends InformationLoader {
 	@Override
 	public void update(SystemInformation systemInformation) {
 		super.update(systemInformation);
+		WindowsExtraInformation extraInformation = (WindowsExtraInformation) systemInformation.extraInformation;
 
 		updateTotalCpuTime();
 		updateProcesses(systemInformation);
@@ -124,7 +126,7 @@ public class WindowsInformationLoader extends InformationLoader {
 		PERFORMANCE_INFORMATION performanceInfo = fetchPerformanceInformation();
 		systemInformation.totalProcesses = performanceInfo.ProcessCount.intValue();
 		systemInformation.totalThreads = performanceInfo.ThreadCount.intValue();
-		systemInformation.totalHandles = performanceInfo.HandleCount.intValue();
+		extraInformation.handles = performanceInfo.HandleCount.intValue();
 
 		systemInformation.commitLimit = performanceInfo.CommitLimit.longValue() * systemInformation.pageSize;
 		systemInformation.commitUsed = performanceInfo.CommitTotal.longValue() * systemInformation.pageSize;
@@ -184,8 +186,9 @@ public class WindowsInformationLoader extends InformationLoader {
 					readFileDescription(process);
 				}
 
-				if (process.description.isEmpty())
+				if (process.description.isEmpty()) {
 					process.description = process.fileName;
+				}
 			}
 
 			process.status = readProcessStatus(newProcess);
@@ -250,19 +253,22 @@ public class WindowsInformationLoader extends InformationLoader {
 			peb.read();
 
 			mem = new Memory(new RTL_USER_PROCESS_PARAMETERS().size());
-			if (!readProcessMemory(handle, mem, peb.processParameters, process, RTL_USER_PROCESS_PARAMETERS.class.getSimpleName()))
+			if (!readProcessMemory(handle, mem, peb.processParameters, process, RTL_USER_PROCESS_PARAMETERS.class.getSimpleName())) {
 				return false;
+			}
 			RTL_USER_PROCESS_PARAMETERS parameters = Structure.newInstance(NtDllExt.RTL_USER_PROCESS_PARAMETERS.class, mem);
 			parameters.read();
 
 			mem = new Memory(parameters.imagePathName.length + 2);
-			if (!readProcessMemory(handle, mem, parameters.imagePathName.buffer, process, "image path"))
+			if (!readProcessMemory(handle, mem, parameters.imagePathName.buffer, process, "image path")) {
 				return false;
+			}
 			process.filePath = mem.getWideString(0);
 
 			mem = new Memory(parameters.commandLine.length + 2);
-			if (!readProcessMemory(handle, mem, parameters.commandLine.buffer, process, "command line"))
+			if (!readProcessMemory(handle, mem, parameters.commandLine.buffer, process, "command line")) {
 				return false;
+			}
 			process.commandLine = mem.getWideString(0);
 
 			HANDLEByReference tokenRef = new HANDLEByReference();

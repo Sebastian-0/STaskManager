@@ -49,6 +49,7 @@ public class LinuxInformationLoader extends InformationLoader {
 	public void init(SystemInformation systemInformation) {
 		super.init(systemInformation);
 
+		systemInformation.extraInformation = new LinuxExtraInformation();
 		systemInformation.physicalMemoryTotalInstalled = systemInformation.physicalMemoryTotal;
 		systemInformation.processes.add(new Process(nextProcessId++, 0));
 	}
@@ -153,7 +154,9 @@ public class LinuxInformationLoader extends InformationLoader {
 		if (fileNr.isEmpty()) {
 			LOGGER.warn("Failed to read /proc/sys/fs/file-nr!");
 		} else {
-			systemInformation.totalHandles = Integer.parseInt(fileNr.split("\\s+")[0]);
+			LinuxExtraInformation extraInformation = (LinuxExtraInformation) systemInformation.extraInformation;
+			extraInformation.openFileDescriptors = Integer.parseInt(fileNr.split("\\s+")[0]);
+			extraInformation.openFileDescriptorsLimit = Integer.parseInt(fileNr.split("\\s+")[2]);
 		}
 	}
 
