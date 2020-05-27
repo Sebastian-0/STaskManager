@@ -82,6 +82,7 @@ public class LinuxInformationLoader extends InformationLoader {
 	private void updateProcesses(SystemInformation systemInformation) {
 		Set<Long> newProcessIds = fetchProcessIds();
 
+		int totalThreadCount = 0;
 		for (Long pid : newProcessIds) {
 			Process process = findProcess(systemInformation.processes, pid);
 			if (process == null) {
@@ -137,24 +138,32 @@ public class LinuxInformationLoader extends InformationLoader {
 				process.updateCpu(stime, utime, (currentCpuTime - lastCpuTime), 1); // Set cores to 1 since the total time is already divided by cores
 
 				process.status = parseStatus(tokens[2]);
+
+				totalThreadCount += Integer.parseInt(tokens[19]);
 			}
 		}
 
 		// Remove old processes
 		updateDeadProcesses(systemInformation, newProcessIds);
+
+		systemInformation.totalProcesses = newProcessIds.size();
+		systemInformation.totalThreads = totalThreadCount;
+
+		String fileNr = FileUtil.getStringFromFile("/proc/sys/fs/file-nr");
+		if (fileNr.isEmpty()) {
+			LOGGER.warn("Failed to read /proc/sys/fs/file-nr!");
+		} else {
+			systemInformation.totalHandles = Integer.parseInt(fileNr.split("\\s+")[0]);
+		}
 	}
 
 	private Set<Long> fetchProcessIds() {
 		Set<Long> processIds = new HashSet<>();
 		File processDir = new File(PROC_PATH);
-		File[] files = processDir.listFiles();
+		File[] files = processDir.listFiles(f -> f.isDirectory() && f.getName().matches("[0-9]+"));
 		if (files != null) {
 			for (File file : files) {
-				String fileName = file.getName();
-				if (file.isDirectory() && fileName.matches("[0-9]+")) {
-					Long pid = Long.parseLong(fileName);
-					processIds.add(pid);
-				}
+				processIds.add(Long.parseLong(file.getName()));
 			}
 		}
 		return processIds;
