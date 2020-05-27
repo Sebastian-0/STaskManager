@@ -14,7 +14,7 @@ package taskmanager;
 import taskmanager.data.SystemInformation;
 
 public interface InformationUpdateCallback {
-	void init(SystemInformation systemInformation);
 	void update(SystemInformation systemInformation);
+	void dataCollectorFailed();
 	boolean hasTerminated();
 }

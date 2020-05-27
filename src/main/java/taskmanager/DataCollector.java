@@ -69,17 +69,21 @@ public class DataCollector extends Thread {
 		notifyAll();
 	}
 
-	public void init() {
+	public SystemInformation init() {
 		loader.init(systemInformationPrivate);
-		collectSystemInformation(true); // TODO This adds an extra measurement which causes the first two to have a time difference of 0 sec. Is this bad? Could be a good thing since the first measurements are 0 or incorrect?
+		// TODO This adds an extra measurement which causes the first two to have a time difference of 0 sec.
+		//  Is this bad? Could be a good thing since the first measurements are 0 or incorrect?
+		updateSystemInformation();
+		return systemInformationShared;
 	}
 
 	@Override
-	public void run() { // TODO Properly handle termination here, also fix the sleep IE catch
+	public void run() {
 		try {
 			do {
 				long startTime = System.currentTimeMillis();
-				collectSystemInformation(false);
+				updateSystemInformation();
+				updateUi();
 				long delta = System.currentTimeMillis() - startTime;
 				totalDataFetchTime += delta;
 				if (numDataFetches++ % 1000 == 0) {
@@ -89,29 +93,25 @@ public class DataCollector extends Thread {
 
 				try {
 					Thread.sleep(Math.max(0, (long) (1000 / Config.getFloat(Config.KEY_UPDATE_RATE) - delta)));
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+				} catch (InterruptedException ignored) {
 				}
 			} while (!uiCallback.hasTerminated());
 		} catch (Throwable e) {
 			LOGGER.error("Unexpected error during data collection", e);
+			uiCallback.dataCollectorFailed();
 		}
 	}
 
-	private void collectSystemInformation(boolean isInit) {
+	private void updateSystemInformation() {
 		loader.update(systemInformationPrivate);
-		updateUi(isInit);
-	}
-
-	private void updateUi(boolean isInit) {
 		lockTransfer();
 		systemInformationShared.copyFrom(systemInformationPrivate);
 		unlockTransfer();
+	}
 
-		if (isInit) {
-			uiCallback.init(systemInformationShared);
-		} else if (systemInformationShared.processes.size() > 0) {
-			SwingUtilities.invokeLater(() -> uiCallback.update(systemInformationShared)); // TODO Move the SwingUtilities-call to the UI!
+	private void updateUi() {
+		if (systemInformationShared.processes.size() > 0) {
+			uiCallback.update(systemInformationShared);
 		}
 	}
 }

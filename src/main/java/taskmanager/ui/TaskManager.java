@@ -27,6 +27,7 @@ import taskmanager.ui.processdialog.ProcessDialog;
 import taskmanager.ui.tray.Tray;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
@@ -51,6 +52,9 @@ import java.util.Set;
 
 public class TaskManager extends JFrame implements InformationUpdateCallback, ProcessDetailsCallback, ApplicationCallback {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TaskManager.class);
+
+	private static final String ICON_LARGE_NAME = "icon_large";
+	private static final String ICON_SMALL_NAME = "icon_small";
 
 	private DataCollector dataCollector;
 	private SystemInformation systemInformation;
@@ -83,26 +87,12 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		addWindowStateListener(windowListener);
 		addComponentListener(componentListener);
 
-		if (!SystemTray.isSupported()) {
-			// TODO When we have settings in the program we should disable the tray minimization setting if this happens
-			LOGGER.warn("No system tray support! Disabling minimize to tray...");
-			Config.put(Config.KEY_MINIMIZE_TO_TRAY, "false"); // Force no tray minimization when we have no tray
-		} else {
-			try {
-				trayIcon = new Tray(this, TextureStorage.instance().getTexture("icon_small"));
-				SystemTray.getSystemTray().add(trayIcon);
-			} catch (AWTException e) {
-				LOGGER.error("Failed to create tray icon", e);
-				Config.put(Config.KEY_MINIMIZE_TO_TRAY, "false"); // Force no tray minimization when we have no tray
-			}
-		}
-
-		dataCollector.init();
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 	}
 
 	private void loadProgramIcon() {
-		Image image = TextureStorage.instance().getTexture("icon_large");
-		Image image16 = TextureStorage.instance().getTexture("icon_small");
+		Image image = TextureStorage.instance().getTexture(ICON_LARGE_NAME);
+		Image image16 = TextureStorage.instance().getTexture(ICON_SMALL_NAME);
 
 		List<Image> images = new ArrayList<Image>();
 		images.add(image);
@@ -110,9 +100,12 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		setIconImages(images);
 	}
 
-	@Override
-	public void init(SystemInformation systemInformationNew) {
+	public void init() {
+		SystemInformation systemInformationNew = dataCollector.init();
+
 		copyData(systemInformationNew);
+
+		initSystemTray();
 
 		processPanel = new ProcessPanel(this, this.systemInformation);
 		performancePanel = new PerformancePanel(this.systemInformation);
@@ -132,20 +125,35 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		setExtendedState(getPreviousExtendedState());
 		pack();
 
-		dataCollector.start();
-
 		setLocationRelativeTo(null);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
 		if (!shouldMinimizeToTray(getExtendedState())) {
 			setVisible(true);
 		}
+
+		dataCollector.start();
 	}
 
 	private void copyData(SystemInformation other) {
 		systemInformation.copyFrom(other);
 		systemInformation.processes.sort(comparator);
 		systemInformation.deadProcesses.sort(deadComparator);
+	}
+
+	private void initSystemTray() {
+		if (!SystemTray.isSupported()) {
+			// TODO When we have settings in the program we should disable the tray minimization setting if this happens
+			LOGGER.warn("No system tray support! Disabling minimize to tray...");
+			Config.put(Config.KEY_MINIMIZE_TO_TRAY, "false"); // Force no tray minimization when we have no tray
+		} else {
+			try {
+				trayIcon = new Tray(this, TextureStorage.instance().getTexture(ICON_SMALL_NAME));
+				SystemTray.getSystemTray().add(trayIcon);
+			} catch (AWTException e) {
+				LOGGER.error("Failed to create tray icon", e);
+				Config.put(Config.KEY_MINIMIZE_TO_TRAY, "false"); // Force no tray minimization when we have no tray
+			}
+		}
 	}
 
 	private Dimension getPreviousSize() {
@@ -164,41 +172,53 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 				trayIcon != null;
 	}
 
-
 	@Override
 	public void update(SystemInformation systemInformationNew) {
-		dataCollector.lockTransfer();
-		copyData(systemInformationNew);
-		dataCollector.unlockTransfer();
+		SwingUtilities.invokeLater(() -> {
+			dataCollector.lockTransfer();
+			copyData(systemInformationNew);
+			dataCollector.unlockTransfer();
 
-		processPanel.update();
-		performancePanel.update(systemInformation);
+			processPanel.update();
+			performancePanel.update(systemInformation);
 
-		Set<Long> openProcessIds = new HashSet<>();
-		for (Process process : systemInformation.processes) {
-			if (processDialogs.containsKey(process.uniqueId)) {
-				openProcessIds.add(process.uniqueId);
+			Set<Long> openProcessIds = new HashSet<>();
+			for (Process process : systemInformation.processes) {
+				if (processDialogs.containsKey(process.uniqueId)) {
+					openProcessIds.add(process.uniqueId);
+				}
 			}
-		}
 
-		Iterator<Entry<Long, ProcessDialog>> itr = processDialogs.entrySet().iterator();
-		while (itr.hasNext()) {
-			Entry<Long, ProcessDialog> entry = itr.next();
-			ProcessDialog dialog = entry.getValue();
-			if (!openProcessIds.contains(entry.getKey())) {
-				itr.remove();
-				dialog.processEnded();
-				deadProcessDialogs.put(entry.getKey(), dialog);
+			Iterator<Entry<Long, ProcessDialog>> itr = processDialogs.entrySet().iterator();
+			while (itr.hasNext()) {
+				Entry<Long, ProcessDialog> entry = itr.next();
+				ProcessDialog dialog = entry.getValue();
+				if (!openProcessIds.contains(entry.getKey())) {
+					itr.remove();
+					dialog.processEnded();
+					deadProcessDialogs.put(entry.getKey(), dialog);
+				}
 			}
-		}
 
-		processDialogs.forEach((id, d) -> d.update());
-		processDialogs.entrySet().removeIf(e -> !e.getValue().isVisible());
-		deadProcessDialogs.entrySet().removeIf(e -> !e.getValue().isVisible());
+			processDialogs.forEach((id, d) -> d.update());
+			processDialogs.entrySet().removeIf(e -> !e.getValue().isVisible());
+			deadProcessDialogs.entrySet().removeIf(e -> !e.getValue().isVisible());
 
-		if (trayIcon != null) {
-			trayIcon.update(systemInformation);
-		}
+			if (trayIcon != null) {
+				trayIcon.update(systemInformation);
+			}
+		});
+	}
+
+	@Override
+	public void dataCollectorFailed() {
+		JOptionPane.showMessageDialog(
+				this,
+				"<html>The taskmanager data collection encountered an internal error, the program will terminate! <br/>" +
+						"See the log file for details.</html>",
+				"Unexpected error",
+				JOptionPane.ERROR_MESSAGE);
+		exit();
 	}
 
 	@Override
@@ -260,7 +280,7 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		}
 	}
 
-	private WindowAdapter windowListener = new WindowAdapter() {
+	private final WindowAdapter windowListener = new WindowAdapter() {
 		@Override
 		public void windowClosing(WindowEvent e) {
 			synchronized (TaskManager.this) {
@@ -275,13 +295,15 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		}
 	};
 
-	private ComponentAdapter componentListener = new ComponentAdapter() {
+	private final ComponentAdapter componentListener = new ComponentAdapter() {
 		@Override
 		public void componentResized(ComponentEvent e) {
-			if ((getExtendedState() & MAXIMIZED_HORIZ) == 0)
+			if ((getExtendedState() & MAXIMIZED_HORIZ) == 0) {
 				Config.put(Config.KEY_LAST_WINDOW_WIDTH, "" + getWidth());
-			if ((getExtendedState() & MAXIMIZED_VERT) == 0)
+			}
+			if ((getExtendedState() & MAXIMIZED_VERT) == 0) {
 				Config.put(Config.KEY_LAST_WINDOW_HEIGHT, "" + getHeight());
+			}
 		}
 	};
 
@@ -299,6 +321,18 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 
 		SwingUtilities.invokeAndWait(() -> Thread.currentThread().setUncaughtExceptionHandler(new LoggedUncaughtExceptionHandler()));
 
-		new TaskManager();
+		TaskManager taskManager = new TaskManager();
+		try {
+			taskManager.init();
+		} catch (Throwable e) {
+			LOGGER.error("Failed to start!", e);
+			JOptionPane.showMessageDialog(
+					taskManager,
+					"<html>The taskmanager failed to start! <br/>" +
+							"See the log file for details.</html>",
+					"Unexpected error",
+					JOptionPane.ERROR_MESSAGE);
+			taskManager.exit();
+		}
 	}
 }
