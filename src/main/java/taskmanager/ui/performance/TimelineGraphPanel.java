@@ -13,7 +13,7 @@ package taskmanager.ui.performance;
 
 import config.Config;
 import taskmanager.Measurements;
-import taskmanager.data.SystemInformation.TopList;
+import taskmanager.data.TopList;
 import taskmanager.ui.TextUtils.ValueType;
 
 import javax.swing.JLabel;

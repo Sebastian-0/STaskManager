@@ -20,11 +20,11 @@ import oshi.hardware.NetworkIF;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
-import taskmanager.data.SystemInformation.Disk;
-import taskmanager.data.SystemInformation.Gpu;
-import taskmanager.data.SystemInformation.Gpu.Type;
-import taskmanager.data.SystemInformation.Network;
-import taskmanager.data.SystemInformation.TopList;
+import taskmanager.data.Disk;
+import taskmanager.data.Gpu;
+import taskmanager.data.Gpu.Type;
+import taskmanager.data.Network;
+import taskmanager.data.TopList;
 import taskmanager.platform.common.NvidiaGpuLoader;
 
 import java.net.SocketException;

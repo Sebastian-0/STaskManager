@@ -11,7 +11,7 @@
 
 package taskmanager.ui.performance.network;
 
-import taskmanager.data.SystemInformation.Network;
+import taskmanager.data.Network;
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
