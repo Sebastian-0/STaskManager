@@ -13,23 +13,35 @@ package taskmanager.platform.linux;
 
 import taskmanager.data.ExtraInformation;
 
-public class LinuxExtraInformation implements ExtraInformation {
-	public int openFileDescriptors;
-	public int openFileDescriptorsLimit;
+public class LinuxExtraInformation implements ExtraInformation<LinuxExtraInformation> {
+	public long openFileDescriptors;
+	public long openFileDescriptorsLimit;
+
+	public long bufferMemory;
+	public long cacheMemory;
+	public long sharedMemory;
+
+	public long swapSize;
+	public long swapUsed;
+
 
 	@Override
-	public ExtraInformation copy() {
+	public LinuxExtraInformation copy() {
 		LinuxExtraInformation extraInformation = new LinuxExtraInformation();
 		extraInformation.copyFrom(this);
 		return extraInformation;
 	}
 
 	@Override
-	public void copyFrom(ExtraInformation info) {
-		if (info instanceof LinuxExtraInformation) {
-			LinuxExtraInformation other = (LinuxExtraInformation) info;
-			openFileDescriptors = other.openFileDescriptors;
-			openFileDescriptorsLimit = other.openFileDescriptorsLimit;
-		}
+	public void copyFrom(LinuxExtraInformation other) {
+		openFileDescriptors = other.openFileDescriptors;
+		openFileDescriptorsLimit = other.openFileDescriptorsLimit;
+
+		bufferMemory = other.bufferMemory;
+		cacheMemory = other.cacheMemory;
+		sharedMemory = other.sharedMemory;
+
+		swapSize = other.swapSize;
+		swapUsed = other.swapUsed;
 	}
 }

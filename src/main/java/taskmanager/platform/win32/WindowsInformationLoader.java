@@ -128,11 +128,11 @@ public class WindowsInformationLoader extends InformationLoader {
 		systemInformation.totalThreads = performanceInfo.ThreadCount.intValue();
 		extraInformation.handles = performanceInfo.HandleCount.intValue();
 
-		systemInformation.commitLimit = performanceInfo.CommitLimit.longValue() * systemInformation.pageSize;
-		systemInformation.commitUsed = performanceInfo.CommitTotal.longValue() * systemInformation.pageSize;
+		extraInformation.commitLimit = performanceInfo.CommitLimit.longValue() * systemInformation.pageSize;
+		extraInformation.commitUsed = performanceInfo.CommitTotal.longValue() * systemInformation.pageSize;
 
-		systemInformation.kernelPaged = performanceInfo.KernelPaged.longValue() * systemInformation.pageSize;
-		systemInformation.kernelNonPaged = performanceInfo.KernelNonpaged.longValue() * systemInformation.pageSize;
+		extraInformation.kernelPaged = performanceInfo.KernelPaged.longValue() * systemInformation.pageSize;
+		extraInformation.kernelNonPaged = performanceInfo.KernelNonpaged.longValue() * systemInformation.pageSize;
 
 		Memory memory = new Memory(new SYSTEM_MEMORY_LIST_INFORMATION().size());
 		int status = NtDllExt.INSTANCE.NtQuerySystemInformation(
@@ -140,11 +140,11 @@ public class WindowsInformationLoader extends InformationLoader {
 		if (status == NtDllExt.STATUS_SUCCESS) {
 			SYSTEM_MEMORY_LIST_INFORMATION memoryInfo = Structure.newInstance(NtDllExt.SYSTEM_MEMORY_LIST_INFORMATION.class, memory);
 			memoryInfo.read();
-			systemInformation.modifiedMemory = memoryInfo.modifiedPageCount.longValue() * systemInformation.pageSize;
-			systemInformation.standbyMemory = 0;
+			extraInformation.modifiedMemory = memoryInfo.modifiedPageCount.longValue() * systemInformation.pageSize;
+			extraInformation.standbyMemory = 0;
 			systemInformation.freeMemory = (memoryInfo.freePageCount.longValue() + memoryInfo.zeroPageCount.longValue()) * systemInformation.pageSize;
 			for (int i = 0; i < memoryInfo.pageCountByPriority.length; i++) {
-				systemInformation.standbyMemory += memoryInfo.pageCountByPriority[i].longValue() * systemInformation.pageSize;
+				extraInformation.standbyMemory += memoryInfo.pageCountByPriority[i].longValue() * systemInformation.pageSize;
 			}
 		} else {
 			LOGGER.error("Failed to read detailed memory information, error code: {}", Integer.toHexString(status));

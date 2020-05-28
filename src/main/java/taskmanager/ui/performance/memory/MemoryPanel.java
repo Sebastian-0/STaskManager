@@ -13,6 +13,8 @@ package taskmanager.ui.performance.memory;
 
 import taskmanager.Measurements;
 import taskmanager.data.SystemInformation;
+import taskmanager.platform.linux.LinuxExtraInformation;
+import taskmanager.platform.win32.WindowsExtraInformation;
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
@@ -40,16 +42,22 @@ public class MemoryPanel extends JPanel {
 
 	private final InformationItemPanel inUsePanel;
 	private final InformationItemPanel availablePanel;
-	private final InformationItemPanel committedPanel;
+
+	// Windows specific
+	private final RatioItemPanel committedPanel;
 	private final InformationItemPanel cachedPanel;
 	private final InformationItemPanel pagedPoolPanel;
 	private final InformationItemPanel nonpagedPoolPanel;
+
+	// Linux specific
+	private final InformationItemPanel sharedPanel;
+	private final RatioItemPanel swapPanel;
 
 	private GraphTypeButton connectedButton;
 
 
 	public MemoryPanel(TimelineGroup timelineGroup, SystemInformation systemInformation) {
-		memoryAvailable = systemInformation.physicalMemoryUsed;
+		memoryAvailable = systemInformation.memoryUsed;
 
 		JLabel labelHeader = new JLabel("Memory");
 		labelHeader.setFont(labelHeader.getFont().deriveFont(24f));
@@ -62,9 +70,9 @@ public class MemoryPanel extends JPanel {
 
 		memoryGraph = new GraphPanel(GraphType.Memory, ValueType.Bytes);
 		timelineGraph = new TimelineGraphPanel(memoryGraph, labelMaxTime);
-		memoryComposition = new MemoryCompositionPanel();
+		memoryComposition = new MemoryCompositionPanel(systemInformation);
 
-		memoryGraph.addGraph(memoryAvailable, systemInformation.physicalMemoryTopList);
+		memoryGraph.addGraph(memoryAvailable, systemInformation.memoryUsedTopList);
 		timelineGraph.addGraph(memoryAvailable);
 		timelineGroup.add(timelineGraph);
 
@@ -72,10 +80,12 @@ public class MemoryPanel extends JPanel {
 		JPanel realTimePanel = new JPanel();
 		inUsePanel = new InformationItemPanel("In use", ValueType.Bytes);
 		availablePanel = new InformationItemPanel("Available", ValueType.Bytes);
-		committedPanel = new RatioItemPanel("Committed", ValueType.Bytes, systemInformation.commitLimit);
+		committedPanel = new RatioItemPanel("Committed", ValueType.Bytes);
 		cachedPanel = new InformationItemPanel("Cached", ValueType.Bytes);
 		pagedPoolPanel = new InformationItemPanel("Paged pool", ValueType.Bytes);
 		nonpagedPoolPanel = new InformationItemPanel("Non-paged pool", ValueType.Bytes);
+		sharedPanel = new InformationItemPanel("Shared memory", ValueType.Bytes);
+		swapPanel = new RatioItemPanel("Swap", ValueType.Bytes);
 
 		Font dataFont = inUsePanel.getFont().deriveFont(Font.BOLD, inUsePanel.getFont().getSize() + 3f);
 		inUsePanel.setFont(dataFont);
@@ -88,10 +98,15 @@ public class MemoryPanel extends JPanel {
 		SimpleGridBagLayout realTimeLayout = new SimpleGridBagLayout(realTimePanel);
 		realTimeLayout.addToGrid(inUsePanel, 0, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
 		realTimeLayout.addToGrid(availablePanel, 1, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		realTimeLayout.addToGrid(committedPanel, 0, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		realTimeLayout.addToGrid(cachedPanel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		realTimeLayout.addToGrid(pagedPoolPanel, 0, 2, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		realTimeLayout.addToGrid(nonpagedPoolPanel, 1, 2, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+		if (systemInformation.extraInformation instanceof WindowsExtraInformation) {
+			realTimeLayout.addToGrid(committedPanel, 0, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+			realTimeLayout.addToGrid(cachedPanel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+			realTimeLayout.addToGrid(pagedPoolPanel, 0, 2, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+			realTimeLayout.addToGrid(nonpagedPoolPanel, 1, 2, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
+			realTimeLayout.addToGrid(sharedPanel, 0, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+			realTimeLayout.addToGrid(swapPanel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+		}
 
 		SimpleGridBagLayout layout = new SimpleGridBagLayout(this);
 		layout.addToGrid(labelHeader, 0, 0, 1, 1, GridBagConstraints.WEST);
@@ -116,7 +131,7 @@ public class MemoryPanel extends JPanel {
 	public void update(SystemInformation systemInformation) {
 		labelMaxMemory.setText(TextUtils.valueToString(systemInformation.physicalMemoryTotal, ValueType.Bytes));
 
-		long memoryUsed = systemInformation.physicalMemoryUsed.newest();
+		long memoryUsed = systemInformation.memoryUsed.newest();
 
 		memoryGraph.setMaxDatapointValue(systemInformation.physicalMemoryTotal);
 		timelineGraph.setMaxDatapointValue(systemInformation.physicalMemoryTotal);
@@ -130,10 +145,20 @@ public class MemoryPanel extends JPanel {
 		// Labels
 		inUsePanel.updateValue(memoryUsed);
 		availablePanel.updateValue(systemInformation.physicalMemoryTotal - memoryUsed);
-		committedPanel.updateValue(systemInformation.commitUsed);
-		cachedPanel.updateValue(systemInformation.standbyMemory + systemInformation.modifiedMemory);
-		pagedPoolPanel.updateValue(systemInformation.kernelPaged);
-		nonpagedPoolPanel.updateValue(systemInformation.kernelNonPaged);
+
+		if (systemInformation.extraInformation instanceof WindowsExtraInformation) {
+			WindowsExtraInformation extraInformation = (WindowsExtraInformation) systemInformation.extraInformation;
+			committedPanel.setMaximum(extraInformation.commitLimit);
+			committedPanel.updateValue(extraInformation.commitUsed);
+			cachedPanel.updateValue(extraInformation.standbyMemory + extraInformation.modifiedMemory);
+			pagedPoolPanel.updateValue(extraInformation.kernelPaged);
+			nonpagedPoolPanel.updateValue(extraInformation.kernelNonPaged);
+		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
+			LinuxExtraInformation extraInformation = (LinuxExtraInformation) systemInformation.extraInformation;
+			sharedPanel.updateValue(extraInformation.sharedMemory);
+			swapPanel.setMaximum(extraInformation.swapSize);
+			swapPanel.updateValue(extraInformation.swapUsed);
+		}
 	}
 
 

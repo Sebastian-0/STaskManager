@@ -112,7 +112,7 @@ public class Tray extends TrayIcon {
 
 		setToolTip(String.format(" CPU: %s%n Memory: %s / %s",
 				TextUtils.valueToString(info.cpuUsageTotal.newest(), ValueType.Percentage),
-				TextUtils.valueToString(info.physicalMemoryUsed.newest(), ValueType.Bytes),
+				TextUtils.valueToString(info.memoryUsed.newest(), ValueType.Bytes),
 				TextUtils.valueToString(info.physicalMemoryTotal, ValueType.Bytes)));
 
 		if (graphTypeToDisplay != null) {
@@ -146,7 +146,7 @@ public class Tray extends TrayIcon {
 				ratios.add(itr.next() / (double) Config.DOUBLE_TO_LONG);
 			}
 		} else if (graphTypeToDisplay == GraphType.Memory) {
-			Iterator<Long> itr = info.physicalMemoryUsed.getRangeIterator(info.physicalMemoryUsed.size() - samples, info.physicalMemoryUsed.size() - 1);
+			Iterator<Long> itr = info.memoryUsed.getRangeIterator(info.memoryUsed.size() - samples, info.memoryUsed.size() - 1);
 			while (itr.hasNext()) {
 				ratios.add(itr.next() / (double) info.physicalMemoryTotal);
 			}

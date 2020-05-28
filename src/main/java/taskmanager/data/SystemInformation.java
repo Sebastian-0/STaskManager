@@ -25,24 +25,16 @@ public class SystemInformation {
 	public long uptime;
 
 	/* Memory data */
-	public long physicalMemoryTotalInstalled; // Includes reserved memory
-	public long physicalMemoryTotal;
-	public Measurements<Long> physicalMemoryUsed;
-	public Measurements<TopList> physicalMemoryTopList;
-	public long reservedMemory;
-
 	public long pageSize;
 
-	// Windows memory types
-	public long standbyMemory;
-	public long modifiedMemory;
+	public long physicalMemoryTotalInstalled; // Includes reserved memory
+	public long physicalMemoryTotal;
+	public Measurements<Long> memoryUsed;
+	public Measurements<TopList> memoryUsedTopList;
+
+	// Memory types shown in the memory composition (expanded in extraInformation)
+	public long reservedMemory;
 	public long freeMemory;
-
-	public long commitLimit;
-	public long commitUsed;
-
-	public long kernelPaged;
-	public long kernelNonPaged;
 
 	/* Processor data */
 	public int logicalProcessorCount;
@@ -74,8 +66,8 @@ public class SystemInformation {
 
 	@SuppressWarnings("unchecked")
 	public SystemInformation() {
-		physicalMemoryUsed = new MeasurementContainer<>(0L);
-		physicalMemoryTopList = new MeasurementContainer<>(TopList.EMPTY);
+		memoryUsed = new MeasurementContainer<>(0L);
+		memoryUsedTopList = new MeasurementContainer<>(TopList.EMPTY);
 		cpuUsagePerCore = new MeasurementContainer[0];
 		cpuUsageTotal = new MeasurementContainer<>((short) 0);
 		cpuTopList = new MeasurementContainer<>(TopList.EMPTY);
@@ -106,22 +98,13 @@ public class SystemInformation {
 
 		physicalMemoryTotalInstalled = other.physicalMemoryTotalInstalled; // Includes reserved memory
 		physicalMemoryTotal = other.physicalMemoryTotal;
-		physicalMemoryUsed.copyDelta(other.physicalMemoryUsed);
-		physicalMemoryTopList.copyDelta(other.physicalMemoryTopList);
+		memoryUsed.copyDelta(other.memoryUsed);
+		memoryUsedTopList.copyDelta(other.memoryUsedTopList);
+
 		reservedMemory = other.reservedMemory;
-
-		pageSize = other.pageSize;
-
-		// Windows memory types
-		standbyMemory = other.standbyMemory;
-		modifiedMemory = other.modifiedMemory;
 		freeMemory = other.freeMemory;
 
-		commitLimit = other.commitLimit;
-		commitUsed = other.commitUsed;
-
-		kernelPaged = other.kernelPaged;
-		kernelNonPaged = other.kernelNonPaged;
+		pageSize = other.pageSize;
 
 		/* Processor data */
 		logicalProcessorCount = other.logicalProcessorCount;

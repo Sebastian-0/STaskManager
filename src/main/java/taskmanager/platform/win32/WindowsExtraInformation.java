@@ -13,21 +13,36 @@ package taskmanager.platform.win32;
 
 import taskmanager.data.ExtraInformation;
 
-public class WindowsExtraInformation implements ExtraInformation {
+public class WindowsExtraInformation implements ExtraInformation<WindowsExtraInformation> {
 	public int handles;
 
+	public long standbyMemory;
+	public long modifiedMemory;
+
+	public long commitLimit;
+	public long commitUsed;
+
+	public long kernelPaged;
+	public long kernelNonPaged;
+
 	@Override
-	public ExtraInformation copy() {
+	public WindowsExtraInformation copy() {
 		WindowsExtraInformation extraInformation = new WindowsExtraInformation();
 		extraInformation.copyFrom(this);
 		return extraInformation;
 	}
 
 	@Override
-	public void copyFrom(ExtraInformation info) {
-		if (info instanceof WindowsExtraInformation) {
-			WindowsExtraInformation other = (WindowsExtraInformation) info;
-			handles = other.handles;
-		}
+	public void copyFrom(WindowsExtraInformation other) {
+		handles = other.handles;
+
+		standbyMemory = other.standbyMemory;
+		modifiedMemory = other.modifiedMemory;
+
+		commitLimit = other.commitLimit;
+		commitUsed = other.commitUsed;
+
+		kernelPaged = other.kernelPaged;
+		kernelNonPaged = other.kernelNonPaged;
 	}
 }

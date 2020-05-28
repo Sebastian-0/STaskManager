@@ -64,7 +64,21 @@ public class LinuxInformationLoader extends InformationLoader {
 	}
 
 	private void updateMemory(SystemInformation systemInformation) {
-		systemInformation.freeMemory = systemInformation.physicalMemoryTotal - systemInformation.physicalMemoryUsed.newest();
+		Map<String, String> memInfo = FileUtil.getKeyValueMapFromFile(PROC_PATH + "/meminfo", ":");
+		if (memInfo.isEmpty()) {
+			LOGGER.warn("Failed to read /proc/meminfo!");
+		} else {
+			// TODO Memory graph uses memory available while the composition uses memory available as defined by free
+			//  (not the same). Find out how linux defines memory available? Is it even possible?
+			LinuxExtraInformation extraInformation = (LinuxExtraInformation) systemInformation.extraInformation;
+			systemInformation.freeMemory = Long.parseLong(removeUnit(memInfo.get("MemFree"))) * 1024;
+			extraInformation.bufferMemory = Long.parseLong(removeUnit(memInfo.get("Buffers"))) * 1024;
+			extraInformation.cacheMemory = Long.parseLong(removeUnit(memInfo.get("Cached"))) * 1024 + Long.parseLong(removeUnit(memInfo.get("SReclaimable"))) * 1024;
+			extraInformation.sharedMemory = Long.parseLong(removeUnit(memInfo.get("Shmem"))) * 1024;
+
+			extraInformation.swapSize = Long.parseLong(removeUnit(memInfo.get("SwapTotal"))) * 1024;
+			extraInformation.swapUsed = extraInformation.swapSize - Long.parseLong(removeUnit(memInfo.get("SwapFree"))) * 1024;
+		}
 	}
 
 	private void updateTotalCpuTime() {
@@ -155,8 +169,8 @@ public class LinuxInformationLoader extends InformationLoader {
 			LOGGER.warn("Failed to read /proc/sys/fs/file-nr!");
 		} else {
 			LinuxExtraInformation extraInformation = (LinuxExtraInformation) systemInformation.extraInformation;
-			extraInformation.openFileDescriptors = Integer.parseInt(fileNr.split("\\s+")[0]);
-			extraInformation.openFileDescriptorsLimit = Integer.parseInt(fileNr.split("\\s+")[2]);
+			extraInformation.openFileDescriptors = Long.parseLong(fileNr.split("\\s+")[0]);
+			extraInformation.openFileDescriptorsLimit = Long.parseLong(fileNr.split("\\s+")[2]);
 		}
 	}
 
@@ -231,8 +245,11 @@ public class LinuxInformationLoader extends InformationLoader {
 		process.fileName = partialName;
 	}
 
-	private String removeUnit(String vmRSS) {
-		return vmRSS.substring(0, vmRSS.length() - 3);
+	private String removeUnit(String value) {
+		if (!value.toLowerCase().endsWith("kb")) {
+			throw new IllegalArgumentException("Currently only supports the kb unit, error parsing: " + value);
+		}
+		return value.substring(0, value.length() - 3);
 	}
 
 	private Status parseStatus(String token) {

@@ -148,7 +148,7 @@ public abstract class InformationLoader {
 
 	public void update(SystemInformation systemInformation) {
 		systemInformation.uptime = System.currentTimeMillis() / 1000 - systemInformation.bootTime;
-		systemInformation.physicalMemoryUsed.addValue(systemInformation.physicalMemoryTotal - systemInfoLoader.getHardware().getMemory().getAvailable());
+		systemInformation.memoryUsed.addValue(systemInformation.physicalMemoryTotal - systemInfoLoader.getHardware().getMemory().getAvailable());
 
 		// Update the CPU usage
 		double[] loadPerCore;
@@ -235,7 +235,7 @@ public abstract class InformationLoader {
 		// Memory
 		systemInformation.processes.sort((p1, p2) -> signum(p2.privateWorkingSet.newest() - p1.privateWorkingSet.newest()));
 		TopList memoryTopList = TopList.of(p -> p.privateWorkingSet.newest(), systemInformation.processes, topListSize);
-		systemInformation.physicalMemoryTopList.addValue(memoryTopList);
+		systemInformation.memoryUsedTopList.addValue(memoryTopList);
 	}
 
 	private static int signum(long value) {
