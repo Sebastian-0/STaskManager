@@ -37,9 +37,9 @@ public abstract class InformationLoader {
 	private SystemInfo systemInfoLoader;
 	private NvidiaGpuLoader nvidiaGpuLoader;
 
-	private NetworkIF[] networkInterfaces;
-	private HWDiskStore[] disks;
-	private GraphicsCard[] gpus;
+	private List<NetworkIF> networkInterfaces;
+	private List<HWDiskStore> disks;
+	private List<GraphicsCard> gpus;
 
 	private long[][] lastCpuLoadTicksPerCore;
 	private long[] lastCpuLoadTicks;
@@ -71,18 +71,18 @@ public abstract class InformationLoader {
 
 	private void initNetworkInterfaces(SystemInformation systemInformation) {
 		networkInterfaces = systemInfoLoader.getHardware().getNetworkIFs();
-		systemInformation.networks = new Network[networkInterfaces.length];
-		for (int i = 0; i < networkInterfaces.length; i++) {
+		systemInformation.networks = new Network[networkInterfaces.size()];
+		for (int i = 0; i < networkInterfaces.size(); i++) {
 			systemInformation.networks[i] = new Network();
-			systemInformation.networks[i].macAddress = networkInterfaces[i].getMacaddr(); // TODO Update this info periodically with networkInterfaces[i].setNetworkInterface(), should happen seldom though
-			systemInformation.networks[i].ipv4Addresses = networkInterfaces[i].getIPv4addr(); // ^
-			systemInformation.networks[i].ipv6Addresses = networkInterfaces[i].getIPv6addr(); //-|
-			systemInformation.networks[i].name = networkInterfaces[i].getDisplayName();       //-|
+			systemInformation.networks[i].macAddress = networkInterfaces.get(i).getMacaddr(); // TODO Update this info periodically with networkInterfaces.get(i).setNetworkInterface(), should happen seldom though
+			systemInformation.networks[i].ipv4Addresses = networkInterfaces.get(i).getIPv4addr(); // ^
+			systemInformation.networks[i].ipv6Addresses = networkInterfaces.get(i).getIPv6addr(); //-|
+			systemInformation.networks[i].name = networkInterfaces.get(i).getDisplayName();       //-|
 			systemInformation.networks[i].compactIpv6();
 
-			// TODO shj: Try using networkInterfaces[i].isConnectorPresent instead?
+			// TODO shj: Try using networkInterfaces.get(i).isConnectorPresent instead?
 			try { // TODO Move this to update to continuously add/remove interfaces, how fast is isUp()?
-				systemInformation.networks[i].isEnabled = networkInterfaces[i].queryNetworkInterface().isUp();
+				systemInformation.networks[i].isEnabled = networkInterfaces.get(i).queryNetworkInterface().isUp();
 			} catch (SocketException e) {
 				e.printStackTrace();
 			}
@@ -93,12 +93,12 @@ public abstract class InformationLoader {
 		disks = systemInfoLoader.getHardware().getDiskStores();
 		List<Disk> diskList = new ArrayList<>();
 		int idx = 0;
-		for (int i = 0; i < disks.length; i++) {
+		for (int i = 0; i < disks.size(); i++) {
 			Disk disk = new Disk();
 			disk.index = idx;
-			disk.size = disks[i].getSize();
-			disk.model = disks[i].getModel();
-			for (HWPartition partition : disks[i].getPartitions()) { // TODO Use UIID of the first partition to identify disks when new are added/removed
+			disk.size = disks.get(i).getSize();
+			disk.model = disks.get(i).getModel();
+			for (HWPartition partition : disks.get(i).getPartitions()) { // TODO Use UIID of the first partition to identify disks when new are added/removed
 				String name = partition.getMountPoint();
 				if (!name.isEmpty()) {
 					if (!name.equals("/")) {
@@ -111,7 +111,7 @@ public abstract class InformationLoader {
 					break;
 				}
 			}
-			if (disks[i].getPartitions().length > 0) {
+			if (disks.get(i).getPartitions().size() > 0) {
 				diskList.add(disk);
 				idx += 1;
 			}
@@ -122,14 +122,14 @@ public abstract class InformationLoader {
 
 	private void initGpus(SystemInformation systemInformation) {
 		gpus = systemInfoLoader.getHardware().getGraphicsCards();
-		systemInformation.gpus = new Gpu[gpus.length];
-		for (int i = 0; i < gpus.length; i++) {
+		systemInformation.gpus = new Gpu[gpus.size()];
+		for (int i = 0; i < gpus.size(); i++) {
 			Gpu gpu = new Gpu();
 			gpu.index = i;
-			gpu.name = gpus[i].getName();
-			gpu.deviceId = Integer.decode(gpus[i].getDeviceId());
-			gpu.vendor = gpus[i].getVendor();
-			gpu.totalMemory = gpus[i].getVRam();
+			gpu.name = gpus.get(i).getName();
+			gpu.deviceId = Integer.decode(gpus.get(i).getDeviceId());
+			gpu.vendor = gpus.get(i).getVendor();
+			gpu.totalMemory = gpus.get(i).getVRam();
 
 			String vendor = gpu.vendor.toLowerCase();
 			if (vendor.contains("nvidia")) { // TODO Does this work in windows?
@@ -187,25 +187,25 @@ public abstract class InformationLoader {
 	}
 
 	private void updateNetworkInterfaces(SystemInformation systemInformation) {
-		for (int i = 0; i < networkInterfaces.length; i++) {
-			long received = networkInterfaces[i].getBytesRecv();
-			long sent = networkInterfaces[i].getBytesSent();
-			networkInterfaces[i].updateAttributes();
-			systemInformation.networks[i].inRate.addValue(networkInterfaces[i].getBytesRecv() - received);
-			systemInformation.networks[i].outRate.addValue(networkInterfaces[i].getBytesSent() - sent);
+		for (int i = 0; i < networkInterfaces.size(); i++) {
+			long received = networkInterfaces.get(i).getBytesRecv();
+			long sent = networkInterfaces.get(i).getBytesSent();
+			networkInterfaces.get(i).updateAttributes();
+			systemInformation.networks[i].inRate.addValue(networkInterfaces.get(i).getBytesRecv() - received);
+			systemInformation.networks[i].outRate.addValue(networkInterfaces.get(i).getBytesSent() - sent);
 		}
 	}
 
 	private void updateDisks(SystemInformation systemInformation) {
 		int i = 0;
 		for (HWDiskStore disk : disks) {
-			if (disk.getPartitions().length > 0) {
+			if (disk.getPartitions().size() > 0) {
 				long w1 = disk.getWriteBytes();
 				long r1 = disk.getReadBytes();
 				long t1 = disk.getTimeStamp();
 				long a1 = disk.getTransferTime();
 
-				boolean diskExists = disk.updateAtrributes();
+				boolean diskExists = disk.updateAttributes();
 
 				long w2 = disk.getWriteBytes();
 				long r2 = disk.getReadBytes();

@@ -13,7 +13,7 @@ package taskmanager.platform.linux;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import oshi.software.os.linux.LinuxUserGroupInfo;
+import oshi.driver.linux.proc.UserGroupInfo;
 import oshi.util.FileUtil;
 import taskmanager.InformationLoader;
 import taskmanager.data.Process;
@@ -34,16 +34,10 @@ public class LinuxInformationLoader extends InformationLoader {
 
 	private static final String PROC_PATH = "/proc";
 
-	private final LinuxUserGroupInfo userGroupInfo;
-
 	private long lastCpuTime;
 	private long currentCpuTime;
 
 	private long nextProcessId;
-
-	public LinuxInformationLoader() {
-		userGroupInfo = new LinuxUserGroupInfo();
-	}
 
 	@Override
 	public void init(SystemInformation systemInformation) {
@@ -111,7 +105,7 @@ public class LinuxInformationLoader extends InformationLoader {
 			if (!process.hasReadOnce) {
 				if (!status.isEmpty()) {
 					String userId = status.getOrDefault("Uid", "-1").split("\\s+")[0];
-					process.userName = userGroupInfo.getGroupName(userId);
+					process.userName = UserGroupInfo.getGroupName(userId);
 					process.commandLine = FileUtil.getStringFromFile(processPath + "/cmdline").replaceAll("" + (char) 0, " ").trim();
 
 					// Read process name and path
