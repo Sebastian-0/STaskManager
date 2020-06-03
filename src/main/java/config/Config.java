@@ -13,7 +13,6 @@ package config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import taskmanager.ui.TaskManager;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,6 +46,7 @@ public class Config {
 	public static final String KEY_DEAD_PROCESS_KEEP_TIME = "deadProcessKeepTime";
 	public static final String KEY_SHOW_DEAD_PROCESSES = "showDeadProcesses";
 
+	public static final String KEY_ALWAYS_ON_TOP = "alwaysOnTop";
 	public static final String KEY_MINIMIZE_TO_TRAY = "minimizeToTray";
 	public static final String KEY_TRAY_GRAPH = "trayGraph";
 
@@ -131,6 +131,7 @@ public class Config {
 		PROPERTIES.put(KEY_GRAPH_MAX_PIXELS_PER_SEGMENT, "2");
 		PROPERTIES.put(KEY_METRIC_TOP_LIST_SIZE, "3");
 		PROPERTIES.put(KEY_LINK_TIMELINES, "true");
+		PROPERTIES.put(KEY_ALWAYS_ON_TOP, "false");
 		PROPERTIES.put(KEY_MINIMIZE_TO_TRAY, "false");
 		PROPERTIES.put(KEY_TRAY_GRAPH, "");
 		PROPERTIES.put(KEY_SHOW_PROCESSES_FOR_ALL_USERS, "true");

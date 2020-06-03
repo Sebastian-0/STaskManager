@@ -88,6 +88,7 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		addComponentListener(componentListener);
 
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		setAlwaysOnTop(Config.getBoolean(Config.KEY_ALWAYS_ON_TOP));
 	}
 
 	private void loadProgramIcon() {
