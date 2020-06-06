@@ -111,7 +111,10 @@ public class CpuPanel extends JPanel {
 		layout.addToGrid(timelineGraph, 0, 4, 2, 1, GridBagConstraints.HORIZONTAL, 1, 0);
 		layout.addToGrid(realTimePanel, 0, 5, 2, 1, GridBagConstraints.WEST);
 
-		setComponentPopupMenu(new CpuContextMenu(this));
+		CpuContextMenu contextMenu = new CpuContextMenu(this);
+		setComponentPopupMenu(contextMenu);
+		singleCpuPanel.setComponentPopupMenu(contextMenu);
+		multiCpuPanel.setComponentPopupMenu(contextMenu);
 	}
 
 

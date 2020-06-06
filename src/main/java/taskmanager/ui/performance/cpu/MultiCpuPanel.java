@@ -21,6 +21,7 @@ import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.TimelineGraphPanel;
 
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import java.awt.GridLayout;
 
 public class MultiCpuPanel extends JPanel {
@@ -49,6 +50,14 @@ public class MultiCpuPanel extends JPanel {
 		}
 
 		timeline.connectGraphs(graphs);
+	}
+
+	@Override
+	public void setComponentPopupMenu(JPopupMenu popup) {
+		super.setComponentPopupMenu(popup);
+		for (GraphPanel graph : graphs) {
+			graph.setComponentPopupMenu(popup);
+		}
 	}
 
 	public void update() {
