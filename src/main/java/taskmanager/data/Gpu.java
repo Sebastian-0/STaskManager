@@ -36,7 +36,12 @@ public class Gpu {
 	public int deviceId;
 	public String driverVersion;
 	public long totalMemory;
-	public boolean isSupported;
+
+	public boolean memorySupported;
+	public boolean utilizationSupported;
+	public boolean temperatureSupported;
+	public boolean encoderSupported;
+	public boolean decoderSupported;
 
 	public Gpu() {
 		usedMemory = new MeasurementContainer<>(0L);
@@ -68,6 +73,10 @@ public class Gpu {
 		driverVersion = other.driverVersion;
 		deviceId = other.deviceId;
 		totalMemory = other.totalMemory;
-		isSupported = other.isSupported;
+		memorySupported = other.memorySupported;
+		utilizationSupported = other.utilizationSupported;
+		temperatureSupported = other.temperatureSupported;
+		encoderSupported = other.encoderSupported;
+		decoderSupported = other.decoderSupported;
 	}
 }

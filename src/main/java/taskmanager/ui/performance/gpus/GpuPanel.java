@@ -76,15 +76,24 @@ public class GpuPanel extends JPanel {
 		// To make the graphs equally big (due to GBL)
 		labelMemory.setPreferredSize(labelTemperature.getPreferredSize());
 
-		if (gpu.isSupported) {
+		if (gpu.utilizationSupported) {
 			utilizationGraph = new GraphPanel(GraphType.Gpu, ValueType.Percentage);
-			encodeDecodeGraph = new GraphPanel(GraphType.Gpu, ValueType.Percentage);
-			memoryGraph = new GraphPanel(GraphType.Gpu, ValueType.Bytes);
-			temperatureGraph = new GraphPanel(GraphType.Gpu, ValueType.Temperature);
 		} else {
 			utilizationGraph = new UnsupportedHardwareGraphPanel(GraphType.Gpu);
+		}
+		if (gpu.encoderSupported || gpu.decoderSupported) {
+			encodeDecodeGraph = new GraphPanel(GraphType.Gpu, ValueType.Percentage);
+		} else {
 			encodeDecodeGraph = new UnsupportedHardwareGraphPanel(GraphType.Gpu);
+		}
+		if (gpu.memorySupported) {
+			memoryGraph = new GraphPanel(GraphType.Gpu, ValueType.Bytes);
+		} else {
 			memoryGraph = new UnsupportedHardwareGraphPanel(GraphType.Gpu);
+		}
+		if (gpu.temperatureSupported) {
+			temperatureGraph = new GraphPanel(GraphType.Gpu, ValueType.Temperature);
+		} else {
 			temperatureGraph = new UnsupportedHardwareGraphPanel(GraphType.Gpu);
 		}
 		timelineGraph = new TimelineGraphPanel(utilizationGraph, labelMaxTime);
