@@ -29,6 +29,7 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 
 	private final JScrollPane selectedPanelContainer;
 
+	private final TimelineGroup timelineGroup;
 	private final MemoryPanel memoryPanel;
 	private final CpuPanel cpuPanel;
 	private final DiskPanel[] diskPanels;
@@ -41,13 +42,13 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 		selectedPanelContainer = new JScrollPane();
 		selectedPanelContainer.setBorder(null);
 
-		TimelineGroup timelineGroup = new TimelineGroup();
-		timelineGroup.setLinked(Config.getBoolean(Config.KEY_LINK_TIMELINES));
+		timelineGroup = new TimelineGroup();
 		memoryPanel = new MemoryPanel(timelineGroup, systemInformation);
 		cpuPanel = new CpuPanel(timelineGroup, systemInformation);
 		diskPanels = new DiskPanel[systemInformation.disks.length];
 		networkPanels = new NetworkPanel[systemInformation.networks.length];
 		gpuPanels = new GpuPanel[systemInformation.gpus.length];
+		updateAreTimelinesLinked();
 
 		for (int i = 0; i < diskPanels.length; i++) {
 			diskPanels[i] = new DiskPanel(timelineGroup, systemInformation.disks[i]);
@@ -84,6 +85,10 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 		add(selectedPanelContainer);
 
 		selectedPanelContainer.setViewportView(cpuPanel);
+	}
+
+	public void updateAreTimelinesLinked() {
+		timelineGroup.setLinked(Config.getBoolean(Config.KEY_LINK_TIMELINES));
 	}
 
 	public void update(SystemInformation systemInformation) {

@@ -41,7 +41,7 @@ public class ProcessPanel extends JPanel {
 		FilterAttributeComboBox attribute = new FilterAttributeComboBox(liveTable.getVisibleColumns(), filterPanel);
 
 		liveTableScrollPane = new JScrollPane(liveTable);
-		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, liveTableScrollPane, new JScrollPane(deadTable));
+		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new JScrollPane(liveTable), new JScrollPane(deadTable));
 		splitPane.setResizeWeight(0.9);
 
 		container = new JPanel();
@@ -61,13 +61,13 @@ public class ProcessPanel extends JPanel {
 		gbl.setInsets(0, 0, borderWidth / 2, borderWidth);
 		gbl.addToGrid(attribute, 2, 2, 1, 1);
 
-		setShowDeadProcesses(Boolean.parseBoolean(Config.get(Config.KEY_SHOW_DEAD_PROCESSES)));
+		updateShouldShowDeadProcesses();
 	}
 
-	public void setShowDeadProcesses(boolean shouldShow) {
+	public void updateShouldShowDeadProcesses() {
 		container.remove(splitPane);
 		container.remove(liveTableScrollPane);
-		if (shouldShow) {
+		if (Config.getBoolean(Config.KEY_SHOW_DEAD_PROCESSES)) {
 			container.add(splitPane);
 		} else {
 			container.add(liveTableScrollPane);

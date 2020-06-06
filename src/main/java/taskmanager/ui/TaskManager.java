@@ -22,6 +22,7 @@ import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
 import taskmanager.ui.details.ProcessDetailsCallback;
 import taskmanager.ui.details.ProcessPanel;
+import taskmanager.ui.menubar.MenuBar;
 import taskmanager.ui.performance.PerformancePanel;
 import taskmanager.ui.processdialog.ProcessDialog;
 import taskmanager.ui.tray.Tray;
@@ -107,6 +108,8 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		copyData(systemInformationNew);
 
 		initSystemTray();
+
+		setJMenuBar(new MenuBar(this));
 
 		processPanel = new ProcessPanel(this, this.systemInformation);
 		performancePanel = new PerformancePanel(this.systemInformation);
@@ -241,6 +244,13 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		if (trayIcon != null) {
 			SystemTray.getSystemTray().remove(trayIcon);
 		}
+	}
+
+	@Override
+	public void configChanged() {
+		setAlwaysOnTop(Config.getBoolean(Config.KEY_ALWAYS_ON_TOP));
+		processPanel.updateShouldShowDeadProcesses();
+		performancePanel.updateAreTimelinesLinked();
 	}
 
 	@Override
