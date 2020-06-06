@@ -115,6 +115,7 @@ public class CpuPanel extends JPanel {
 		setComponentPopupMenu(contextMenu);
 		singleCpuPanel.setComponentPopupMenu(contextMenu);
 		multiCpuPanel.setComponentPopupMenu(contextMenu);
+		timelineGraph.setComponentPopupMenu(contextMenu);
 	}
 
 
