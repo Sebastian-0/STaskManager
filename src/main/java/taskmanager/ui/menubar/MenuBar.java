@@ -15,7 +15,12 @@ public class MenuBar extends JMenuBar {
 
         ButtonGroup updateRateGroup = new ButtonGroup();
         JMenu updateRateMenu = new JMenu("Update rate");
-        updateRateMenu.add(); // TODO here!
+        updateRateMenu.add(new UpdateRateRadioButtonMenuItem(updateRateGroup, 10));
+        updateRateMenu.add(new UpdateRateRadioButtonMenuItem(updateRateGroup, 5));
+        updateRateMenu.add(new UpdateRateRadioButtonMenuItem(updateRateGroup, 2));
+        updateRateMenu.add(new UpdateRateRadioButtonMenuItem(updateRateGroup, 1));
+        updateRateMenu.add(new UpdateRateRadioButtonMenuItem(updateRateGroup, 0.5));
+        updateRateMenu.add(new CustomUpdateRateRadioButtonMenuItem(updateRateGroup));
 
 
         JMenu viewMenu = new JMenu("View");
