@@ -25,12 +25,12 @@ import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
 
 public class ProcessPanel extends JPanel {
-	private ProcessTable liveTable;
-	private ProcessTable deadTable;
+	private final ProcessTable liveTable;
+	private final ProcessTable deadTable;
 
-	private JPanel container;
-	private JScrollPane liveTableScrollPane;
-	private JSplitPane splitPane;
+	private final JPanel container;
+	private final JScrollPane liveTableScrollPane;
+	private final JSplitPane splitPane;
 
 	public ProcessPanel(ProcessDetailsCallback processCallback, SystemInformation systemInformation) {
 		liveTable = new ProcessTable(processCallback, systemInformation, false);
@@ -41,24 +41,24 @@ public class ProcessPanel extends JPanel {
 		FilterAttributeComboBox attribute = new FilterAttributeComboBox(liveTable.getVisibleColumns(), filterPanel);
 
 		liveTableScrollPane = new JScrollPane(liveTable);
-		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new JScrollPane(liveTable), new JScrollPane(deadTable));
+		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, liveTableScrollPane, new JScrollPane(deadTable));
 		splitPane.setResizeWeight(0.9);
 
 		container = new JPanel();
 		container.setLayout(new GridLayout(1, 1));
 
-		int borderWidth = 10;
+		int insets = 10;
 		SimpleGridBagLayout gbl = new SimpleGridBagLayout(this);
-		gbl.setInsets(borderWidth, borderWidth, borderWidth / 2, borderWidth);
+		gbl.setInsets(insets, insets, insets / 2, insets);
 		gbl.addToGrid(container, 0, 0, 3, 1, GridBagConstraints.BOTH, 1, 1);
 
-		gbl.setInsets(0, borderWidth, borderWidth / 2, borderWidth);
+		gbl.setInsets(0, insets, insets / 2, insets);
 		gbl.addToGrid(showAllProcessesCheckbox, 0, 1, 3, 1, GridBagConstraints.WEST);
 
 		gbl.addToGrid(filterPanel, 0, 2, 1, 1, GridBagConstraints.BOTH, 1, 0);
-		gbl.setInsets(0, 0, borderWidth / 2, borderWidth/2);
+		gbl.setInsets(0, 0, insets / 2, insets/2);
 		gbl.addToGrid(attributeLabel, 1, 2, 1, 1);
-		gbl.setInsets(0, 0, borderWidth / 2, borderWidth);
+		gbl.setInsets(0, 0, insets / 2, insets);
 		gbl.addToGrid(attribute, 2, 2, 1, 1);
 
 		updateShouldShowDeadProcesses();
@@ -69,6 +69,7 @@ public class ProcessPanel extends JPanel {
 		container.remove(liveTableScrollPane);
 		if (Config.getBoolean(Config.KEY_SHOW_DEAD_PROCESSES)) {
 			container.add(splitPane);
+			splitPane.setLeftComponent(liveTableScrollPane); // Reset the table to avoid it getting disabled
 		} else {
 			container.add(liveTableScrollPane);
 		}
