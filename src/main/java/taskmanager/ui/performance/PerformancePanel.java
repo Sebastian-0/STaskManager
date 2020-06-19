@@ -90,9 +90,8 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 		if (dividerLocation != -1) {
 			setDividerLocation(dividerLocation);
 		}
-		addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, e -> {
-			Config.put(Config.KEY_LAST_PERFORMANCE_PANEL_SPLIT_LOCATION, String.valueOf(getDividerLocation()));
-		});
+		addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, e ->
+				Config.put(Config.KEY_LAST_PERFORMANCE_PANEL_SPLIT_LOCATION, String.valueOf(getDividerLocation())));
 	}
 
 	public void updateAreTimelinesLinked() {

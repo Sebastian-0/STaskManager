@@ -30,6 +30,8 @@ public class Config {
 	public static final String KEY_LAST_WINDOW_WIDTH = "lastWindowWidth";
 	public static final String KEY_LAST_WINDOW_HEIGHT = "lastWindowHeight";
 	public static final String KEY_LAST_EXTENDED_STATE = "lastExtendedState";
+
+	public static final String KEY_LAST_TAB = "lastTab";
 	public static final String KEY_LAST_PROCESS_LIST_SPLIT_RATIO = "lastProcessListSplitRatio";
 	public static final String KEY_LAST_PERFORMANCE_PANEL_SPLIT_LOCATION = "lastPerformancePanelSplitLocation";
 

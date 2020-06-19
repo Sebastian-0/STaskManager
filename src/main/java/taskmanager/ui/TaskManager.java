@@ -118,6 +118,9 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		tabbed.addTab("Processes", processPanel);
 		tabbed.addTab("Performance", performancePanel);
 
+		tabbed.setSelectedIndex(Config.getInt(Config.KEY_LAST_TAB, 0));
+		tabbed.addChangeListener(e -> Config.put(Config.KEY_LAST_TAB, String.valueOf(tabbed.getSelectedIndex())));
+
 		getContentPane().add(tabbed);
 
 		Dimension previousSize = getPreviousSize();
