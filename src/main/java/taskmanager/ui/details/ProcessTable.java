@@ -147,10 +147,10 @@ public class ProcessTable extends JTable {
 		visibleColumns = new ArrayList<>(); // TODO The order of these must (probably?) be the same as in the enum, fix that?
 		visibleColumns.add(Columns.FileName);
 		visibleColumns.add(Columns.Pid); // TODO Can't disable PID
+		visibleColumns.add(Columns.Status);
 		if (showDeadProcesses) {
 			visibleColumns.add(Columns.DeathTime); // TODO Can't disable Death Time
 		}
-		visibleColumns.add(Columns.Status);
 		visibleColumns.add(Columns.UserName);
 		visibleColumns.add(Columns.Cpu);
 		visibleColumns.add(Columns.PrivateWorkingSet);
