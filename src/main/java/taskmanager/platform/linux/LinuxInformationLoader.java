@@ -104,7 +104,7 @@ public class LinuxInformationLoader extends InformationLoader {
 			if (!process.hasReadOnce) {
 				if (!status.isEmpty()) {
 					String userId = status.getOrDefault("Uid", "-1").split("\\s+")[0];
-					process.userName = UserGroupInfo.getGroupName(userId);
+					process.userName = UserGroupInfo.getUser(userId);
 					process.commandLine = FileUtil.getStringFromFile(processPath + "/cmdline").replaceAll("" + (char) 0, " ").trim();
 
 					// Read process name and path
