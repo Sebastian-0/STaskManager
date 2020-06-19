@@ -258,7 +258,8 @@ public class ProcessTable extends JTable {
 	}
 
 	private void loadPreviousColumnSizes() {
-		String defaultValue = visibleColumns.stream().map(c -> Integer.toString(c.defaultWidth)).collect(Collectors.joining(";"));
+		String defaultValue = Arrays.stream(Columns.values()).map(c -> Integer.toString(c.defaultWidth)).collect(Collectors.joining(";"));
+		//String defaultValue = visibleColumns.stream().map(c -> Integer.toString(c.defaultWidth)).collect(Collectors.joining(";"));
 		String widthsAsString = Config.get(Config.KEY_LAST_COLUMN_WIDTHS, defaultValue);
 		if (showDeadProcesses) {
 			widthsAsString = Config.get(Config.KEY_LAST_DEAD_COLUMN_WIDTHS, defaultValue);
@@ -266,11 +267,19 @@ public class ProcessTable extends JTable {
 		int[] widths = Arrays.stream(widthsAsString.split(";"))
 				.flatMapToInt(v -> IntStream.of(Integer.parseInt(v)))
 				.toArray();
-		for (int i = 0, idx = 0; i < headers.length; i++) {
+		for (int i = 0; i < headers.length; i++) {
 			if (headers[i] != null) {
-				getColumnModel().getColumn(headers[i].index).setPreferredWidth(widths[idx++]);
+				getColumnModel().getColumn(headers[i].index).setPreferredWidth(widths[i]);
+				// TODO We need all header widths to be loaded so that we don't overwrite the width of the hidden ones with defaults here.
+				//  We want to save with their previous width that is in the config file!
+				//  We must also handle the tab orders somehow...
 			}
 		}
+//		for (int i = 0, idx = 0; i < headers.length; i++) {
+//			if (headers[i] != null) {
+//				getColumnModel().getColumn(headers[i].index).setPreferredWidth(widths[idx++]);
+//			}
+//		}
 	}
 
 	private void loadPreviousColumnSelection() {
