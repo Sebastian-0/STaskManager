@@ -120,8 +120,6 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 
 		getContentPane().add(tabbed);
 
-//		pack(); // Pack two times to set minimum size before resizing to the preferred size
-//		setMinimumSize(getSize());
 		Dimension previousSize = getPreviousSize();
 		if (previousSize.width > 0) {
 			setPreferredSize(previousSize);
@@ -162,8 +160,8 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 
 	private Dimension getPreviousSize() {
 		return new Dimension(
-				Config.getInt(Config.KEY_LAST_WINDOW_WIDTH, -1),
-				Config.getInt(Config.KEY_LAST_WINDOW_HEIGHT, -1));
+				Config.getInt(Config.KEY_LAST_WINDOW_WIDTH, 890),
+				Config.getInt(Config.KEY_LAST_WINDOW_HEIGHT, 740));
 	}
 
 	private int getPreviousExtendedState() {
