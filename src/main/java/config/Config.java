@@ -122,7 +122,7 @@ public class Config {
 
 	private static void generateDefaultValues() {
 		PROPERTIES.put(KEY_USE_DEBUG_MODE, "false");
-		PROPERTIES.put(KEY_DEAD_PROCESS_KEEP_TIME, "30");
+		PROPERTIES.put(KEY_DEAD_PROCESS_KEEP_TIME, "1800");
 		PROPERTIES.put(KEY_SHOW_DEAD_PROCESSES, "true");
 		PROPERTIES.put(KEY_LAST_SELECTION_INVERTED, "false");
 		PROPERTIES.put(KEY_LAST_DEAD_SELECTION_INVERTED, "true");
