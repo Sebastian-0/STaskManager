@@ -129,10 +129,10 @@ public class Process {
 		}
 	}
 
-	public static class FileNameComparator extends ProcessComparator {
+	public static class ProcessNameComparator extends ProcessComparator {
 		private final Collator collator;
 
-		public FileNameComparator() {
+		public ProcessNameComparator() {
 			collator = Collator.getInstance();
 			collator.setStrength(Collator.PRIMARY);
 		}

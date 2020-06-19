@@ -60,7 +60,7 @@ public class ProcessTable extends JTable {
 	public enum Columns {
 		// TODO For some reason both these constants and visibleColumns need to be in the same order to avoid problems.
 		//      this enum determines the default order and visibleColumns determine the default widths
-		FileName("Process name", 180, new Process.FileNameComparator()),
+		ProcessName("Process name", 180, new Process.ProcessNameComparator()),
 		Pid("PID", 65, new Process.IdComparator()),
 		Status("Status", 30, new Process.StatusComparator()),
 		DeathTime("Death time", 100, new Process.DeadTimestampsComparator()),
@@ -115,6 +115,7 @@ public class ProcessTable extends JTable {
 
 	private final SystemInformation systemInformation;
 	private final ProcessDetailsCallback processCallback;
+	private List<Process> filteredProcesses;
 
 	private final boolean showDeadProcesses;
 	private final CustomTableModel tableModel;
@@ -145,8 +146,8 @@ public class ProcessTable extends JTable {
 		setAutoResizeMode(AUTO_RESIZE_OFF);
 
 		visibleColumns = new ArrayList<>(); // TODO The order of these must (probably?) be the same as in the enum, fix that?
-		visibleColumns.add(Columns.FileName);
-		visibleColumns.add(Columns.Pid); // TODO Can't disable PID
+		visibleColumns.add(Columns.ProcessName);
+		visibleColumns.add(Columns.Pid);
 		visibleColumns.add(Columns.Status);
 		if (showDeadProcesses) {
 			visibleColumns.add(Columns.DeathTime); // TODO Can't disable Death Time
@@ -156,7 +157,6 @@ public class ProcessTable extends JTable {
 		visibleColumns.add(Columns.PrivateWorkingSet);
 		visibleColumns.add(Columns.CommandLine);
 		visibleColumns.add(Columns.Description);
-
 
 		tableModel = new CustomTableModel();
 		tableModel.columns = loadHeaders();
@@ -289,26 +289,26 @@ public class ProcessTable extends JTable {
 
 
 	public void update() {
-		List<Process> processes = systemInformation.processes;
+		List<Process> allProcesses = systemInformation.processes;
 		if (showDeadProcesses) {
-			processes = systemInformation.deadProcesses;
+			allProcesses = systemInformation.deadProcesses;
 		}
 
-		processes = filter(processes);
+		long selectedPid = getSelectedPid();
+
+		filteredProcesses = filter(allProcesses);
 
 		if (!isMovingColumn && !isResizingColumn) {
-			long selectedPid = getSelectedPid();
-
-			tableModel.data = new Object[processes.size()][tableModel.columns.length];
-			tableModel.color = new Color[processes.size()][tableModel.columns.length];
-			tableRowToProcess = new Process[processes.size()];
+			tableModel.data = new Object[filteredProcesses.size()][tableModel.columns.length];
+			tableModel.color = new Color[filteredProcesses.size()][tableModel.columns.length];
+			tableRowToProcess = new Process[filteredProcesses.size()];
 
 			DecimalFormat dfCpu = new DecimalFormat("##0.0");
 
-			for (int i = 0; i < processes.size(); i++) {
-				Process process = processes.get(i);
+			for (int i = 0; i < filteredProcesses.size(); i++) {
+				Process process = filteredProcesses.get(i);
 				tableRowToProcess[i] = process;
-				trySetData(Columns.FileName, i, process.fileName);
+				trySetData(Columns.ProcessName, i, process.fileName);
 				trySetData(Columns.Pid, i, process.id);
 				trySetData(Columns.Status, i, StatusUtils.letter(process.status));
 				trySetData(Columns.UserName, i, process.userName);
@@ -358,12 +358,11 @@ public class ProcessTable extends JTable {
 	}
 
 	private long getSelectedPid() {
-		long selectedPid = -1;
 		int selectedRow = getSelectedRow();
 		if (selectedRow >= 0) {
-			selectedPid = (Long) tableModel.data[selectedRow][headers[Columns.Pid.ordinal()].index];
+			return filteredProcesses.get(selectedRow).id;
 		}
-		return selectedPid;
+		return -1;
 	}
 
 	private void trySelectPid(long selectedPid) {
@@ -558,7 +557,7 @@ public class ProcessTable extends JTable {
 				result.setBackground(ColorUtils.blend(selection, result.getBackground(), 50f/255));
 			}
 
-			ColumnHeader fileNameHeader = headers[Columns.FileName.ordinal()];
+			ColumnHeader fileNameHeader = headers[Columns.ProcessName.ordinal()];
 			if (showDeadProcesses && fileNameHeader != null && realColumn == fileNameHeader.index) {
 				setStrikeThroughFontFor(result);
 			}
@@ -650,7 +649,7 @@ public class ProcessTable extends JTable {
 
 		@Override
 		public void keyTyped(KeyEvent e) {
-			ColumnHeader fileNameHeader = headers[Columns.FileName.ordinal()];
+			ColumnHeader fileNameHeader = headers[Columns.ProcessName.ordinal()];
 			if (fileNameHeader != null) {
 				long time = System.currentTimeMillis();
 				if (time - lastClick > 1000) {
@@ -681,7 +680,7 @@ public class ProcessTable extends JTable {
 		public void keyPressed(KeyEvent e) {
 			if (e.getKeyCode() == KeyEvent.VK_DELETE && !showDeadProcesses) {
 				if (getSelectedRow() > -1) {
-					long pid = (long) tableModel.data[getSelectedRow()][headers[Columns.Pid.ordinal()].index];
+					long pid = filteredProcesses.get(getSelectedRow()).id;
 					DeleteProcessMenuItem menuItem = new DeleteProcessMenuItem((Component) processCallback);
 					menuItem.setProcess(systemInformation.getProcessById(pid));
 					menuItem.doAction();
@@ -699,7 +698,7 @@ public class ProcessTable extends JTable {
 		public void mouseClicked(MouseEvent e) {
 			if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
 				int row = rowAtPoint(e.getPoint());
-				long pid = (long) tableModel.data[row][headers[Columns.Pid.ordinal()].index];
+				long pid = filteredProcesses.get(row).id;
 				if (showDeadProcesses) {
 					processCallback.openDialog(systemInformation.getDeadProcessById(pid));
 				} else {
@@ -754,7 +753,7 @@ public class ProcessTable extends JTable {
 				int columnAtPoint = columnAtPoint(SwingUtilities.convertPoint(contextMenu, new Point(0, 0), ProcessTable.this));
 				if (rowAtPoint > -1 && columnAtPoint > -1) {
 					setRowSelectionInterval(rowAtPoint, rowAtPoint);
-					Long pid = (Long) tableModel.data[rowAtPoint][headers[Columns.Pid.ordinal()].index];
+					long pid = filteredProcesses.get(rowAtPoint).id;
 					if (showDeadProcesses) {
 						contextMenu.setProcess(systemInformation.getDeadProcessById(pid));
 					} else {

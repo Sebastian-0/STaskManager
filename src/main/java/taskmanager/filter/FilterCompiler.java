@@ -32,7 +32,7 @@ public class FilterCompiler { // TODO Get rid of dependency on ProcessTable.Colu
 
 	public enum Tag {
 		Pid("pid", Columns.Pid.name, new Color(230, 230, 230)),
-		ProcessName("name", Columns.FileName.name, new Color(230, 230, 230)),
+		ProcessName("name", Columns.ProcessName.name, new Color(230, 230, 230)),
 		Status("stat", Columns.Status.name, new Color(230, 230, 230)),
 		UserName("user", Columns.UserName.name, new Color(230, 230, 230)),
 		Cpu("cpu", Columns.Cpu.name, new Color(188, 231, 255)),
