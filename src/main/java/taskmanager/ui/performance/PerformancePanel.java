@@ -85,6 +85,14 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 		add(selectedPanelContainer);
 
 		selectedPanelContainer.setViewportView(cpuPanel);
+
+		int dividerLocation = Config.getInt(Config.KEY_LAST_PERFORMANCE_PANEL_SPLIT_LOCATION, -1);
+		if (dividerLocation != -1) {
+			setDividerLocation(dividerLocation);
+		}
+		addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, e -> {
+			Config.put(Config.KEY_LAST_PERFORMANCE_PANEL_SPLIT_LOCATION, String.valueOf(getDividerLocation()));
+		});
 	}
 
 	public void updateAreTimelinesLinked() {

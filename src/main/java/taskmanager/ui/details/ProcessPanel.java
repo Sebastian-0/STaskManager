@@ -42,7 +42,11 @@ public class ProcessPanel extends JPanel {
 
 		liveTableScrollPane = new JScrollPane(liveTable);
 		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, liveTableScrollPane, new JScrollPane(deadTable));
-		splitPane.setResizeWeight(0.9);
+		splitPane.setResizeWeight(Config.getFloat(Config.KEY_LAST_PROCESS_LIST_SPLIT_RATIO, 0.8f));
+		splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, e -> {
+			double ratio = splitPane.getDividerLocation() / (double) splitPane.getHeight();
+			Config.put(Config.KEY_LAST_PROCESS_LIST_SPLIT_RATIO, String.valueOf(ratio));
+		});
 
 		container = new JPanel();
 		container.setLayout(new GridLayout(1, 1));
