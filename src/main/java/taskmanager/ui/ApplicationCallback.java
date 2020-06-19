@@ -11,8 +11,11 @@
 
 package taskmanager.ui;
 
+import javax.swing.JFrame;
+
 public interface ApplicationCallback {
 	void exit();
 	void focus();
 	void configChanged();
+	JFrame frame();
 }

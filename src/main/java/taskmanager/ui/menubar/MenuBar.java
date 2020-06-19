@@ -21,5 +21,10 @@ public class MenuBar extends JMenuBar {
         viewMenu.addSeparator();
         viewMenu.add(new LinkTimelinesMenuItem(callback));
         add(viewMenu);
+
+        JMenu helpMenu = new JMenu("Help");
+        helpMenu.setMnemonic('H');
+        helpMenu.add(new AboutMenuItem(callback));
+        add(helpMenu);
     }
 }

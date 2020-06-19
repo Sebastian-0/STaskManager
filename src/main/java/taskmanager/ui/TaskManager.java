@@ -255,6 +255,11 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 	}
 
 	@Override
+	public JFrame frame() {
+		return this;
+	}
+
+	@Override
 	public synchronized boolean hasTerminated() {
 		return hasTerminated;
 	}
