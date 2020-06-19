@@ -45,7 +45,6 @@ public class LinuxInformationLoader extends InformationLoader {
 
 		systemInformation.extraInformation = new LinuxExtraInformation();
 		systemInformation.physicalMemoryTotalInstalled = systemInformation.physicalMemoryTotal;
-		systemInformation.processes.add(new Process(nextProcessId++, 0));
 	}
 
 	@Override
