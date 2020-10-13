@@ -38,15 +38,19 @@ import taskmanager.InformationLoader;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
-import taskmanager.platform.win32.NtDllExt.PEB;
-import taskmanager.platform.win32.NtDllExt.PROCESS_BASIC_INFORMATION;
-import taskmanager.platform.win32.NtDllExt.PROCESS_INFORMATION_CLASS;
-import taskmanager.platform.win32.NtDllExt.RTL_USER_PROCESS_PARAMETERS;
-import taskmanager.platform.win32.NtDllExt.SYSTEM_INFORMATION_CLASS;
-import taskmanager.platform.win32.NtDllExt.SYSTEM_MEMORY_LIST_INFORMATION;
-import taskmanager.platform.win32.NtDllExt.SYSTEM_PROCESS_INFORMATION;
-import taskmanager.platform.win32.NtDllExt.SYSTEM_THREAD_INFORMATION;
-import taskmanager.platform.win32.VersionExt.LANGANDCODEPAGE;
+import taskmanager.platform.win32.dll.Kernel32Ext;
+import taskmanager.platform.win32.dll.NtDllExt;
+import taskmanager.platform.win32.dll.NtDllExt.PEB;
+import taskmanager.platform.win32.dll.NtDllExt.PROCESS_BASIC_INFORMATION;
+import taskmanager.platform.win32.dll.NtDllExt.PROCESS_INFORMATION_CLASS;
+import taskmanager.platform.win32.dll.NtDllExt.RTL_USER_PROCESS_PARAMETERS;
+import taskmanager.platform.win32.dll.NtDllExt.SYSTEM_INFORMATION_CLASS;
+import taskmanager.platform.win32.dll.NtDllExt.SYSTEM_MEMORY_LIST_INFORMATION;
+import taskmanager.platform.win32.dll.NtDllExt.SYSTEM_PROCESS_INFORMATION;
+import taskmanager.platform.win32.dll.NtDllExt.SYSTEM_THREAD_INFORMATION;
+import taskmanager.platform.win32.dll.PsapiExt;
+import taskmanager.platform.win32.dll.VersionExt;
+import taskmanager.platform.win32.dll.VersionExt.LANGANDCODEPAGE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,8 +58,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static taskmanager.platform.win32.NtDllExt.THREAD_STATE_WAITING;
-import static taskmanager.platform.win32.NtDllExt.WAIT_REASON_SUSPENDED;
+import static taskmanager.platform.win32.dll.NtDllExt.THREAD_STATE_WAITING;
+import static taskmanager.platform.win32.dll.NtDllExt.WAIT_REASON_SUSPENDED;
 
 public class WindowsInformationLoader extends InformationLoader {
 	private static final Logger LOGGER = LoggerFactory.getLogger(WindowsInformationLoader.class);

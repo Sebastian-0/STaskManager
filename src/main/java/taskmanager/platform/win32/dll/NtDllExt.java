@@ -9,7 +9,7 @@
  * See LICENSE for further details.
  */
 
-package taskmanager.platform.win32;
+package taskmanager.platform.win32.dll;
 
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
@@ -51,7 +51,7 @@ public interface NtDllExt extends NtDll {
 		SystemProcessInformation(5),
 		SystemMemoryListInformation(80);
 
-		final int code;
+		public final int code;
 
 		SYSTEM_INFORMATION_CLASS(int code) {
 			this.code = code;
@@ -61,7 +61,7 @@ public interface NtDllExt extends NtDll {
 	enum PROCESS_INFORMATION_CLASS {
 		ProcessBasicInformation(0);
 
-		final int code;
+		public final int code;
 
 		PROCESS_INFORMATION_CLASS(int code) {
 			this.code = code;

@@ -9,7 +9,7 @@
  * See LICENSE for further details.
  */
 
-package taskmanager.platform.win32;
+package taskmanager.platform.win32.dll;
 
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.Kernel32;

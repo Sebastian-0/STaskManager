@@ -17,6 +17,7 @@ import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import taskmanager.platform.win32.dll.NtDllExt;
 
 public class WindowsProcess {
 	private static final Logger LOGGER = LoggerFactory.getLogger(WindowsProcess.class);

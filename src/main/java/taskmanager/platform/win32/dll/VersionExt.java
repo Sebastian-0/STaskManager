@@ -9,13 +9,13 @@
  * See LICENSE for further details.
  */
 
-package taskmanager.platform.win32;
+package taskmanager.platform.win32.dll;
 
 import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 import com.sun.jna.platform.win32.WinDef.WORD;
 
-public class VersionExt {
+public interface VersionExt {
 	@FieldOrder({"wLanguage", "wCodePage"})
 	public static class LANGANDCODEPAGE extends Structure {
 		public WORD wLanguage;
@@ -23,6 +23,7 @@ public class VersionExt {
 	}
 	
 	@FieldOrder({"wLength", "wValueLength", "wType", "szKey", "padding", "children"})
+	@SuppressWarnings("unused")
 	public static class STRING_TABLE extends Structure {
 		public WORD wLength;
 		public WORD wValueLength;
@@ -33,6 +34,7 @@ public class VersionExt {
 	}
 	
 	@FieldOrder({"wLength", "wValueLength", "wType", "szKey", "padding", "value"})
+	@SuppressWarnings("unused")
 	public static class STRING extends Structure {
 		public WORD wLength;
 		public WORD wValueLength;

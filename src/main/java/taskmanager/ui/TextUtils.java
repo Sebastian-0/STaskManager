@@ -25,8 +25,6 @@ public class TextUtils {
 	private static final DecimalFormatSymbols FORMAT_SYMBOLS = new DecimalFormatSymbols();
 	private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("###,###.#");
 
-	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd: HH:mm:ss");
-
 	static {
 		FORMAT_SYMBOLS.setGroupingSeparator(' ');
 		DECIMAL_FORMAT.setDecimalFormatSymbols(FORMAT_SYMBOLS);
@@ -81,7 +79,7 @@ public class TextUtils {
 				return formattedNumber(trueValue) + " s";
 			}
 		} else if (type == ValueType.Date) {
-			return DATE_FORMAT.format(new Date(value));
+			return new SimpleDateFormat("yyyy-MM-dd: HH:mm:ss").format(new Date(value));
 		} else if (type == ValueType.Temperature) {
 			return formattedNumber(value) + " C";
 		} else if (type == ValueType.Raw) {

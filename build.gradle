@@ -28,6 +28,7 @@ java {
 
 spotbugs {
     ignoreFailures = true
+    excludeFilter = file('SpotBugsExclude.xml')
 }
 
 spotbugsMain {

@@ -9,7 +9,7 @@
  * See LICENSE for further details.
  */
 
-package taskmanager.platform.win32;
+package taskmanager.platform.win32.dll;
 
 import com.sun.jna.Native;
 import com.sun.jna.Structure;
@@ -30,6 +30,7 @@ public interface PsapiExt extends Psapi {
 	@FieldOrder({"cb", "pageFaultCount", "peakWorkingSetSize", "workingSetSize", "quotaPeakPagedPoolUsage",
 			"quotaPagedPoolUsage", "quotaPeakNonPagedPoolUsage", "quotaNonPagedPoolUsage", "pagefileUsage", "peakPagefileUsage",
 			"privateUsage"})
+	@SuppressWarnings("unused")
 	class PROCESS_MEMORY_COUNTERS extends Structure {
 		public DWORD cb;
 		public DWORD pageFaultCount;
