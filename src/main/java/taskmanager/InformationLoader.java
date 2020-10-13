@@ -55,7 +55,7 @@ public abstract class InformationLoader {
 		systemInformation.physicalProcessorCount = systemInfoLoader.getHardware().getProcessor().getPhysicalProcessorCount();
 		systemInformation.physicalMemoryTotal = systemInfoLoader.getHardware().getMemory().getTotal();
 		systemInformation.pageSize = systemInfoLoader.getHardware().getMemory().getPageSize();
-		systemInformation.bootTime = System.currentTimeMillis() / 1000 - systemInfoLoader.getOperatingSystem().getSystemUptime(); // TODO this is incorrect when you take hibernation into account!
+		systemInformation.bootTime = System.currentTimeMillis() - systemInfoLoader.getOperatingSystem().getSystemUptime() * 1000; // TODO this is incorrect when you take hibernation into account!
 
 		systemInformation.cpuUsagePerCore = new MeasurementContainer[systemInformation.logicalProcessorCount];
 		for (int i = 0; i < systemInformation.cpuUsagePerCore.length; i++) {
@@ -147,7 +147,7 @@ public abstract class InformationLoader {
 	}
 
 	public void update(SystemInformation systemInformation) {
-		systemInformation.uptime = System.currentTimeMillis() / 1000 - systemInformation.bootTime;
+		systemInformation.uptime = System.currentTimeMillis() - systemInformation.bootTime;
 		systemInformation.memoryUsed.addValue(systemInformation.physicalMemoryTotal - systemInfoLoader.getHardware().getMemory().getAvailable());
 
 		// Update the CPU usage

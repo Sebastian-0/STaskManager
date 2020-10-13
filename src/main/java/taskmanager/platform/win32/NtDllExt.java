@@ -69,6 +69,7 @@ public interface NtDllExt extends NtDll {
 	}
 
 	@FieldOrder({"length", "maximumLength", "buffer"})
+	@SuppressWarnings("unused")
 	class UNICODE_STRING extends Structure {
 		public short length;
 		public short maximumLength;
@@ -76,6 +77,7 @@ public interface NtDllExt extends NtDll {
 	}
 
 	@FieldOrder({"uniqueProcess", "uniqueThread"})
+	@SuppressWarnings("unused")
 	class CLIENT_ID extends Structure {
 		public HANDLE uniqueProcess;
 		public HANDLE uniqueThread;
@@ -87,6 +89,7 @@ public interface NtDllExt extends NtDll {
 
 	@FieldOrder({"kernelTime", "userTime", "createTime", "waitTime", "startAddress", "clientId", "priority",
 			"basePriority", "contextSwitches", "threadState", "waitReason"})
+	@SuppressWarnings("unused")
 	class SYSTEM_THREAD_INFORMATION extends Structure {
 		public LARGE_INTEGER kernelTime;
 		public LARGE_INTEGER userTime;
@@ -108,6 +111,7 @@ public interface NtDllExt extends NtDll {
 			"quotaPeakPagedPoolUsage", "quotaPagedPoolUsage", "quotaPeakNonPagedPoolUsage", "quotaNonPagedPoolUsage",
 			"pagefileUsage", "peakPagefileUsage", "privatePageCount", "readOperationCount", "writeOperationCount",
 			"otherOperationCount", "readTransferCount", "writeTransferCount", "otherTransferCount"})
+	@SuppressWarnings("unused")
     class SYSTEM_PROCESS_INFORMATION extends Structure { // TODO Try to speed up by removing replacing Types with primitives?
 		public int nextEntryOffset;
 		public int numberOfThreads;
@@ -147,6 +151,7 @@ public interface NtDllExt extends NtDll {
 
 	@FieldOrder({"exitStatus", "pebBaseAddress", "affinityMask", "basePriority", "uniqueProcessId",
 			"inheritedFromUniqueProcessId"})
+	@SuppressWarnings("unused")
 	class PROCESS_BASIC_INFORMATION extends Structure
 	{
 		public int exitStatus;
@@ -160,6 +165,7 @@ public interface NtDllExt extends NtDll {
 	@FieldOrder({"reserved", "timerResolution", "pageSize", "numberOfPhysicalPages", "lowestPhysicalPageNumber",
 	"highestPhysicalPageNumber", "allocationGranularity", "minimumUserModeAddress", "maximumUserModeAddress",
 	"activeProcessorsAffinityMask", "numberOfProcessors"})
+	@SuppressWarnings("unused")
 	class SYSTEM_BASIC_INFORMATION extends Structure {
 		public ULONG reserved;
 		public ULONG timerResolution;
@@ -176,6 +182,7 @@ public interface NtDllExt extends NtDll {
 
 	@FieldOrder({"zeroPageCount", "freePageCount", "modifiedPageCount", "modifiedNoWritePageCount", "badPageCount",
 			"pageCountByPriority", "repurposedPagesByPriority", "modifiedPageCountPageFile"})
+	@SuppressWarnings("unused")
 	class SYSTEM_MEMORY_LIST_INFORMATION extends Structure {
 		public ULONG_PTR zeroPageCount;
 		public ULONG_PTR freePageCount;
@@ -191,6 +198,7 @@ public interface NtDllExt extends NtDll {
 			"processParameters", "reserved4", "reserved4_2", "reserved4_3", "atlThunkSListPtr", "reserved5", "reserved6",
 			"reserved7", "reserved8", "atlThunkSListPtr32", "reserved9", "reserved10", "postProcessInitRoutine", "reserved11",
 			"reserved12", "sessionId"})
+	@SuppressWarnings("unused")
 	class PEB extends Structure	{
 		public BYTE reserved1;
 		public BYTE reserved1_2;
@@ -218,6 +226,7 @@ public interface NtDllExt extends NtDll {
 	}
 
 	@FieldOrder({"reserved1", "reserved2", "imagePathName", "commandLine"})
+	@SuppressWarnings("unused")
 	class RTL_USER_PROCESS_PARAMETERS extends Structure	{
 		public BYTE[] reserved1 = new BYTE[16];
 		public PVOID[] reserved2 = new PVOID[10];

@@ -30,6 +30,7 @@ public class Process {
 	public Measurements<Long> cpuUsage;
 	public Measurements<Long> cpuTime;
 	public Status status;
+	public long startTimestamp;
 	public long deathTimestamp;
 
 	public boolean hasReadOnce;
@@ -60,6 +61,7 @@ public class Process {
 		description = other.description;
 		userName = other.userName;
 		status = other.status;
+		startTimestamp = other.startTimestamp;
 		deathTimestamp = other.deathTimestamp;
 
 		if (doFullCopy) {

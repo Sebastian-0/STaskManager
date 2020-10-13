@@ -14,6 +14,7 @@ package taskmanager.platform.linux;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.driver.linux.proc.UserGroupInfo;
+import oshi.software.os.linux.LinuxOperatingSystem;
 import oshi.util.FileUtil;
 import taskmanager.InformationLoader;
 import taskmanager.data.Process;
@@ -100,6 +101,11 @@ public class LinuxInformationLoader extends InformationLoader {
 
 			String processPath = PROC_PATH + "/" + pid;
 			Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
+			if (status.isEmpty()) {
+				LOGGER.warn("Failed to read /proc/{}/status", process.id);
+			}
+
+			String[] stat = FileUtil.getStringFromFile(processPath + "/stat").split("\\s+");
 
 			if (!process.hasReadOnce) {
 				if (!status.isEmpty()) {
@@ -124,30 +130,31 @@ public class LinuxInformationLoader extends InformationLoader {
 						processFileNameAndPathFallback(process, processPath, status);
 					}
 					process.hasReadOnce = true;
-				} else {
-					LOGGER.warn("Failed to read /proc/{}/status", process.id);
 				}
+
+				if (stat.length > 21) {
+					process.startTimestamp = systemInformation.bootTime + Long.parseLong(stat[21]) * 1000 / LinuxOperatingSystem.getHz();
+				}
+
 //				if (process.description.isEmpty())
 //					process.description = process.fileName;
 			}
 
 			process.privateWorkingSet.addValue(Long.parseLong(removeUnit(status.getOrDefault("RssAnon", "0 kb"))) * 1024);
 
-			String stat = FileUtil.getStringFromFile(processPath + "/stat");
-			if (stat.isEmpty()) {
+			if (stat.length < 20) {
 				LOGGER.warn("Failed to read /proc/{}/stat, duplicating previous CPU-values", process.id);
 				process.cpuTime.addValue(process.cpuTime.newest());
 				process.cpuUsage.addValue(process.cpuUsage.newest());
 			} else {
-				String[] tokens = stat.split("\\s+");
-				long utime = Long.parseLong(tokens[13]);
-				long stime = Long.parseLong(tokens[14]);
+				long utime = Long.parseLong(stat[13]);
+				long stime = Long.parseLong(stat[14]);
 				// TODO Maybe use a delta of the process uptime (like LinuxOperatingSystem#getProcess():286)?
 				process.updateCpu(stime, utime, (currentCpuTime - lastCpuTime), 1); // Set cores to 1 since the total time is already divided by cores
 
-				process.status = parseStatus(tokens[2]);
+				process.status = parseStatus(stat[2]);
 
-				totalThreadCount += Integer.parseInt(tokens[19]);
+				totalThreadCount += Integer.parseInt(stat[19]);
 			}
 		}
 

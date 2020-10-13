@@ -313,9 +313,9 @@ public class ProcessTable extends JTable {
 				trySetData(Columns.Status, i, StatusUtils.letter(process.status));
 				trySetData(Columns.UserName, i, process.userName);
 				trySetData(Columns.DeathTime, i, TextUtils.valueToString(
-						(long) ((System.currentTimeMillis() - process.deathTimestamp) / 1000f * Config.DOUBLE_TO_LONG),
+						System.currentTimeMillis() - process.deathTimestamp,
 						ValueType.Time));
-				trySetColor(Columns.DeathTime, i, selectColorDeath((System.currentTimeMillis() - process.deathTimestamp) / 1000f));
+				trySetColor(Columns.DeathTime, i, selectColorDeath(System.currentTimeMillis() - process.deathTimestamp));
 				if (showDeadProcesses) {
 					trySetData(Columns.Cpu, i, "--.- %");
 					trySetColor(Columns.Cpu, i, selectColorCpu(0));
@@ -419,8 +419,8 @@ public class ProcessTable extends JTable {
 		return Load.None.color;
 	}
 
-	private Color selectColorDeath(float seconds) {
-		float fraction = seconds / Config.getInt(Config.KEY_DEAD_PROCESS_KEEP_TIME);
+	private Color selectColorDeath(float millis) {
+		float fraction = millis / 1000f / Config.getInt(Config.KEY_DEAD_PROCESS_KEEP_TIME);
 		if (fraction > 0.83) {
 			return Time.VeryMuch.color;
 		} else if (fraction > 0.67) {

@@ -189,6 +189,9 @@ public class WindowsInformationLoader extends InformationLoader {
 				if (process.description.isEmpty()) {
 					process.description = process.fileName;
 				}
+
+				// TODO Verify if this works!
+				process.startTimestamp = new FILETIME(new LARGE_INTEGER(newProcess.process.createTime.getValue())).toTime();
 			}
 
 			process.status = readProcessStatus(newProcess);

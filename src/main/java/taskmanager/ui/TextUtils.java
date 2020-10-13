@@ -16,16 +16,20 @@ import config.Config;
 import java.awt.FontMetrics;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class TextUtils {
 	private static final String[] PREFIXES = {"", "K", "M", "G", "T", "P"};
 
 	private static final DecimalFormatSymbols FORMAT_SYMBOLS = new DecimalFormatSymbols();
-	public static final DecimalFormat FORMAT = new DecimalFormat("###,###.#");
+	private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("###,###.#");
+
+	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd: HH:mm:ss");
 
 	static {
 		FORMAT_SYMBOLS.setGroupingSeparator(' ');
-		FORMAT.setDecimalFormatSymbols(FORMAT_SYMBOLS);
+		DECIMAL_FORMAT.setDecimalFormatSymbols(FORMAT_SYMBOLS);
 	}
 
 	public enum ValueType {
@@ -37,6 +41,7 @@ public class TextUtils {
 		Millis,
 		TimeFull,
 		Time,
+		Date,
 		Temperature,
 		Raw
 	}
@@ -55,6 +60,7 @@ public class TextUtils {
 		} else if (type == ValueType.Millis) {
 			return formattedNumber(value) + "ms";
 		} else if (type == ValueType.TimeFull) {
+			value /= 1000;
 			long seconds = value % 60;
 			long minutes = (value / 60) % 60;
 			long hours = ((value / 60) / 60) % 24;
@@ -74,6 +80,8 @@ public class TextUtils {
 			} else {
 				return formattedNumber(trueValue) + " s";
 			}
+		} else if (type == ValueType.Date) {
+			return DATE_FORMAT.format(new Date(value));
 		} else if (type == ValueType.Temperature) {
 			return formattedNumber(value) + " C";
 		} else if (type == ValueType.Raw) {
@@ -133,11 +141,11 @@ public class TextUtils {
 	}
 
 	private static String formattedNumber(long value) {
-		return FORMAT.format(value);
+		return DECIMAL_FORMAT.format(value);
 	}
 
 	private static String formattedNumber(double value) {
-		return FORMAT.format(value);
+		return DECIMAL_FORMAT.format(value);
 	}
 
 
