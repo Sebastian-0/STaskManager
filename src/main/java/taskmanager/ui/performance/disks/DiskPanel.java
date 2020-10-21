@@ -20,7 +20,7 @@ import taskmanager.ui.performance.GraphPanel;
 import taskmanager.ui.performance.GraphPanel.DoubleToLong;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
-import taskmanager.ui.performance.InformationItemPanel;
+import taskmanager.ui.performance.common.InformationItemPanel;
 import taskmanager.ui.performance.TimelineGraphPanel;
 import taskmanager.ui.performance.TimelineGroup;
 

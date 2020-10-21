@@ -13,6 +13,7 @@ package taskmanager.ui.performance;
 
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
+import taskmanager.ui.performance.common.InformationItemPanel;
 
 public class RatioItemPanel extends InformationItemPanel {
 	private long maximum;

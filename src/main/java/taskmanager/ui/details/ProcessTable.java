@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ProcessTable extends JTable {
+
 	public enum Columns {
 		// TODO For some reason both these constants and visibleColumns need to be in the same order to avoid problems.
 		//      this enum determines the default order and visibleColumns determine the default widths
@@ -503,6 +504,17 @@ public class ProcessTable extends JTable {
 	public void setShowProcessesForAllUsers(boolean newState) {
 		showProcessesForAllUsers = newState;
 		update();
+	}
+
+	public boolean showProcess(long uniqueId) {
+		for (int i = 0; i < filteredProcesses.size(); i++) {
+			if (filteredProcesses.get(i).uniqueId == uniqueId) {
+				setRowSelectionInterval(i, i);
+				scrollRectToVisible(getCellRect(i, getSelectedColumn(), true));
+				return true;
+			}
+		}
+		return false;
 	}
 
 

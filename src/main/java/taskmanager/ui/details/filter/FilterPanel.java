@@ -21,7 +21,6 @@ import java.awt.Color;
 import java.awt.GridBagConstraints;
 
 public class FilterPanel extends JPanel {
-
 	private final FilterTextField filterTextField;
 
 	public FilterPanel(ProcessTable liveTable, ProcessTable deadTable) {
@@ -32,7 +31,6 @@ public class FilterPanel extends JPanel {
 		filterTextField.setBorder(null);
 		setBackground(Color.WHITE);
 
-
 		SimpleGridBagLayout layout = new SimpleGridBagLayout(this);
 		layout.setInsets(0, 0, 0, 0);
 		layout.addToGrid(filterTextField, 0, 0, 1, 1, GridBagConstraints.BOTH, 1, 1);
@@ -42,5 +40,9 @@ public class FilterPanel extends JPanel {
 
 	public void setDefaultTag(Tag tag) {
 		filterTextField.setDefaultTag(tag);
+	}
+
+	public void clearFilter() {
+		filterTextField.clear();
 	}
 }

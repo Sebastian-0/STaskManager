@@ -9,7 +9,7 @@
  * See LICENSE for further details.
  */
 
-package taskmanager.ui.performance;
+package taskmanager.ui.performance.common;
 
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;

@@ -24,6 +24,7 @@ import taskmanager.ui.details.ProcessDetailsCallback;
 import taskmanager.ui.details.ProcessPanel;
 import taskmanager.ui.menubar.MenuBar;
 import taskmanager.ui.performance.PerformancePanel;
+import taskmanager.ui.performance.ShowProcessCallback;
 import taskmanager.ui.processdialog.ProcessDialog;
 import taskmanager.ui.tray.Tray;
 
@@ -51,7 +52,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class TaskManager extends JFrame implements InformationUpdateCallback, ProcessDetailsCallback, ApplicationCallback {
+public class TaskManager extends JFrame implements InformationUpdateCallback, ProcessDetailsCallback, ApplicationCallback, ShowProcessCallback {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TaskManager.class);
 
 	private static final String ICON_LARGE_NAME = "icon_large";
@@ -63,6 +64,7 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 	private Comparator<Process> comparator;
 	private Comparator<Process> deadComparator;
 
+	private JTabbedPane tabbedPane;
 	private ProcessPanel processPanel;
 	private PerformancePanel performancePanel;
 
@@ -112,16 +114,16 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		setJMenuBar(new MenuBar(this));
 
 		processPanel = new ProcessPanel(this, this.systemInformation);
-		performancePanel = new PerformancePanel(this.systemInformation);
+		performancePanel = new PerformancePanel(this.systemInformation, this);
 
-		JTabbedPane tabbed = new JTabbedPane();
-		tabbed.addTab("Processes", processPanel);
-		tabbed.addTab("Performance", performancePanel);
+		tabbedPane = new JTabbedPane();
+		tabbedPane.addTab("Processes", processPanel);
+		tabbedPane.addTab("Performance", performancePanel);
 
-		tabbed.setSelectedIndex(Config.getInt(Config.KEY_LAST_TAB, 0));
-		tabbed.addChangeListener(e -> Config.put(Config.KEY_LAST_TAB, String.valueOf(tabbed.getSelectedIndex())));
+		tabbedPane.setSelectedIndex(Config.getInt(Config.KEY_LAST_TAB, 0));
+		tabbedPane.addChangeListener(e -> Config.put(Config.KEY_LAST_TAB, String.valueOf(tabbedPane.getSelectedIndex())));
 
-		getContentPane().add(tabbed);
+		getContentPane().add(tabbedPane);
 
 		Dimension previousSize = getPreviousSize();
 		if (previousSize.width > 0) {
@@ -295,6 +297,12 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		if (processPanel != null) {
 			processPanel.update();
 		}
+	}
+
+	@Override
+	public void showProcess(long uniqueId) {
+		tabbedPane.setSelectedComponent(processPanel);
+		processPanel.showProcess(uniqueId);
 	}
 
 	private final WindowAdapter windowListener = new WindowAdapter() {

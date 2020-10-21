@@ -21,8 +21,9 @@ import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
-import taskmanager.ui.performance.InformationItemPanel;
+import taskmanager.ui.performance.common.InformationItemPanel;
 import taskmanager.ui.performance.RatioItemPanel;
+import taskmanager.ui.performance.ShowProcessCallback;
 import taskmanager.ui.performance.TimelineGraphPanel;
 import taskmanager.ui.performance.TimelineGroup;
 
@@ -56,7 +57,7 @@ public class MemoryPanel extends JPanel {
 	private GraphTypeButton connectedButton;
 
 
-	public MemoryPanel(TimelineGroup timelineGroup, SystemInformation systemInformation) {
+	public MemoryPanel(TimelineGroup timelineGroup, SystemInformation systemInformation, ShowProcessCallback showProcessCallback) {
 		memoryAvailable = systemInformation.memoryUsed;
 
 		JLabel labelHeader = new JLabel("Memory");
@@ -125,6 +126,11 @@ public class MemoryPanel extends JPanel {
 		layout.setInsets(5, 5, 5, 5);
 		layout.addToGrid(memoryComposition, 0, 6, 2, 1, GridBagConstraints.HORIZONTAL, 1, 0);
 		layout.addToGrid(realTimePanel, 0, 7, 2, 1, GridBagConstraints.WEST);
+
+		MemoryContextMenu contextMenu = new MemoryContextMenu(systemInformation.memoryUsedTopList, showProcessCallback);
+		setComponentPopupMenu(contextMenu);
+		memoryGraph.setComponentPopupMenu(contextMenu);
+		timelineGraph.setComponentPopupMenu(contextMenu);
 	}
 
 

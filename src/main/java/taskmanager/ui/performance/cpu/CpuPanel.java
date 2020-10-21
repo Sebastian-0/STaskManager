@@ -22,8 +22,9 @@ import taskmanager.ui.performance.GraphPanel;
 import taskmanager.ui.performance.GraphPanel.ShortToLong;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
-import taskmanager.ui.performance.InformationItemPanel;
+import taskmanager.ui.performance.common.InformationItemPanel;
 import taskmanager.ui.performance.RatioItemPanel;
+import taskmanager.ui.performance.ShowProcessCallback;
 import taskmanager.ui.performance.TimelineGraphPanel;
 import taskmanager.ui.performance.TimelineGroup;
 
@@ -55,7 +56,7 @@ public class CpuPanel extends JPanel {
 	private GraphTypeButton connectedButton;
 
 
-	public CpuPanel(TimelineGroup timelineGroup, SystemInformation systemInformation) {
+	public CpuPanel(TimelineGroup timelineGroup, SystemInformation systemInformation, ShowProcessCallback showProcessCallback) {
 		cpuUsage = new ShortToLong(systemInformation.cpuUsageTotal);
 
 		JLabel labelHeader = new JLabel("CPU");
@@ -111,7 +112,7 @@ public class CpuPanel extends JPanel {
 		layout.addToGrid(timelineGraph, 0, 4, 2, 1, GridBagConstraints.HORIZONTAL, 1, 0);
 		layout.addToGrid(realTimePanel, 0, 5, 2, 1, GridBagConstraints.WEST);
 
-		CpuContextMenu contextMenu = new CpuContextMenu(this);
+		CpuContextMenu contextMenu = new CpuContextMenu(this, systemInformation.cpuTopList, showProcessCallback);
 		setComponentPopupMenu(contextMenu);
 		singleCpuPanel.setComponentPopupMenu(contextMenu);
 		multiCpuPanel.setComponentPopupMenu(contextMenu);

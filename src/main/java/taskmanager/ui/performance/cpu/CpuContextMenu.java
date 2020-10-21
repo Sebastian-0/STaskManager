@@ -11,12 +11,18 @@
 
 package taskmanager.ui.performance.cpu;
 
+import taskmanager.Measurements;
+import taskmanager.data.TopList;
+import taskmanager.ui.TextUtils.ValueType;
+import taskmanager.ui.performance.ShowProcessCallback;
+import taskmanager.ui.performance.common.TopListMenu;
+
 import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 
 public class CpuContextMenu extends JPopupMenu {
-	public CpuContextMenu(CpuPanel panel) {
+	public CpuContextMenu(CpuPanel panel, Measurements<TopList> cpuTopList, ShowProcessCallback callback) {
 		ShowTotalCpuMenuItem totalCpu = new ShowTotalCpuMenuItem(panel);
 		ShowCoresCpuMenuItem coresCpu = new ShowCoresCpuMenuItem(panel);
 		
@@ -25,10 +31,10 @@ public class CpuContextMenu extends JPopupMenu {
 		group.add(coresCpu);
 		totalCpu.setSelected(true);
 		
-		JMenu subMenu = new JMenu("Change graph to ");
-		subMenu.add(totalCpu);
-		subMenu.add(coresCpu);
-		
-		add(subMenu);
+		JMenu changeGraphMenu = new JMenu("Change graph to ");
+		changeGraphMenu.add(totalCpu);
+		changeGraphMenu.add(coresCpu);
+
+		add(new TopListMenu(this, cpuTopList, ValueType.Percentage, callback));
 	}
 }

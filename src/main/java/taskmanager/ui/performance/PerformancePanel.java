@@ -36,15 +36,15 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 	private final NetworkPanel[] networkPanels;
 	private final GpuPanel[] gpuPanels;
 
-	public PerformancePanel(SystemInformation systemInformation) {
+	public PerformancePanel(SystemInformation systemInformation, ShowProcessCallback showProcessCallback) {
 		super(JSplitPane.HORIZONTAL_SPLIT);
 
 		selectedPanelContainer = new JScrollPane();
 		selectedPanelContainer.setBorder(null);
 
 		timelineGroup = new TimelineGroup();
-		memoryPanel = new MemoryPanel(timelineGroup, systemInformation);
-		cpuPanel = new CpuPanel(timelineGroup, systemInformation);
+		memoryPanel = new MemoryPanel(timelineGroup, systemInformation, showProcessCallback);
+		cpuPanel = new CpuPanel(timelineGroup, systemInformation, showProcessCallback);
 		diskPanels = new DiskPanel[systemInformation.disks.length];
 		networkPanels = new NetworkPanel[systemInformation.networks.length];
 		gpuPanels = new GpuPanel[systemInformation.gpus.length];

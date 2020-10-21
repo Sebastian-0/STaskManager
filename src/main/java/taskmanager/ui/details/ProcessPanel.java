@@ -12,6 +12,7 @@
 package taskmanager.ui.details;
 
 import config.Config;
+import taskmanager.data.Process;
 import taskmanager.data.SystemInformation;
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.details.filter.FilterAttributeComboBox;
@@ -23,20 +24,26 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
+import java.util.List;
 
 public class ProcessPanel extends JPanel {
+	private final SystemInformation systemInformation;
+
 	private final ProcessTable liveTable;
 	private final ProcessTable deadTable;
+
+	private final FilterPanel filterPanel;
 
 	private final JPanel container;
 	private final JScrollPane liveTableScrollPane;
 	private final JSplitPane splitPane;
 
 	public ProcessPanel(ProcessDetailsCallback processCallback, SystemInformation systemInformation) {
+		this.systemInformation = systemInformation;
 		liveTable = new ProcessTable(processCallback, systemInformation, false);
 		deadTable = new ProcessTable(processCallback, systemInformation, true);
 		ShowAllProcessesCheckbox showAllProcessesCheckbox = new ShowAllProcessesCheckbox(liveTable, deadTable);
-		FilterPanel filterPanel = new FilterPanel(liveTable, deadTable);
+		filterPanel = new FilterPanel(liveTable, deadTable);
 		JLabel attributeLabel = new JLabel("By:");
 		FilterAttributeComboBox attribute = new FilterAttributeComboBox(liveTable.getVisibleColumns(), filterPanel);
 
@@ -84,5 +91,25 @@ public class ProcessPanel extends JPanel {
 	public void update() {
 		liveTable.update();
 		deadTable.update();
+	}
+
+	public void showProcess(long uniqueId) {
+		if (isProcessInList(systemInformation.processes, uniqueId)) {
+			showProcess(liveTable, uniqueId);
+		} else if (isProcessInList(systemInformation.deadProcesses, uniqueId) &&
+				Config.getBoolean(Config.KEY_SHOW_DEAD_PROCESSES)) {
+			showProcess(deadTable, uniqueId);
+		}
+	}
+
+	private boolean isProcessInList(List<Process> processes, long uniqueId) {
+		return processes.stream().anyMatch(p -> p.uniqueId == uniqueId);
+	}
+
+	private void showProcess(ProcessTable targetTable, long uniqueId) {
+		if (!targetTable.showProcess(uniqueId)) {
+			filterPanel.clearFilter();
+			targetTable.showProcess(uniqueId);
+		}
 	}
 }
