@@ -35,6 +35,7 @@ public class CpuContextMenu extends JPopupMenu {
 		changeGraphMenu.add(totalCpu);
 		changeGraphMenu.add(coresCpu);
 
+		add(changeGraphMenu);
 		add(new TopListMenu(this, cpuTopList, ValueType.Percentage, callback));
 	}
 }
