@@ -68,10 +68,11 @@ public class CpuPanel extends JPanel {
 		JLabel labelMaxCpu = new JLabel("100%");
 
 		singleCpuPanel = new GraphPanel(GraphType.Cpu, ValueType.Percentage);
-		timelineGraph = new TimelineGraphPanel(singleCpuPanel, labelMaxTime);
+		timelineGraph = new TimelineGraphPanel(GraphType.Cpu, labelMaxTime);
 		multiCpuPanel = new MultiCpuPanel(timelineGraph, systemInformation);
 
 		singleCpuPanel.addGraph(cpuUsage, systemInformation.cpuTopList);
+		timelineGraph.connectGraphPanels(singleCpuPanel);
 		timelineGraph.addGraph(cpuUsage);
 		timelineGroup.add(timelineGraph);
 

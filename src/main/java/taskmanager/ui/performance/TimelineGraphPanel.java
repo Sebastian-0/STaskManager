@@ -38,13 +38,12 @@ public class TimelineGraphPanel extends GraphPanel {
 	
 	private TimelineGroup group;
 	
-	public TimelineGraphPanel(GraphPanel mainGraph, JLabel timeLabel) {
-		super(mainGraph.graphType, ValueType.Raw, false);
+	public TimelineGraphPanel(GraphType graphType, JLabel timeLabel) {
+		super(graphType, ValueType.Raw, false);
 		this.timeLabel = timeLabel;
 		
 		connectedGraphs = new ArrayList<>();
-		connectedGraphs.add(mainGraph);
-		
+
 		addMouseListener(mouseListener);
 		addMouseMotionListener(mouseListener);
 		
@@ -58,7 +57,7 @@ public class TimelineGraphPanel extends GraphPanel {
 	}
 	
 	
-	public void connectGraphs(GraphPanel... graphs) {
+	public void connectGraphPanels(GraphPanel... graphs) {
 		connectedGraphs.addAll(Arrays.asList(graphs));
 	}
 	
@@ -248,22 +247,26 @@ public class TimelineGraphPanel extends GraphPanel {
 			int right = getRightBorderPosition();
 			
 			if (Math.abs(x - left) <= BORDER_WIDTH/2) {
-				if (!highlightLeftBorder)
+				if (!highlightLeftBorder) {
 					repaint();
+				}
 				highlightLeftBorder = true;
 			} else {
-				if (highlightLeftBorder)
+				if (highlightLeftBorder) {
 					repaint();
+				}
 				highlightLeftBorder = false;
 			}
 				
 			if (Math.abs(x - right) <= BORDER_WIDTH/2) {
-				if (!highlightRightBorder)
+				if (!highlightRightBorder) {
 					repaint();
+				}
 				highlightRightBorder = true;
 			} else {
-				if (highlightRightBorder)
+				if (highlightRightBorder) {
 					repaint();
+				}
 				highlightRightBorder = false;
 			}
 		}
@@ -275,10 +278,12 @@ public class TimelineGraphPanel extends GraphPanel {
 		
 		@Override
 		public void mouseExited(MouseEvent e) {
-			if (highlightLeftBorder)
+			if (highlightLeftBorder) {
 				repaint();
-			if (highlightRightBorder)
+			}
+			if (highlightRightBorder) {
 				repaint();
+			}
 			highlightLeftBorder = false;
 			highlightRightBorder = false;
 			

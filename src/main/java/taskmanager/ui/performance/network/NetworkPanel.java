@@ -58,11 +58,12 @@ public class NetworkPanel extends JPanel {
 		labelMaxTransfer = new JLabel("XX Kbps");
 
 		transferGraph = new GraphPanel(GraphType.Network, ValueType.BitsPerSecond);
-		timelineGraph = new TimelineGraphPanel(transferGraph, labelMaxTime);
+		timelineGraph = new TimelineGraphPanel(GraphType.Network, labelMaxTime);
 
 		transferGraph.setIsLogarithmic(true);
 		transferGraph.addGraph(network.inRate, false);
 		transferGraph.addGraph(network.outRate, true);
+		timelineGraph.connectGraphPanels(transferGraph);
 		timelineGraph.addGraph(network.inRate);
 		timelineGraph.addGraph(network.outRate);
 		timelineGroup.add(timelineGraph);

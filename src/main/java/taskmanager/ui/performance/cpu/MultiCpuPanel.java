@@ -49,7 +49,7 @@ public class MultiCpuPanel extends JPanel {
 			add(graphs[i]);
 		}
 
-		timeline.connectGraphs(graphs);
+		timeline.connectGraphPanels(graphs);
 	}
 
 	@Override

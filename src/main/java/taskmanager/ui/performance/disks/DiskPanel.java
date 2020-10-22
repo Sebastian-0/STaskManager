@@ -62,13 +62,13 @@ public class DiskPanel extends JPanel {
 		
 		activeTimeGraph = new GraphPanel(GraphType.Disk, ValueType.Percentage);
 		transferGraph = new GraphPanel(GraphType.Disk, ValueType.BytesPerSecond);
-		timelineGraph = new TimelineGraphPanel(activeTimeGraph, labelMaxTime);
+		timelineGraph = new TimelineGraphPanel(GraphType.Disk, labelMaxTime);
 		
 		activeTimeGraph.addGraph(new DoubleToLong(disk.activeFraction));
 		transferGraph.setIsLogarithmic(true);
 		transferGraph.addGraph(disk.writeRate, true);
 		transferGraph.addGraph(disk.readRate, false);
-		timelineGraph.connectGraphs(transferGraph);
+		timelineGraph.connectGraphPanels(activeTimeGraph, transferGraph);
 		timelineGraph.addGraph(new DoubleToLong(disk.activeFraction));
 		timelineGroup.add(timelineGraph);
 

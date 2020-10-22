@@ -74,13 +74,13 @@ public class PerformancePanel extends JPanel {
 		JLabel labelMaxTime = new JLabel("Displaying 60 seconds");
 
 		TimelineGroup group = new TimelineGroup();
-		cpuTimeline = new TimelineGraphPanel(cpuGraph, labelMaxTime);
-		memoryTimeline = new TimelineGraphPanel(memoryGraph, labelMaxTime);
+		cpuTimeline = new TimelineGraphPanel(GraphType.Cpu, labelMaxTime);
+		memoryTimeline = new TimelineGraphPanel(GraphType.Memory, labelMaxTime);
 
 		cpuTimeline.addGraph(process.cpuUsage);
-		cpuTimeline.connectGraphs(memoryGraph);
+		cpuTimeline.connectGraphPanels(cpuGraph, memoryGraph);
 		memoryTimeline.addGraph(process.privateWorkingSet);
-		memoryTimeline.connectGraphs(cpuGraph);
+		memoryTimeline.connectGraphPanels(memoryGraph, cpuGraph);
 
 		group.add(cpuTimeline);
 		group.add(memoryTimeline);

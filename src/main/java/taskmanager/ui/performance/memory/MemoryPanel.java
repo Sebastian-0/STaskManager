@@ -70,10 +70,11 @@ public class MemoryPanel extends JPanel {
 		JLabel labelComposition = new JLabel("Memory composition");
 
 		memoryGraph = new GraphPanel(GraphType.Memory, ValueType.Bytes);
-		timelineGraph = new TimelineGraphPanel(memoryGraph, labelMaxTime);
+		timelineGraph = new TimelineGraphPanel(GraphType.Memory, labelMaxTime);
 		memoryComposition = new MemoryCompositionPanel(systemInformation);
 
 		memoryGraph.addGraph(memoryAvailable, systemInformation.memoryUsedTopList);
+		timelineGraph.connectGraphPanels(memoryGraph);
 		timelineGraph.addGraph(memoryAvailable);
 		timelineGroup.add(timelineGraph);
 

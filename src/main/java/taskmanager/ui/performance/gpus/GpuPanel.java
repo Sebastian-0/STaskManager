@@ -96,15 +96,14 @@ public class GpuPanel extends JPanel {
 		} else {
 			temperatureGraph = new UnsupportedHardwareGraphPanel(GraphType.Gpu);
 		}
-		timelineGraph = new TimelineGraphPanel(utilizationGraph, labelMaxTime);
+		timelineGraph = new TimelineGraphPanel(GraphType.Gpu, labelMaxTime);
 
 		utilizationGraph.addGraph(gpu.utilization);
 		encodeDecodeGraph.addGraph(gpu.encoderUtilization, false);
 		encodeDecodeGraph.addGraph(gpu.decoderUtilization, true);
 		memoryGraph.addGraph(gpu.usedMemory);
 		temperatureGraph.addGraph(gpu.temperature);
-		timelineGraph.connectGraphs(memoryGraph);
-		timelineGraph.connectGraphs(temperatureGraph);
+		timelineGraph.connectGraphPanels(utilizationGraph, memoryGraph, temperatureGraph);
 		timelineGraph.addGraph(gpu.utilization);
 		timelineGroup.add(timelineGraph);
 

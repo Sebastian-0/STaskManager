@@ -47,7 +47,7 @@ public class GraphPanel extends JPanel {
 
 	private int gridOffset;
 
-	private boolean renderValueMarker;
+	private final boolean renderValueMarker;
 	private boolean isLogarithmic;
 	private int mouseX;
 	private int mouseY;
@@ -101,10 +101,11 @@ public class GraphPanel extends JPanel {
 	}
 
 	public void setSelected(boolean selected) {
-		if (selected)
+		if (selected) {
 			setBorder(new LineBorder(Color.BLACK, 2));
-		else
+		} else {
 			setBorder(new LineBorder(Color.BLACK));
+		}
 	}
 
 	@Override
@@ -236,8 +237,9 @@ public class GraphPanel extends JPanel {
 	}
 
 	private double computeHeightFraction(long value, long maximum) {
-		if (isLogarithmic)
+		if (isLogarithmic) {
 			return logarithm(value < 1 ? 1 : value) / logarithm(maximum);
+		}
 		return value / (double) maximum;
 	}
 
