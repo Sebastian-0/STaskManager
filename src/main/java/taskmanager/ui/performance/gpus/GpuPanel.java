@@ -17,13 +17,15 @@ import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
+import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
+import taskmanager.ui.performance.GraphPanel.Style;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
-import taskmanager.ui.performance.common.InformationItemPanel;
 import taskmanager.ui.performance.RatioItemPanel;
 import taskmanager.ui.performance.TimelineGraphPanel;
 import taskmanager.ui.performance.TimelineGroup;
 import taskmanager.ui.performance.UnsupportedHardwareGraphPanel;
+import taskmanager.ui.performance.common.InformationItemPanel;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -77,34 +79,34 @@ public class GpuPanel extends JPanel {
 		labelMemory.setPreferredSize(labelTemperature.getPreferredSize());
 
 		if (gpu.utilizationSupported) {
-			utilizationGraph = new GraphPanel(GraphType.Gpu, ValueType.Percentage);
+			utilizationGraph = new GraphPanel();
 		} else {
 			utilizationGraph = new UnsupportedHardwareGraphPanel(GraphType.Gpu);
 		}
 		if (gpu.encoderSupported || gpu.decoderSupported) {
-			encodeDecodeGraph = new GraphPanel(GraphType.Gpu, ValueType.Percentage);
+			encodeDecodeGraph = new GraphPanel();
 		} else {
 			encodeDecodeGraph = new UnsupportedHardwareGraphPanel(GraphType.Gpu);
 		}
 		if (gpu.memorySupported) {
-			memoryGraph = new GraphPanel(GraphType.Gpu, ValueType.Bytes);
+			memoryGraph = new GraphPanel();
 		} else {
 			memoryGraph = new UnsupportedHardwareGraphPanel(GraphType.Gpu);
 		}
 		if (gpu.temperatureSupported) {
-			temperatureGraph = new GraphPanel(GraphType.Gpu, ValueType.Temperature);
+			temperatureGraph = new GraphPanel();
 		} else {
 			temperatureGraph = new UnsupportedHardwareGraphPanel(GraphType.Gpu);
 		}
-		timelineGraph = new TimelineGraphPanel(GraphType.Gpu, labelMaxTime);
+		timelineGraph = new TimelineGraphPanel(labelMaxTime);
 
-		utilizationGraph.addGraph(gpu.utilization);
-		encodeDecodeGraph.addGraph(gpu.encoderUtilization, false);
-		encodeDecodeGraph.addGraph(gpu.decoderUtilization, true);
-		memoryGraph.addGraph(gpu.usedMemory);
-		temperatureGraph.addGraph(gpu.temperature);
+		utilizationGraph.addGraph(new GraphBuilder(gpu.utilization, GraphType.Gpu).build());
+		encodeDecodeGraph.addGraph(new GraphBuilder(gpu.encoderUtilization, GraphType.Gpu).valueType(ValueType.Percentage).style(new Style(false, "E: ")).build());
+		encodeDecodeGraph.addGraph(new GraphBuilder(gpu.decoderUtilization, GraphType.Gpu).valueType(ValueType.Percentage).style(new Style(false, "D: ")).build());
+		memoryGraph.addGraph(new GraphBuilder(gpu.usedMemory, GraphType.Gpu).valueType(ValueType.Bytes).build());
+		temperatureGraph.addGraph(new GraphBuilder(gpu.temperature, GraphType.Gpu).valueType(ValueType.Temperature).build());
 		timelineGraph.connectGraphPanels(utilizationGraph, memoryGraph, temperatureGraph);
-		timelineGraph.addGraph(gpu.utilization);
+		timelineGraph.addGraph(new GraphBuilder(gpu.utilization, GraphType.Gpu).build());
 		timelineGroup.add(timelineGraph);
 
 		utilizationGraph.setMaxDatapointValue(Config.DOUBLE_TO_LONG);
@@ -221,9 +223,9 @@ public class GpuPanel extends JPanel {
 
 
 	public GraphTypeButton createGraphButton(int index) {
-		connectedButton = new GraphTypeButton(GraphType.Gpu, ValueType.Percentage, String.format("GPU %d (%s)", gpu.index, gpu.name), index);
+		connectedButton = new GraphTypeButton(String.format("GPU %d (%s)", gpu.index, gpu.name), index);
 		connectedButton.setIsLogarithmic(utilizationGraph.isLogarithmic());
-		connectedButton.addGraph(gpu.utilization);
+		connectedButton.addGraph(new GraphBuilder(gpu.utilization, GraphType.Gpu).build());
 		connectedButton.setMaxDatapointValue(Config.DOUBLE_TO_LONG);
 		return connectedButton;
 	}

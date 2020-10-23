@@ -19,13 +19,14 @@ import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
+import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
-import taskmanager.ui.performance.common.InformationItemPanel;
 import taskmanager.ui.performance.RatioItemPanel;
 import taskmanager.ui.performance.ShowProcessCallback;
 import taskmanager.ui.performance.TimelineGraphPanel;
 import taskmanager.ui.performance.TimelineGroup;
+import taskmanager.ui.performance.common.InformationItemPanel;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -69,13 +70,13 @@ public class MemoryPanel extends JPanel {
 		labelMaxMemory = new JLabel("XX GB");
 		JLabel labelComposition = new JLabel("Memory composition");
 
-		memoryGraph = new GraphPanel(GraphType.Memory, ValueType.Bytes);
-		timelineGraph = new TimelineGraphPanel(GraphType.Memory, labelMaxTime);
+		memoryGraph = new GraphPanel();
+		timelineGraph = new TimelineGraphPanel(labelMaxTime);
 		memoryComposition = new MemoryCompositionPanel(systemInformation);
 
-		memoryGraph.addGraph(memoryAvailable, systemInformation.memoryUsedTopList);
+		memoryGraph.addGraph(new GraphBuilder(memoryAvailable, GraphType.Memory).topList(systemInformation.memoryUsedTopList).build());
 		timelineGraph.connectGraphPanels(memoryGraph);
-		timelineGraph.addGraph(memoryAvailable);
+		timelineGraph.addGraph(new GraphBuilder(memoryAvailable, GraphType.Memory).build());
 		timelineGroup.add(timelineGraph);
 
 
@@ -170,9 +171,9 @@ public class MemoryPanel extends JPanel {
 
 
 	public GraphTypeButton createMemoryButton() {
-		connectedButton = new GraphTypeButton(GraphType.Memory, ValueType.Bytes, "Memory");
+		connectedButton = new GraphTypeButton("Memory");
 		connectedButton.setIsLogarithmic(memoryGraph.isLogarithmic());
-		connectedButton.addGraph(memoryAvailable);
+		connectedButton.addGraph(new GraphBuilder(memoryAvailable, GraphType.Memory).build());
 		return connectedButton;
 	}
 }

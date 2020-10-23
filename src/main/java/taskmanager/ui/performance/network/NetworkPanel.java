@@ -16,11 +16,13 @@ import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
+import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
+import taskmanager.ui.performance.GraphPanel.Style;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
-import taskmanager.ui.performance.common.InformationItemPanel;
 import taskmanager.ui.performance.TimelineGraphPanel;
 import taskmanager.ui.performance.TimelineGroup;
+import taskmanager.ui.performance.common.InformationItemPanel;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -57,15 +59,15 @@ public class NetworkPanel extends JPanel {
 		JLabel labelMaxTime = new JLabel("Displaying 60 seconds");
 		labelMaxTransfer = new JLabel("XX Kbps");
 
-		transferGraph = new GraphPanel(GraphType.Network, ValueType.BitsPerSecond);
-		timelineGraph = new TimelineGraphPanel(GraphType.Network, labelMaxTime);
+		transferGraph = new GraphPanel();
+		timelineGraph = new TimelineGraphPanel(labelMaxTime);
 
 		transferGraph.setIsLogarithmic(true);
-		transferGraph.addGraph(network.inRate, false);
-		transferGraph.addGraph(network.outRate, true);
+		transferGraph.addGraph(new GraphBuilder(network.inRate, GraphType.Network).style(new Style(false, "R: ")).build());
+		transferGraph.addGraph(new GraphBuilder(network.outRate, GraphType.Network).style(new Style(true, "S: ")).build());
 		timelineGraph.connectGraphPanels(transferGraph);
-		timelineGraph.addGraph(network.inRate);
-		timelineGraph.addGraph(network.outRate);
+		timelineGraph.addGraph(new GraphBuilder(network.inRate, GraphType.Network).build());
+		timelineGraph.addGraph(new GraphBuilder(network.outRate, GraphType.Network).build());
 		timelineGroup.add(timelineGraph);
 
 		// TODO Currently copy-n-paste strokes from GraphPanel! Improve this somehow!
@@ -144,10 +146,10 @@ public class NetworkPanel extends JPanel {
 
 
 	public GraphTypeButton createGraphButton(int index) {
-		connectedButton = new GraphTypeButton(GraphType.Network, ValueType.BitsPerSecond, "Network", index);
+		connectedButton = new GraphTypeButton("Network", index);
 		connectedButton.setIsLogarithmic(transferGraph.isLogarithmic());
-		connectedButton.addGraph(network.inRate, false);
-		connectedButton.addGraph(network.outRate, true);
+		connectedButton.addGraph(new GraphBuilder(network.inRate, GraphType.Network).style(new Style(false, "R: ")).build());
+		connectedButton.addGraph(new GraphBuilder(network.outRate, GraphType.Network).style(new Style(false, "S: ")).build());
 		return connectedButton;
 	}
 }

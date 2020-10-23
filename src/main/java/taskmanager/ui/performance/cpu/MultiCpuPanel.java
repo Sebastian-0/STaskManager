@@ -16,6 +16,7 @@ import taskmanager.Measurements;
 import taskmanager.data.SystemInformation;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
+import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
 import taskmanager.ui.performance.GraphPanel.ShortToLong;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.TimelineGraphPanel;
@@ -25,19 +26,18 @@ import javax.swing.JPopupMenu;
 import java.awt.GridLayout;
 
 public class MultiCpuPanel extends JPanel {
-	private final Measurements<Long>[] measurements;
 	private final GraphPanel[] graphs;
 
 	@SuppressWarnings("unchecked")
 	public MultiCpuPanel(TimelineGraphPanel timeline, SystemInformation systemInformation) {
 		int numCores = systemInformation.logicalProcessorCount;
-		measurements = new Measurements[numCores];
+		Measurements<Long>[] measurements = new Measurements[numCores];
 		graphs = new GraphPanel[numCores];
 
 		for (int i = 0; i < numCores; i++) {
 			measurements[i] = new ShortToLong(systemInformation.cpuUsagePerCore[i]);
-			graphs[i] = new GraphPanel(GraphType.Cpu, ValueType.Percentage);
-			graphs[i].addGraph(measurements[i]);
+			graphs[i] = new GraphPanel();
+			graphs[i].addGraph(new GraphBuilder(measurements[i], GraphType.Cpu).build());
 		}
 
 		int height = (int) (Math.log(numCores - 1) / Math.log(2)) + 1;

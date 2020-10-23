@@ -18,17 +18,20 @@ import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
 import taskmanager.ui.performance.GraphPanel.DoubleToLong;
+import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
-import taskmanager.ui.performance.common.InformationItemPanel;
 import taskmanager.ui.performance.TimelineGraphPanel;
 import taskmanager.ui.performance.TimelineGroup;
+import taskmanager.ui.performance.common.InformationItemPanel;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BasicStroke;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
+
+import static taskmanager.ui.performance.GraphPanel.Style;
 
 public class DiskPanel extends JPanel {
 	private final Disk disk;
@@ -60,19 +63,19 @@ public class DiskPanel extends JPanel {
 		JLabel labelTransferZero = new JLabel("0");
 		labelTransferMax = new JLabel("XX KB");
 		
-		activeTimeGraph = new GraphPanel(GraphType.Disk, ValueType.Percentage);
-		transferGraph = new GraphPanel(GraphType.Disk, ValueType.BytesPerSecond);
-		timelineGraph = new TimelineGraphPanel(GraphType.Disk, labelMaxTime);
-		
-		activeTimeGraph.addGraph(new DoubleToLong(disk.activeFraction));
+		activeTimeGraph = new GraphPanel();
+		transferGraph = new GraphPanel();
+		timelineGraph = new TimelineGraphPanel(labelMaxTime);
+
+		activeTimeGraph.addGraph(new GraphBuilder(new DoubleToLong(disk.activeFraction), GraphType.Disk).build());
 		transferGraph.setIsLogarithmic(true);
-		transferGraph.addGraph(disk.writeRate, true);
-		transferGraph.addGraph(disk.readRate, false);
-		timelineGraph.connectGraphPanels(activeTimeGraph, transferGraph);
-		timelineGraph.addGraph(new DoubleToLong(disk.activeFraction));
+		transferGraph.addGraph(new GraphBuilder(disk.writeRate, GraphType.Disk).valueType(ValueType.BytesPerSecond).style(new Style(true, "W: ")).build());
+		transferGraph.addGraph(new GraphBuilder(disk.readRate, GraphType.Disk).valueType(ValueType.BytesPerSecond).style(new Style(false, "R: ")).build());
+		timelineGraph.connectGraphPanels(this.activeTimeGraph, transferGraph);
+		timelineGraph.addGraph(new GraphBuilder(new DoubleToLong(disk.activeFraction), GraphType.Disk).build());
 		timelineGroup.add(timelineGraph);
 
-		activeTimeGraph.setMaxDatapointValue(Config.DOUBLE_TO_LONG);
+		this.activeTimeGraph.setMaxDatapointValue(Config.DOUBLE_TO_LONG);
 		timelineGraph.setMaxDatapointValue(Config.DOUBLE_TO_LONG);
 
 		// TODO Currently copy-n-paste strokes from GraphPanel! Improve this somehow!
@@ -110,7 +113,7 @@ public class DiskPanel extends JPanel {
 		layout.addToGrid(labelActiveTime, 0, 1, 1, 1, GridBagConstraints.WEST);
 		layout.addToGrid(labelActiveTimeMax , 2, 1, 1, 1, GridBagConstraints.EAST);
 		layout.setInsets(2, 5, 2, 5);
-		layout.addToGrid(activeTimeGraph, 0, 2, 3, 1, GridBagConstraints.BOTH, 1, 1);
+		layout.addToGrid(this.activeTimeGraph, 0, 2, 3, 1, GridBagConstraints.BOTH, 1, 1);
 		layout.setInsets(0, 5, 5, 5);
 		layout.addToGrid(labelMaxTime, 0, 3, 2, 1, GridBagConstraints.WEST);
 		layout.addToGrid(labelActiveTimeZero, 2, 3, 1, 1, GridBagConstraints.EAST);
@@ -148,9 +151,9 @@ public class DiskPanel extends JPanel {
 
 
 	public GraphTypeButton createGraphButton(int index) {
-		connectedButton = new GraphTypeButton(GraphType.Disk, ValueType.Percentage, String.format("Disk %d (%s)", disk.index, disk.name), index);
+		connectedButton = new GraphTypeButton(String.format("Disk %d (%s)", disk.index, disk.name), index);
 		connectedButton.setIsLogarithmic(activeTimeGraph.isLogarithmic());
-		connectedButton.addGraph(new DoubleToLong(disk.activeFraction));
+		connectedButton.addGraph(new GraphBuilder(new DoubleToLong(disk.activeFraction), GraphType.Disk).build());
 		connectedButton.setMaxDatapointValue(Config.DOUBLE_TO_LONG);
 		return connectedButton;
 	}

@@ -11,8 +11,6 @@
 
 package taskmanager.ui.performance;
 
-import taskmanager.ui.TextUtils.ValueType;
-
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -21,8 +19,6 @@ import java.awt.event.MouseMotionListener;
 
 public class UnsupportedHardwareGraphPanel extends GraphPanel {
 	public UnsupportedHardwareGraphPanel(GraphType graphType) {
-		super(graphType, ValueType.Raw);
-
 		for (MouseListener listener : getMouseListeners()) {
 			removeMouseListener(listener);
 		}

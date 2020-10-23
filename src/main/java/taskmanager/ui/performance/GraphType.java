@@ -11,20 +11,24 @@
 
 package taskmanager.ui.performance;
 
+import taskmanager.ui.TextUtils.ValueType;
+
 import java.awt.Color;
 
 public enum GraphType {
-	Memory(new Color(139, 18, 174), "Memory"),
-	Cpu(new Color(17, 125, 187), "Cpu"),
-	Network(new Color(167, 79, 1), "Network"),
-	Disk(new Color(77, 166, 12), "Disk"),
-	Gpu(new Color(167, 1, 7), "Gpu");
+	Memory(new Color(139, 18, 174), "Memory", ValueType.Bytes),
+	Cpu(new Color(17, 125, 187), "Cpu", ValueType.Percentage),
+	Network(new Color(167, 79, 1), "Network", ValueType.BitsPerSecond),
+	Disk(new Color(77, 166, 12), "Disk", ValueType.Percentage),
+	Gpu(new Color(167, 1, 7), "Gpu", ValueType.Percentage);
 	
 	public final Color color;
 	public final String header;
+	public final ValueType mainValueType;
 	
-	GraphType(Color color, String header) {
+	GraphType(Color color, String header, ValueType mainValueType) {
 		this.color = color;
 		this.header = header;
+		this.mainValueType = mainValueType;
 	}
 }

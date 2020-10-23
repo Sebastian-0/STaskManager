@@ -17,6 +17,7 @@ import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
+import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.TimelineGraphPanel;
 import taskmanager.ui.performance.TimelineGroup;
@@ -60,13 +61,13 @@ public class PerformancePanel extends JPanel {
 		labelCpuCurrent.setPreferredSize(labelMemoryCurrent.getPreferredSize());
 		labelMemoryCurrent.setPreferredSize(labelMemoryCurrent.getPreferredSize());
 
-		cpuGraph = new GraphPanel(GraphType.Cpu, ValueType.Percentage);
-		memoryGraph = new GraphPanel(GraphType.Memory, ValueType.Bytes);
+		cpuGraph = new GraphPanel();
+		memoryGraph = new GraphPanel();
 
-		cpuGraph.addGraph(process.cpuUsage);
+		cpuGraph.addGraph(new GraphBuilder(process.cpuUsage, GraphType.Cpu).build());
 		cpuGraph.setPreferredSize(new Dimension(cpuGraph.getPreferredSize().width * 2, cpuGraph.getPreferredSize().height * 2));
 		cpuGraph.addMouseListener(mouseListener);
-		memoryGraph.addGraph(process.privateWorkingSet);
+		memoryGraph.addGraph(new GraphBuilder(process.privateWorkingSet, GraphType.Memory).build());
 		memoryGraph.setPreferredSize(new Dimension(memoryGraph.getPreferredSize().width * 2, memoryGraph.getPreferredSize().height * 2));
 		memoryGraph.addMouseListener(mouseListener);
 
@@ -74,12 +75,12 @@ public class PerformancePanel extends JPanel {
 		JLabel labelMaxTime = new JLabel("Displaying 60 seconds");
 
 		TimelineGroup group = new TimelineGroup();
-		cpuTimeline = new TimelineGraphPanel(GraphType.Cpu, labelMaxTime);
-		memoryTimeline = new TimelineGraphPanel(GraphType.Memory, labelMaxTime);
+		cpuTimeline = new TimelineGraphPanel(labelMaxTime);
+		memoryTimeline = new TimelineGraphPanel(labelMaxTime);
 
-		cpuTimeline.addGraph(process.cpuUsage);
+		cpuTimeline.addGraph(new GraphBuilder(process.cpuUsage, GraphType.Cpu).build());
 		cpuTimeline.connectGraphPanels(cpuGraph, memoryGraph);
-		memoryTimeline.addGraph(process.privateWorkingSet);
+		memoryTimeline.addGraph(new GraphBuilder(process.privateWorkingSet, GraphType.Memory).build());
 		memoryTimeline.connectGraphPanels(memoryGraph, cpuGraph);
 
 		group.add(cpuTimeline);

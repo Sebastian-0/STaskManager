@@ -19,14 +19,15 @@ import taskmanager.platform.win32.WindowsExtraInformation;
 import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
+import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
 import taskmanager.ui.performance.GraphPanel.ShortToLong;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
-import taskmanager.ui.performance.common.InformationItemPanel;
 import taskmanager.ui.performance.RatioItemPanel;
 import taskmanager.ui.performance.ShowProcessCallback;
 import taskmanager.ui.performance.TimelineGraphPanel;
 import taskmanager.ui.performance.TimelineGroup;
+import taskmanager.ui.performance.common.InformationItemPanel;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -67,13 +68,13 @@ public class CpuPanel extends JPanel {
 		JLabel labelMaxTime = new JLabel("Displaying 60 seconds");
 		JLabel labelMaxCpu = new JLabel("100%");
 
-		singleCpuPanel = new GraphPanel(GraphType.Cpu, ValueType.Percentage);
-		timelineGraph = new TimelineGraphPanel(GraphType.Cpu, labelMaxTime);
+		singleCpuPanel = new GraphPanel();
+		timelineGraph = new TimelineGraphPanel(labelMaxTime);
 		multiCpuPanel = new MultiCpuPanel(timelineGraph, systemInformation);
 
-		singleCpuPanel.addGraph(cpuUsage, systemInformation.cpuTopList);
+		singleCpuPanel.addGraph(new GraphBuilder(cpuUsage, GraphType.Cpu).topList(systemInformation.cpuTopList).build());
 		timelineGraph.connectGraphPanels(singleCpuPanel);
-		timelineGraph.addGraph(cpuUsage);
+		timelineGraph.addGraph(new GraphBuilder(cpuUsage, GraphType.Cpu).build());
 		timelineGroup.add(timelineGraph);
 
 		containerPanel = new JPanel();
@@ -166,9 +167,9 @@ public class CpuPanel extends JPanel {
 
 
 	public GraphTypeButton createGraphButton() {
-		connectedButton = new GraphTypeButton(GraphType.Cpu, ValueType.Percentage, "CPU");
+		connectedButton = new GraphTypeButton("CPU");
 		connectedButton.setIsLogarithmic(singleCpuPanel.isLogarithmic());
-		connectedButton.addGraph(cpuUsage);
+		connectedButton.addGraph(new GraphBuilder(cpuUsage, GraphType.Cpu).build());
 		return connectedButton;
 	}
 }

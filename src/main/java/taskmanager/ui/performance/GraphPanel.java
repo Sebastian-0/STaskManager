@@ -38,9 +38,6 @@ public class GraphPanel extends JPanel {
 	private final List<Graph> graphs;
 	private long measurementMaximumValue;
 
-	protected final GraphType graphType;
-	private final ValueType valueType;
-
 	protected int dataStartIndex;
 	protected int dataEndIndex;
 	private boolean moveDataWindow; // When false the displayed sequence stays the same until it is forced out of memory
@@ -52,14 +49,12 @@ public class GraphPanel extends JPanel {
 	private int mouseX;
 	private int mouseY;
 
-	public GraphPanel(GraphType graphType, ValueType valueType) {
-		this (graphType, valueType, true);
+	public GraphPanel() {
+		this (true);
 	}
 
-	public GraphPanel(GraphType graphType, ValueType valueType, boolean renderValueMarker) {
+	public GraphPanel(boolean renderValueMarker) {
 		this.graphs = new ArrayList<>();
-		this.graphType = graphType;
-		this.valueType = valueType;
 		this.renderValueMarker = renderValueMarker;
 		isLogarithmic = false;
 
@@ -83,21 +78,9 @@ public class GraphPanel extends JPanel {
 		return isLogarithmic;
 	}
 
-	public void addGraph(Measurements<Long> measurements) {
-		addGraph(measurements, null, false);
-	}
-
-	public void addGraph(Measurements<Long> measurements, boolean isDashed) {
-		addGraph(measurements, null, isDashed);
-	}
-
-	public void addGraph(Measurements<Long> measurements, Measurements<TopList> topLists) {
-		addGraph(measurements, topLists, false);
-	}
-
-	public void addGraph(Measurements<Long> measurements, Measurements<TopList> topLists, boolean isDashed) {
-		this.graphs.add(new Graph(measurements, topLists, isDashed));
-		setDataIndexInterval((int) (measurements.size() - 1 - 60 * Config.getFloat(Config.KEY_UPDATE_RATE)), measurements.size() - 1);
+	public void addGraph(Graph graph) {
+		graphs.add(graph);
+		setDataIndexInterval((int) (graph.measurements.size() - 1 - 60 * Config.getFloat(Config.KEY_UPDATE_RATE)), graph.measurements.size() - 1);
 	}
 
 	public void setSelected(boolean selected) {
@@ -143,7 +126,6 @@ public class GraphPanel extends JPanel {
 		final int numVerticalSections = (dataEndIndex - dataStartIndex) / datapointsPerVerticalSection;
 		final int verticalOffset = 0;
 
-//		g.setColor(new Color(227, 239, 247));
 		g.setColor(new Color(127, 139, 147, 50));
 		if (isLogarithmic) {
 			double lower = 0;
@@ -202,9 +184,7 @@ public class GraphPanel extends JPanel {
 
 	private void drawCurvePart(Graphics2D g2d, Graph graph, boolean drawLine, int alpha) {
 		Stroke oldStroke = g2d.getStroke();
-		if (graph.isDashed) {
-			g2d.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[]{3f}, 0f));
-		}
+		g2d.setStroke(graph.style.createStroke());
 
 		MeasurementAverager<Long> itr = graph.measurementAverager;
 		itr.reset();
@@ -219,7 +199,7 @@ public class GraphPanel extends JPanel {
 			int x = getWidth() * (idx) / itr.numPoints();
 			int xNext = getWidth() * (idx + 1) / itr.numPoints();
 
-			Color color = graphType.color;
+			Color color = graph.graphType.color;
 			if (drawLine) {
 				g2d.setColor(color);
 				g2d.drawLine(x, getHeight() - yPrev, xNext, getHeight() - yCurr);
@@ -281,6 +261,8 @@ public class GraphPanel extends JPanel {
 				}
 
 				selectedTopLists.add(MeasurementAveragerForTopList.weightedAverageOf(leftList, rightList, factor));
+			} else {
+				selectedTopLists.add(null);
 			}
 		}
 
@@ -291,43 +273,34 @@ public class GraphPanel extends JPanel {
 
 
 	private void drawSelectedValues(Graphics2D g2d, int x, List<Integer> yCoordinates) {
-		g2d.setColor(graphType.color);
+		g2d.setColor(getSelectionLineColor());
 		Stroke oldStroke = g2d.getStroke();
 		g2d.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[]{5f}, 0f));
 		g2d.drawLine(x, 0, x, getHeight());
 		g2d.setStroke(oldStroke);
 
 		final int size = 7;
-		for (Integer y : yCoordinates) {
+		for (int i = 0; i < yCoordinates.size(); i++) {
+			Integer y = yCoordinates.get(i);
+			g2d.setColor(graphs.get(i).graphType.color);
 			g2d.fillOval(x - size / 2, y - size / 2, size, size);
 		}
+	}
+
+	private Color getSelectionLineColor() {
+		if (graphs.stream().map(g -> g.graphType.color).distinct().count() > 1) {
+			return Color.GRAY;
+		}
+		return graphs.get(0).graphType.color;
 	}
 
 	private void drawSelectedValuesLabel(Graphics2D g2d, int x, List<Long> selectedValues, List<TopList> selectedTopLists) {
 		g2d.setFont(getFont());
 		FontMetrics metrics = g2d.getFontMetrics();
 		List<String> labelLines = new ArrayList<>();
-		if (graphType == GraphType.Cpu) {
-			labelLines.add(TextUtils.valueToString(selectedValues.get(0), valueType));
-		} else if (graphType == GraphType.Memory) {
-			labelLines.add(TextUtils.valueToString(selectedValues.get(0), valueType));
-		} else if (graphType == GraphType.Network) {
-			labelLines.add("S: " + TextUtils.valueToString(selectedValues.get(1), valueType));
-			labelLines.add("R: " + TextUtils.valueToString(selectedValues.get(0), valueType));
-		} else if (graphType == GraphType.Disk) {
-			if (graphs.size() == 1) {
-				labelLines.add(TextUtils.valueToString(selectedValues.get(0), valueType));
-			} else {
-				labelLines.add("W: " + TextUtils.valueToString(selectedValues.get(0), valueType));
-				labelLines.add("R: " + TextUtils.valueToString(selectedValues.get(1), valueType));
-			}
-		} else if (graphType == GraphType.Gpu) {
-			if (graphs.size() == 1) {
-				labelLines.add(TextUtils.valueToString(selectedValues.get(0), valueType));
-			} else {
-				labelLines.add("E: " + TextUtils.valueToString(selectedValues.get(0), valueType));
-				labelLines.add("D: " + TextUtils.valueToString(selectedValues.get(1), valueType));
-			}
+
+		for (int i = 0; i < graphs.size(); i++) {
+			labelLines.add(graphs.get(i).style.tooltipPrefix + TextUtils.valueToString(selectedValues.get(i), graphs.get(i).valueType));
 		}
 
 		final int columnOffset = 10;
@@ -337,27 +310,31 @@ public class GraphPanel extends JPanel {
 		int width = computeTextWidth(labelLines, metrics) + insets * 2;
 		int height = computeTextHeight(labelLines.size(), metrics) + insets;
 
-		TopList selectedTopList = null;
 		List<String> usages = new ArrayList<>();
 		List<String> names = new ArrayList<>();
 		List<String> pids = new ArrayList<>();
 		int[] columnPositions = new int[3];
-		if (!selectedTopLists.isEmpty() && selectedTopLists.get(0) != TopList.EMPTY) {
-			selectedTopList = selectedTopLists.get(0);
+
+		// Only render the first top list we find
+		int topListIdx = -1;
+		for (int i = 0; i < selectedTopLists.size(); i++) {
+			if (selectedTopLists.get(i) != null && selectedTopLists.get(i) != TopList.EMPTY) {
+				topListIdx = i;
+				break;
+			}
+		}
+
+		if (topListIdx != -1) {
 			int usageWidth = 40;
 			int nameWidth = 80;
 			int pidWidth = 40;
 
-			TopList topList = selectedTopList;
+			TopList topList = selectedTopLists.get(topListIdx);
 			for (TopList.Entry entry : topList.entries) {
 				String usage = "";
 				String name = entry.process.fileName;
 				String pid = Long.toString(entry.process.id);
-				if (graphType == GraphType.Cpu) {
-					usage = TextUtils.valueToString(entry.value, ValueType.Percentage);
-				} else if (graphType == GraphType.Memory) {
-					usage = TextUtils.valueToString(entry.value, ValueType.Bytes);
-				}
+				usage = TextUtils.valueToString(entry.value, graphs.get(topListIdx).valueType);
 
 				if (name.isEmpty()) {
 					name = "<unnamed>";
@@ -397,10 +374,10 @@ public class GraphPanel extends JPanel {
 		y += labelLines.size() * metrics.getHeight() + insets / 2;
 
 		// Render top list
-		if (selectedTopList != null) {
+		if (topListIdx != -1) {
 			g2d.drawLine(x + insets/2, y + metrics.getHeight()/2, x + width - insets/2, y + metrics.getHeight()/2);
 			y += metrics.getHeight() * 3 / 4;
-			for (int i = 0; i < selectedTopList.entries.length; i++) {
+			for (int i = 0; i < selectedTopLists.get(topListIdx).entries.length; i++) {
 				g2d.drawString(usages.get(i), x + insets + columnPositions[0], y + metrics.getHeight() * (i + 1) - metrics.getDescent());
 				g2d.drawString(names.get(i), x + insets + columnPositions[1], y + metrics.getHeight() * (i + 1) - metrics.getDescent());
 				g2d.drawString(pids.get(i), x + insets + columnPositions[2], y + metrics.getHeight() * (i + 1) - metrics.getDescent());
@@ -466,13 +443,39 @@ public class GraphPanel extends JPanel {
 	};
 
 
-	private static class Graph {
-		private final Measurements<Long> measurements;
-		private final MeasurementAverager<Long> measurementAverager;
-		private final MeasurementAverager<TopList> topListAverager;
-		private final boolean isDashed;
+	public static class Style {
+		public final boolean dashedLine;
+		public final String tooltipPrefix;
 
-		public Graph(Measurements<Long> measurements, Measurements<TopList> topLists, boolean isDashed) {
+		public Style() {
+			this(false, "");
+		}
+
+		public Style(boolean dashedLine, String tooltipPrefix) {
+			this.dashedLine = dashedLine;
+			this.tooltipPrefix = tooltipPrefix;
+		}
+
+		public Stroke createStroke() {
+			if (dashedLine) {
+				return new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] {3f}, 0f);
+			} else {
+				return new BasicStroke(1.5f);
+			}
+		}
+	}
+
+
+	public static class Graph {
+		public final Measurements<Long> measurements;
+		public final MeasurementAverager<Long> measurementAverager;
+		public final MeasurementAverager<TopList> topListAverager;
+
+		public final GraphType graphType;
+		public final ValueType valueType;
+		public final Style style;
+
+		private Graph(Measurements<Long> measurements, Measurements<TopList> topLists, GraphType graphType, ValueType valueType, Style style) {
 			this.measurements = measurements;
 			this.measurementAverager = new MeasurementAveragerForLong(measurements);
 			if (topLists != null) {
@@ -480,7 +483,45 @@ public class GraphPanel extends JPanel {
 			} else {
 				this.topListAverager = null;
 			}
-			this.isDashed = isDashed;
+			this.graphType = graphType;
+			this.valueType = valueType != null ? valueType : graphType.mainValueType;
+			this.style = style;
+		}
+		
+		
+		public static class GraphBuilder {
+			private final Measurements<Long> measurements;
+			private Measurements<TopList> topList;
+
+			private final GraphType graphType;
+
+			private ValueType valueType;
+			private Style style;
+
+			public GraphBuilder(Measurements<Long> measurements, GraphType graphType) {
+				this.measurements = measurements;
+				this.graphType = graphType;
+				this.style = new Style();
+			}
+
+			public GraphBuilder topList(Measurements<TopList> topList) {
+				this.topList = topList;
+				return this;
+			}
+
+			public GraphBuilder valueType(ValueType valueType) {
+				this.valueType = valueType;
+				return this;
+			}
+
+			public GraphBuilder style(Style style) {
+				this.style = style;
+				return this;
+			}
+
+			public Graph build() {
+				return new Graph(measurements, topList, graphType, valueType, style);
+			}
 		}
 	}
 
