@@ -231,9 +231,9 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 	@Override
 	public void focus() {
 		if ((getExtendedState() & JFrame.ICONIFIED) != 0) {
+			setVisible(true);
 			setExtendedState(getExtendedState() & ~JFrame.ICONIFIED);
 			Config.put(Config.KEY_LAST_EXTENDED_STATE, "" + getExtendedState());
-			setVisible(true);
 		}
 		toFront();
 	}
@@ -316,7 +316,12 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		@Override
 		public void windowStateChanged(WindowEvent e) {
 			Config.put(Config.KEY_LAST_EXTENDED_STATE, "" + e.getNewState());
-			setVisible(!shouldMinimizeToTray(e.getNewState()));
+			
+			if (shouldMinimizeToTray(e.getNewState())) {
+				setVisible(false);
+			} else if (!isVisible()) {
+				setVisible(true);
+			}
 		}
 	};
 
