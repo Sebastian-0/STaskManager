@@ -19,61 +19,86 @@ import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphType;
 
+import javax.swing.ButtonGroup;
+import javax.swing.JDialog;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.Menu;
-import java.awt.MenuItem;
-import java.awt.PopupMenu;
 import java.awt.RenderingHints;
 import java.awt.TrayIcon;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class Tray extends TrayIcon {
-	private Image applicationIcon;
-	private BufferedImage iconImage;
-	private Graphics2D imageGraphics;
+	private final Image applicationIcon;
+	private final BufferedImage iconImage;
+	private final Graphics2D imageGraphics;
 
 	private SystemInformation latestInfo;
 	private GraphType graphTypeToDisplay;
+
+	/** Only used to have a surface that can generate the popup menu */
+	private final JDialog popupMenuDialog;
+	private final JPopupMenu popupMenu;
 
 	public Tray(ApplicationCallback application, Image image) {
 		super(image);
 		applicationIcon = image;
 
+		popupMenuDialog = new JDialog((Frame) null);
+		popupMenuDialog.setUndecorated(true);
+		popupMenuDialog.setAlwaysOnTop(true);
+		popupMenuDialog.addWindowFocusListener(new WindowAdapter() {
+			@Override
+			public void windowLostFocus(WindowEvent e) {
+				popupMenuDialog.setVisible(false);
+			}
+		});
+
 		setImageAutoSize(true);
 
-		PopupMenu popupMenu = new PopupMenu();
+		popupMenu = new JPopupMenu();
+		JMenu selectedGraphItem = new JMenu("Selected graph");
 
-		Menu selectedGraphItem = new Menu("Selected graph");
-
-		AwtRadioButtonMenuItem noneItem = new AwtRadioButtonMenuItem("None");
-		AwtRadioButtonMenuItem cpuItem = new AwtRadioButtonMenuItem("CPU");
-		AwtRadioButtonMenuItem memoryItem = new AwtRadioButtonMenuItem("Memory");
-		noneItem.setActionListener(e -> setGraphType(null));
-		cpuItem.setActionListener(e -> setGraphType(GraphType.Cpu));
-		memoryItem.setActionListener(e -> setGraphType(GraphType.Memory));
+		JRadioButtonMenuItem noneItem = new JRadioButtonMenuItem("None");
+		JRadioButtonMenuItem cpuItem = new JRadioButtonMenuItem("CPU");
+		JRadioButtonMenuItem memoryItem = new JRadioButtonMenuItem("Memory");
+		noneItem.addActionListener(e -> setGraphType(null));
+		cpuItem.addActionListener(e -> setGraphType(GraphType.Cpu));
+		memoryItem.addActionListener(e -> setGraphType(GraphType.Memory));
 		selectedGraphItem.add(noneItem);
 		selectedGraphItem.add(cpuItem);
 		selectedGraphItem.add(memoryItem);
 		popupMenu.add(selectedGraphItem);
 
-		AwtButtonGroup group = new AwtButtonGroup();
-		group.addButtons(noneItem, cpuItem, memoryItem);
+		ButtonGroup group = new ButtonGroup();
+		group.add(noneItem);
+		group.add(cpuItem);
+		group.add(memoryItem);
 
 		popupMenu.addSeparator();
 
-		MenuItem messageItem = new MenuItem("Restore");
+		JMenuItem messageItem = new JMenuItem("Restore");
 		messageItem.addActionListener(e -> application.focus());
 		popupMenu.add(messageItem);
 
-		MenuItem closeItem = new MenuItem("Close");
+		JMenuItem closeItem = new JMenuItem("Close");
 		closeItem.addActionListener(e -> application.exit());
 		popupMenu.add(closeItem);
-		setPopupMenu(popupMenu);
 
 		addActionListener(e -> application.focus());
 
@@ -82,17 +107,53 @@ public class Tray extends TrayIcon {
 		imageGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 //		imageGraphics.setStroke(new BasicStroke(4));
 
+		popupMenu.addPopupMenuListener(new PopupMenuListener() {
+			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+			}
+
+			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+				popupMenuDialog.setVisible(false);
+			}
+
+			public void popupMenuCanceled(PopupMenuEvent e) {
+				popupMenuDialog.setVisible(false);
+			}
+		});
+
 		String graphName = Config.get(Config.KEY_TRAY_GRAPH);
 		if (graphName.isEmpty()) {
 			setGraphType(null);
-			noneItem.setState(true);
+			noneItem.setSelected(true);
 		} else if (graphName.equals(GraphType.Cpu.name())){
 			setGraphType(GraphType.Cpu);
-			cpuItem.setState(true);
+			cpuItem.setSelected(true);
 		} else if (graphName.equals(GraphType.Memory.name())){
 			setGraphType(GraphType.Memory);
-			memoryItem.setState(true);
+			memoryItem.setSelected(true);
 		}
+
+		addMouseListener(
+				new MouseAdapter() {
+					@Override
+					public void mousePressed(MouseEvent e) {
+						showJPopupMenu(e);
+					}
+
+					@Override
+					public void mouseReleased(MouseEvent e) {
+						showJPopupMenu(e);
+					}
+
+					private void showJPopupMenu(MouseEvent e) {
+						if (e.isPopupTrigger()) {
+							Dimension menuSize = popupMenu.getPreferredSize();
+							popupMenuDialog.setLocation(e.getX(), e.getY() - menuSize.height);
+							popupMenuDialog.setVisible(true);
+							popupMenu.show(popupMenuDialog.getContentPane(), 0, 0);
+						}
+					}
+				}
+		);
 	}
 
 	private void setGraphType(GraphType type) {
