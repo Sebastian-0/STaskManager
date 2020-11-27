@@ -366,15 +366,27 @@ public class GraphPanel extends JPanel {
 		g2d.drawRoundRect(x, y, width, height, 6, 6);
 
 		// Render overall measurements
-		g2d.setColor(Color.BLACK);
 		for (int i = 0; i < labelLines.size(); i++) {
-			g2d.drawString(labelLines.get(i), x + insets, y + insets / 2 + metrics.getHeight() * (i + 1) - metrics.getDescent());
+			g2d.setColor(graphs.get(i).graphType.color);
+			Stroke old = g2d.getStroke();
+			if (graphs.get(i).style.dashedLine) {
+				g2d.setStroke(new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] {3f}, 0f));
+			} else {
+				g2d.setStroke(new BasicStroke(2f));
+			}
+			int lineY = (int) (y + insets / 2 + metrics.getHeight() * (i + 0.5));
+			g2d.drawLine(x + insets, lineY, x + insets + 10, lineY);
+			g2d.setStroke(old);
+
+			g2d.setColor(Color.BLACK);
+			g2d.drawString(labelLines.get(i), x + insets * 2 + 10, y + insets / 2 + metrics.getHeight() * (i + 1) - metrics.getDescent());
 		}
 
 		y += labelLines.size() * metrics.getHeight() + insets / 2;
 
 		// Render top list
 		if (topListIdx != -1) {
+			g2d.setColor(graphs.get(topListIdx).graphType.color.darker());
 			g2d.drawLine(x + insets/2, y + metrics.getHeight()/2, x + width - insets/2, y + metrics.getHeight()/2);
 			y += metrics.getHeight() * 3 / 4;
 			for (int i = 0; i < selectedTopLists.get(topListIdx).entries.length; i++) {

@@ -12,8 +12,8 @@
 package taskmanager.ui.processdialog;
 
 import config.Config;
+import net.miginfocom.swing.MigLayout;
 import taskmanager.data.Process;
-import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
@@ -26,7 +26,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -96,20 +95,18 @@ public class PerformancePanel extends JPanel {
 		containerPanel.add(cpuTimeline);
 		currentTimeline = cpuTimeline;
 
-		SimpleGridBagLayout layout = new SimpleGridBagLayout(this);
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(labelCpu, 0, 0, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelCpuCurrent, 1, 0, 1, 1, GridBagConstraints.EAST);
-		layout.addToGrid(labelMemory, 2, 0, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelMemoryCurrent, 3, 0, 1, 1, GridBagConstraints.EAST);
-		layout.setInsets(2, 5, 2, 5);
-		layout.addToGrid(cpuGraph, 0, 1, 2, 1, GridBagConstraints.BOTH, 1, 1);
-		layout.addToGrid(memoryGraph, 2, 1, 2, 1, GridBagConstraints.BOTH, 1, 1);
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(labelMaxTime, 0, 2, 2, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelZero, 3, 2, 1, 1, GridBagConstraints.EAST);
-		layout.setInsets(5, 5, 5, 5);
-		layout.addToGrid(containerPanel, 0, 3, 4, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+		setLayout(new MigLayout());
+		add(labelCpu);
+		add(labelCpuCurrent);
+		add(labelMemory);
+		add(labelMemoryCurrent, "wrap");
+
+		add(cpuGraph, "push, grow, sg 1, span 2");
+		add(memoryGraph, "push, grow, sg 1, span 2, wrap");
+
+		add(labelMaxTime, "span 4, wrap");
+
+		add(containerPanel, "growx, span 4");
 
 		update(); // Read initial values
 	}

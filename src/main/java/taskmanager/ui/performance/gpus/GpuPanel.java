@@ -12,8 +12,8 @@
 package taskmanager.ui.performance.gpus;
 
 import config.Config;
+import net.miginfocom.swing.MigLayout;
 import taskmanager.data.Gpu;
-import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
@@ -31,7 +31,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BasicStroke;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
 
 public class GpuPanel extends JPanel {
 	private final Gpu gpu;
@@ -132,73 +131,52 @@ public class GpuPanel extends JPanel {
 		labelCapacityHeader.setFont(headerFont);
 		labelModelHeader.setFont(headerFont);
 		
-		JPanel utilizationGraphPanel = new JPanel();
-		SimpleGridBagLayout layout = new SimpleGridBagLayout(utilizationGraphPanel);
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(labelUtilization, 0, 1, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelUtilizationMax, 2, 1, 1, 1, GridBagConstraints.EAST);
-		layout.setInsets(2, 5, 2, 5);
-		layout.addToGrid(utilizationGraph, 0, 2, 3, 1, GridBagConstraints.BOTH, 1, 1);
-		layout.setInsets(0, 5, 5, 5);
-		layout.addToGrid(labelMaxTime, 0, 3, 2, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelUtilizationZero, 2, 3, 1, 1, GridBagConstraints.EAST);
+		JPanel utilizationGraphPanel = new JPanel(new MigLayout("ins 0 0 0 0"));
+		utilizationGraphPanel.add(labelUtilization);
+		utilizationGraphPanel.add(labelUtilizationMax, "wrap");
+		utilizationGraphPanel.add(utilizationGraph, "span 2, push, grow, wrap");
+		utilizationGraphPanel.add(labelMaxTime);
+		utilizationGraphPanel.add(labelUtilizationZero, "ax right");
 
-		JPanel encodeDecodeGraphPanel = new JPanel();
-		layout = new SimpleGridBagLayout(encodeDecodeGraphPanel);
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(labelEncodeDecode, 0, 1, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelEncodeDecodeMax, 2, 1, 1, 1, GridBagConstraints.EAST);
-		layout.setInsets(2, 5, 2, 5);
-		layout.addToGrid(encodeDecodeGraph, 0, 2, 3, 1, GridBagConstraints.BOTH, 1, 1);
-		layout.setInsets(0, 5, 5, 5);
-		layout.addToGrid(labelEncodeDecodeZero, 2, 3, 1, 1, GridBagConstraints.EAST);
+		JPanel encodeDecodeGraphPanel = new JPanel(new MigLayout("ins 0 0 0 0"));
+		encodeDecodeGraphPanel.add(labelEncodeDecode);
+		encodeDecodeGraphPanel.add(labelEncodeDecodeMax, "wrap");
+		encodeDecodeGraphPanel.add(encodeDecodeGraph, "span 2, push, grow, wrap");
+		encodeDecodeGraphPanel.add(labelEncodeDecodeZero, "skip 1, ax right");
 
-		JPanel memoryAndTemperatureGraphPanel = new JPanel();
-		layout = new SimpleGridBagLayout(memoryAndTemperatureGraphPanel);
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(labelMemory, 0, 0, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelMemoryMax, 2, 0, 1, 1, GridBagConstraints.EAST);
-		layout.setInsets(2, 5, 2, 5);
-		layout.addToGrid(memoryGraph, 0, 1, 3, 1, GridBagConstraints.BOTH, 1, 1);
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(labelMemoryZero, 2, 2, 1, 1, GridBagConstraints.EAST);
+		JPanel memoryAndTemperatureGraphPanel = new JPanel(new MigLayout("ins 0 0 0 0", "[][]10[][]"));
+		memoryAndTemperatureGraphPanel.add(labelMemory);
+		memoryAndTemperatureGraphPanel.add(labelMemoryMax);
+		memoryAndTemperatureGraphPanel.add(labelTemperature);
+		memoryAndTemperatureGraphPanel.add(labelTemperatureMax, "wrap");
+		memoryAndTemperatureGraphPanel.add(memoryGraph, "span 2, sg 1, push, grow");
+		memoryAndTemperatureGraphPanel.add(temperatureGraph, "span 2, sg 1, push, grow, wrap");
+		memoryAndTemperatureGraphPanel.add(labelMemoryZero, "skip 1, ax right");
+		memoryAndTemperatureGraphPanel.add(labelTemperatureZero, "skip 1, ax right");
 
-		layout.addToGrid(labelTemperature, 3, 0, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelTemperatureMax, 5, 0, 1, 1, GridBagConstraints.EAST);
-		layout.setInsets(2, 5, 2, 5);
-		layout.addToGrid(temperatureGraph, 3, 1, 3, 1, GridBagConstraints.BOTH, 1, 1);
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(labelTemperatureZero, 5, 2, 1, 1, GridBagConstraints.EAST);
+		JPanel metricsPanel = new JPanel(new MigLayout("wrap 2"));
+		metricsPanel.add(utilizationPanel);
+		metricsPanel.add(memoryPanel);
+		metricsPanel.add(decodePanel);
+		metricsPanel.add(encodePanel);
+		metricsPanel.add(temperaturePanel);
 
-		JPanel metricsPanel = new JPanel();
-		layout = new SimpleGridBagLayout(metricsPanel);
-		layout.addToGrid(utilizationPanel, 0, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		layout.addToGrid(memoryPanel, 1, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		layout.addToGrid(decodePanel, 0, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		layout.addToGrid(encodePanel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		layout.addToGrid(temperaturePanel, 0, 2, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+		JPanel constantsPanel = new JPanel(new MigLayout("wrap 2, gapy 10"));
+		constantsPanel.add(labelCapacityHeader);
+		constantsPanel.add(capacityLabel);
+		constantsPanel.add(labelModelHeader);
+		constantsPanel.add(modelLabel);
+		constantsPanel.add(labelDriverHeader);
+		constantsPanel.add(driverLabel);
 
-		JPanel constantsPanel = new JPanel();
-		layout = new SimpleGridBagLayout(constantsPanel);
-		layout.addToGrid(labelCapacityHeader, 1, 0, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelModelHeader, 1, 1, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelDriverHeader, 1, 2, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(capacityLabel, 2, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		layout.addToGrid(modelLabel, 2, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		layout.addToGrid(driverLabel, 2, 2, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-
-		layout = new SimpleGridBagLayout(this);
-		layout.addToGrid(labelHeader, 0, 0, 1, 1, GridBagConstraints.WEST);
-
-		layout.setInsets(0, 0, 0, 0);
-		layout.addToGrid(utilizationGraphPanel, 0, 1, 3, 1, GridBagConstraints.BOTH, 1, 1);
-		layout.addToGrid(encodeDecodeGraphPanel, 0, 2, 3, 1, GridBagConstraints.BOTH, 1, 0.25);
-		layout.addToGrid(memoryAndTemperatureGraphPanel, 0, 3, 3, 1, GridBagConstraints.BOTH, 1, 0.25);
-
-		layout.setInsets(5, 5, 5, 5);
-		layout.addToGrid(timelineGraph, 0, 4, 3, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		layout.addToGrid(metricsPanel, 0, 5, 1, 1, GridBagConstraints.NORTHWEST);
-		layout.addToGrid(constantsPanel, 1, 5, 2, 1, GridBagConstraints.NORTHWEST);
+		setLayout(new MigLayout("", "[][grow]"));
+		add(labelHeader, "wrap");
+		add(utilizationGraphPanel, "span 2, push, grow, wrap");
+		add(encodeDecodeGraphPanel, "span 2, gaptop 5, pushy 25, grow, wrap");
+		add(memoryAndTemperatureGraphPanel, "span 2, pushy 25, grow, wrap");
+		add(timelineGraph, "span 2, growx, wrap");
+		add(metricsPanel);
+		add(constantsPanel, "ay top");
 	}
 
 

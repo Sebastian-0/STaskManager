@@ -13,6 +13,7 @@ package taskmanager.ui;
 
 import config.Config;
 import config.TextureStorage;
+import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import taskmanager.DataCollector;
@@ -123,6 +124,7 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		tabbedPane.setSelectedIndex(Config.getInt(Config.KEY_LAST_TAB, 0));
 		tabbedPane.addChangeListener(e -> Config.put(Config.KEY_LAST_TAB, String.valueOf(tabbedPane.getSelectedIndex())));
 
+		setLayout(new MigLayout("fill, ins 0", "fill", "fill")); // TODO maybe overkill
 		getContentPane().add(tabbedPane);
 
 		Dimension previousSize = getPreviousSize();

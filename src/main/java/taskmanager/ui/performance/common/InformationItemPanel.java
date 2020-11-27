@@ -11,19 +11,16 @@
 
 package taskmanager.ui.performance.common;
 
-import taskmanager.ui.SimpleGridBagLayout;
+import net.miginfocom.swing.MigLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 
-import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GridBagConstraints;
 import java.awt.Stroke;
 
 public class InformationItemPanel extends JPanel {
@@ -45,13 +42,10 @@ public class InformationItemPanel extends JPanel {
 		JLabel labelHeader = new JLabel(header); 
 		valueLabel = new JLabel("0");
 		valueLabel.setFont(valueLabel.getFont().deriveFont(Font.BOLD, valueLabel.getFont().getSize() + 3f));
-		
-		SimpleGridBagLayout layout = new SimpleGridBagLayout(this);
-		layout.setInsets(0, 5, 5, 5);
-		layout.addToGrid(Box.createRigidArea(new Dimension(1, 1)), 0, 0, 1, 2);
-		layout.addToGrid(labelHeader, 1, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0, GridBagConstraints.WEST);
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(valueLabel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0, GridBagConstraints.WEST);
+
+		setLayout(new MigLayout("ins 2 15 2 5"));
+		add(labelHeader, "wrap");
+		add(valueLabel);
 	}
 	
 	@Override

@@ -11,8 +11,8 @@
 
 package taskmanager.ui.performance.network;
 
+import net.miginfocom.swing.MigLayout;
 import taskmanager.data.Network;
-import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
@@ -28,8 +28,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BasicStroke;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridLayout;
 
 public class NetworkPanel extends JPanel {
 	private final Network network;
@@ -89,37 +87,31 @@ public class NetworkPanel extends JPanel {
 		labelIpv4Header.setFont(headerFont);
 		labelIpv6Header.setFont(headerFont);
 
-		JPanel ratePanel = new JPanel();
-		ratePanel.setLayout(new GridLayout(2, 1));
+		JPanel ratePanel = new JPanel(new MigLayout("wrap 1"));
 		ratePanel.add(sendRatePanel);
 		ratePanel.add(receiveRatePanel);
 
 		JPanel labelPanel = new JPanel();
-		SimpleGridBagLayout labelLayout = new SimpleGridBagLayout(labelPanel);
-		labelLayout.addToGrid(labelNameHeader, 1, 0, 1, 1, GridBagConstraints.WEST);
-		labelLayout.addToGrid(labelMacHeader, 1, 1, 1, 1, GridBagConstraints.WEST);
-		labelLayout.addToGrid(labelIpv4Header, 1, 2, 1, 1, GridBagConstraints.WEST);
-		labelLayout.addToGrid(labelIpv6Header, 1, 3, 1, 1, GridBagConstraints.WEST);
-		labelLayout.addToGrid(nameLabel, 2, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		labelLayout.addToGrid(macLabel, 2, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		labelLayout.addToGrid(ipv4Label, 2, 2, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		labelLayout.addToGrid(ipv6Label, 2, 3, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+		labelPanel.setLayout(new MigLayout("wrap 2, gapy 10"));
+		labelPanel.add(labelNameHeader);
+		labelPanel.add(nameLabel);
+		labelPanel.add(labelMacHeader);
+		labelPanel.add(macLabel);
+		labelPanel.add(labelIpv4Header);
+		labelPanel.add(ipv4Label);
+		labelPanel.add(labelIpv6Header);
+		labelPanel.add(ipv6Label);
 
-		SimpleGridBagLayout layout = new SimpleGridBagLayout(this);
-		layout.addToGrid(labelHeader, 0, 0, 1, 1, GridBagConstraints.WEST);
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(labelNetworkUsage, 0, 1, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelMaxTransfer, 2, 1, 1, 1, GridBagConstraints.EAST);
-		layout.setInsets(2, 5, 2, 5);
-		layout.addToGrid(transferGraph, 0, 2, 3, 1, GridBagConstraints.BOTH, 1, 1);
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(labelMaxTime, 0, 3, 2, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelZero, 2, 3, 1, 1, GridBagConstraints.EAST);
-		layout.setInsets(5, 5, 5, 5);
-		layout.addToGrid(timelineGraph, 0, 4, 3, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		layout.addToGrid(sendRatePanel, 0, 7, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(receiveRatePanel, 0, 8, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelPanel, 1, 7, 2, 2, GridBagConstraints.WEST);
+		setLayout(new MigLayout("", "[][grow]"));
+		add(labelHeader, "wrap");
+		add(labelNetworkUsage);
+		add(labelMaxTransfer, "ax right, wrap");
+		add(transferGraph, "span 2, push, grow, wrap");
+		add(labelMaxTime);
+		add(labelZero, "ax right, wrap");
+		add(timelineGraph, "span 2, growx, wrap");
+		add(ratePanel);
+		add(labelPanel);
 	}
 
 

@@ -57,7 +57,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ProcessTable extends JTable {
-
 	public enum Columns {
 		// TODO For some reason both these constants and visibleColumns need to be in the same order to avoid problems.
 		//      this enum determines the default order and visibleColumns determine the default widths

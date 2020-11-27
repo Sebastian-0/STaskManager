@@ -11,13 +11,12 @@
 
 package taskmanager.ui.processdialog;
 
+import net.miginfocom.swing.MigLayout;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
-import taskmanager.ui.SimpleGridBagLayout;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import java.awt.GridBagConstraints;
 
 public class ProcessDialog extends JDialog {
 	private final PerformancePanel performancePanel;
@@ -39,13 +38,13 @@ public class ProcessDialog extends JDialog {
 			processEnded();
 		}
 
-		SimpleGridBagLayout gbl = new SimpleGridBagLayout(this);
-		gbl.addToGrid(performancePanel, 0, 0, 1, 1, GridBagConstraints.BOTH, 1, 1);
-		gbl.addToGrid(informationPanel, 0, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		gbl.addToGrid(commandLinePanel, 0, 2, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		pack();
+		setLayout(new MigLayout());
+		add(performancePanel, "grow, push, wrap");
+		add(informationPanel, "growx, wrap");
+		add(commandLinePanel, "growx");
 
-		setMinimumSize(getSize());
+		pack();
+		setMinimumSize(getLayout().minimumLayoutSize(this));
 
 		setLocationRelativeTo(parent);
 	}

@@ -12,8 +12,8 @@
 package taskmanager.ui.performance.disks;
 
 import config.Config;
+import net.miginfocom.swing.MigLayout;
 import taskmanager.data.Disk;
-import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
@@ -29,7 +29,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BasicStroke;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
 
 import static taskmanager.ui.performance.GraphPanel.Style;
 
@@ -79,17 +78,17 @@ public class DiskPanel extends JPanel {
 		timelineGraph.setMaxDatapointValue(Config.DOUBLE_TO_LONG);
 
 		// TODO Currently copy-n-paste strokes from GraphPanel! Improve this somehow!
-		JPanel realTimePanel = new JPanel();
+		JPanel informationPanel = new JPanel();
 		activeTimePanel = new InformationItemPanel("Active time    ", ValueType.Percentage); // Wider text here to force the label panel further to the right
 		ioQueueLengthPanel = new InformationItemPanel("I/O queue length", ValueType.Raw);
 		writeTransferPanel = new InformationItemPanel("Write speed    ", ValueType.BytesPerSecond, new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] {3f}, 0f), GraphType.Disk.color);
 		readTransferPanel = new InformationItemPanel("Read speed    ", ValueType.BytesPerSecond, new BasicStroke(2), GraphType.Disk.color);
-		
-		SimpleGridBagLayout realTimeLayout = new SimpleGridBagLayout(realTimePanel);
-		realTimeLayout.addToGrid(activeTimePanel, 0, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		realTimeLayout.addToGrid(ioQueueLengthPanel, 1, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		realTimeLayout.addToGrid(readTransferPanel, 0, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		realTimeLayout.addToGrid(writeTransferPanel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+
+		informationPanel.setLayout(new MigLayout("wrap 2"));
+		informationPanel.add(activeTimePanel);
+		informationPanel.add(ioQueueLengthPanel);
+		informationPanel.add(readTransferPanel);
+		informationPanel.add(writeTransferPanel);
 
 		JPanel constantsPanel = new JPanel();
 		JLabel labelCapacityHeader = new JLabel("Capacity: ");
@@ -100,36 +99,29 @@ public class DiskPanel extends JPanel {
 		Font headerFont = labelCapacityHeader.getFont().deriveFont(Font.BOLD);
 		labelCapacityHeader.setFont(headerFont);
 		labelModelHeader.setFont(headerFont);
-		
-		SimpleGridBagLayout labelLayout = new SimpleGridBagLayout(constantsPanel);
-		labelLayout.addToGrid(labelCapacityHeader, 1, 0, 1, 1, GridBagConstraints.WEST);
-		labelLayout.addToGrid(labelModelHeader , 1, 1, 1, 1, GridBagConstraints.WEST);
-		labelLayout.addToGrid(capacityLabel, 2, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		labelLayout.addToGrid(modelLabel , 2, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		
-		SimpleGridBagLayout layout = new SimpleGridBagLayout(this);
-		layout.addToGrid(labelHeader, 0, 0, 1, 1, GridBagConstraints.WEST);
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(labelActiveTime, 0, 1, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelActiveTimeMax , 2, 1, 1, 1, GridBagConstraints.EAST);
-		layout.setInsets(2, 5, 2, 5);
-		layout.addToGrid(this.activeTimeGraph, 0, 2, 3, 1, GridBagConstraints.BOTH, 1, 1);
-		layout.setInsets(0, 5, 5, 5);
-		layout.addToGrid(labelMaxTime, 0, 3, 2, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelActiveTimeZero, 2, 3, 1, 1, GridBagConstraints.EAST);
 
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(labelTransfer, 0, 4, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelTransferMax, 2, 4, 1, 1, GridBagConstraints.EAST);
-		layout.setInsets(2, 5, 2, 5);
-		layout.addToGrid(transferGraph, 0, 5, 3, 1, GridBagConstraints.BOTH, 1, 1);
-		layout.setInsets(0, 5, 0, 5);
-//		layout.addToGrid(labelMaxTime, 0, 6, 2, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelTransferZero, 2, 6, 1, 1, GridBagConstraints.EAST);
-		layout.setInsets(5, 5, 5, 5);
-		layout.addToGrid(timelineGraph, 0, 7, 3, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		layout.addToGrid(realTimePanel, 0, 8, 1, 1, GridBagConstraints.NORTHWEST);
-		layout.addToGrid(constantsPanel, 1, 8, 2, 2, GridBagConstraints.NORTHWEST);
+		constantsPanel.setLayout(new MigLayout("wrap 2, gapy 10"));
+		constantsPanel.add(labelCapacityHeader);
+		constantsPanel.add(capacityLabel);
+		constantsPanel.add(labelModelHeader);
+		constantsPanel.add(modelLabel);
+
+		setLayout(new MigLayout("", "[][grow]"));
+		add(labelHeader, "wrap");
+		add(labelActiveTime);
+		add(labelActiveTimeMax, "ax right, wrap");
+		add(activeTimeGraph, "span 2, push, grow, wrap");
+		add(labelMaxTime);
+		add(labelActiveTimeZero, "ax right, wrap");
+
+		add(labelTransfer);
+		add(labelTransferMax, "gaptop 5, ax right, wrap");
+		add(transferGraph, "span 2, push, grow, wrap");
+		add(labelTransferZero, "skip 1, ax right, wrap");
+
+		add(timelineGraph, "span 2, growx, wrap");
+		add(informationPanel);
+		add(constantsPanel, "ay top");
 	}
 
 	
