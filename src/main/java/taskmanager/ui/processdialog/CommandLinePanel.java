@@ -11,6 +11,7 @@
 
 package taskmanager.ui.processdialog;
 
+import net.miginfocom.swing.MigLayout;
 import taskmanager.data.Process;
 
 import javax.swing.JPanel;
@@ -22,7 +23,6 @@ import java.awt.BorderLayout;
 public class CommandLinePanel extends JPanel {
 	public CommandLinePanel(Process process) {
 		setBorder(new TitledBorder("Command line"));
-		setLayout(new BorderLayout());
 
 		JTextArea text = new JTextArea(process.commandLine, 10, 30);
 		text.setEditable(false);
@@ -31,6 +31,7 @@ public class CommandLinePanel extends JPanel {
 		JScrollPane scrollPane = new JScrollPane(text,
 				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		add(scrollPane, BorderLayout.CENTER);
+		setLayout(new MigLayout("fill", "fill", "fill"));
+		add(scrollPane, "hmin 25, pad -3 -3 3 3");
 	}
 }

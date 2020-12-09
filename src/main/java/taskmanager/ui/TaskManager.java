@@ -13,6 +13,7 @@ package taskmanager.ui;
 
 import config.Config;
 import config.TextureStorage;
+import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import taskmanager.DataCollector;

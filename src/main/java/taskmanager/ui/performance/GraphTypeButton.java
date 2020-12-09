@@ -11,8 +11,8 @@
 
 package taskmanager.ui.performance;
 
+import net.miginfocom.swing.MigLayout;
 import taskmanager.ui.ColorUtils;
-import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel.Graph;
@@ -20,7 +20,6 @@ import taskmanager.ui.performance.GraphPanel.Graph;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import java.awt.Color;
-import java.awt.GridBagConstraints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -51,11 +50,10 @@ public class GraphTypeButton extends JButton {
 		valueLabel = new JLabel();
 		JLabel headerLabel = new JLabel(header);
 
-		SimpleGridBagLayout layout = new SimpleGridBagLayout(this);
-
-		layout.addToGrid(graphPanel, 0, 0, 1, 2);
-		layout.addToGrid(headerLabel, 1, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0, GridBagConstraints.WEST);
-		layout.addToGrid(valueLabel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0, GridBagConstraints.WEST);
+		setLayout(new MigLayout());
+		add(graphPanel, "spany 2");
+		add(headerLabel, "wrap");
+		add(valueLabel, "skip 1");
 	}
 
 	public void setIsLogarithmic(boolean isLogarithmic) {

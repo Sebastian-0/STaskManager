@@ -11,17 +11,15 @@
 
 package taskmanager.ui.processdialog;
 
+import net.miginfocom.swing.MigLayout;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
-import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.StatusUtils;
 import taskmanager.ui.TextUtils;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
-import java.awt.GridBagConstraints;
-import java.time.Duration;
 
 public class InformationPanel extends JPanel {
 	private final Process process;
@@ -37,22 +35,16 @@ public class InformationPanel extends JPanel {
 		updateStatusLabelText();
 		updateDurationLabel();
 
-		SimpleGridBagLayout gbl = new SimpleGridBagLayout(this);
-		gbl.setInsets(5, 5, 5, 15);
-		gbl.addToGrid(new JLabel("PID: " + process.id), 0, 0, 1, 1, GridBagConstraints.WEST);
-		gbl.setInsets(5, 5, 5, 5);
-		gbl.addToGrid(new JLabel("Name: " + process.fileName), 1, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+		setLayout(new MigLayout("wrap 2", "", "sg 1"));
+		add(new JLabel("PID: " + process.id));
+		add(new JLabel("Name: " + process.fileName), "gapleft 15");
 
-		gbl.setInsets(5, 5, 5, 15);
-		gbl.addToGrid(new JLabel("User: " + process.userName), 0, 1, 1, 1, GridBagConstraints.WEST);
-		gbl.setInsets(5, 5, 5, 5);
-		gbl.addToGrid(statusLabel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+		add(new JLabel("User: " + process.userName));
+		add(statusLabel, "gapleft 15");
 
 		if (process.startTimestamp > 0) {
-			gbl.setInsets(5, 5, 5, 15);
-			gbl.addToGrid(new JLabel("Started: " + TextUtils.valueToString(process.startTimestamp, TextUtils.ValueType.Date)), 0, 2, 1, 1, GridBagConstraints.WEST);
-			gbl.setInsets(5, 5, 5, 5);
-			gbl.addToGrid(durationLabel, 1, 2, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+			add(new JLabel("Started: " + TextUtils.valueToString(process.startTimestamp, TextUtils.ValueType.Date)));
+			add(durationLabel, "gapleft 15");
 		}
 	}
 

@@ -12,9 +12,9 @@
 package taskmanager.ui.details;
 
 import config.Config;
+import net.miginfocom.swing.MigLayout;
 import taskmanager.data.Process;
 import taskmanager.data.SystemInformation;
-import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.details.filter.FilterAttributeComboBox;
 import taskmanager.ui.details.filter.FilterPanel;
 
@@ -22,7 +22,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
 import java.util.List;
 
@@ -58,19 +57,14 @@ public class ProcessPanel extends JPanel {
 		container = new JPanel();
 		container.setLayout(new GridLayout(1, 1));
 
-		int insets = 10;
-		SimpleGridBagLayout gbl = new SimpleGridBagLayout(this);
-		gbl.setInsets(insets, insets, insets / 2, insets);
-		gbl.addToGrid(container, 0, 0, 3, 1, GridBagConstraints.BOTH, 1, 1);
+		setLayout(new MigLayout());
+		add(container, "push, grow, span 3, wrap");
 
-		gbl.setInsets(0, insets, insets / 2, insets);
-		gbl.addToGrid(showAllProcessesCheckbox, 0, 1, 3, 1, GridBagConstraints.WEST);
+		add(showAllProcessesCheckbox, "span 3, wrap");
 
-		gbl.addToGrid(filterPanel, 0, 2, 1, 1, GridBagConstraints.BOTH, 1, 0);
-		gbl.setInsets(0, 0, insets / 2, insets/2);
-		gbl.addToGrid(attributeLabel, 1, 2, 1, 1);
-		gbl.setInsets(0, 0, insets / 2, insets);
-		gbl.addToGrid(attribute, 2, 2, 1, 1);
+		add(filterPanel, "growx");
+		add(attributeLabel);
+		add(attribute);
 
 		updateShouldShowDeadProcesses();
 	}

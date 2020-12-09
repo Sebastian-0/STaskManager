@@ -12,11 +12,11 @@
 package taskmanager.ui.performance.cpu;
 
 import config.Config;
+import net.miginfocom.swing.MigLayout;
 import taskmanager.Measurements;
 import taskmanager.data.SystemInformation;
 import taskmanager.platform.linux.LinuxExtraInformation;
 import taskmanager.platform.win32.WindowsExtraInformation;
-import taskmanager.ui.SimpleGridBagLayout;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
 import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
@@ -31,7 +31,6 @@ import taskmanager.ui.performance.common.InformationItemPanel;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
 
 public class CpuPanel extends JPanel {
@@ -81,7 +80,7 @@ public class CpuPanel extends JPanel {
 		containerPanel.setLayout(new GridLayout(1, 1));
 		containerPanel.add(singleCpuPanel);
 
-		JPanel realTimePanel = new JPanel();
+		JPanel informationPanel = new JPanel();
 		utilizationLabel = new InformationItemPanel("Utilization", ValueType.Percentage);
 		processesLabel = new InformationItemPanel("Processes", ValueType.Raw);
 		threadsLabel = new InformationItemPanel("Threads", ValueType.Raw);
@@ -89,30 +88,26 @@ public class CpuPanel extends JPanel {
 		handlesLabel = new InformationItemPanel("Handles", ValueType.Raw);
 		fileDescriptorsLabel = new RatioItemPanel("Open file descriptors", ValueType.Raw);
 
-		SimpleGridBagLayout realTimeLayout = new SimpleGridBagLayout(realTimePanel);
-		realTimeLayout.addToGrid(utilizationLabel, 0, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		realTimeLayout.addToGrid(processesLabel, 1, 0, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		realTimeLayout.addToGrid(threadsLabel, 0, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		realTimeLayout.addToGrid(uptimeLabel, 0, 2, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+		informationPanel.setLayout(new MigLayout("wrap 2"));
+		informationPanel.add(utilizationLabel);
+		informationPanel.add(processesLabel);
+		informationPanel.add(threadsLabel);
 		if (systemInformation.extraInformation instanceof WindowsExtraInformation) {
-			realTimeLayout.addToGrid(handlesLabel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+			informationPanel.add(handlesLabel);
 		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
-			realTimeLayout.addToGrid(fileDescriptorsLabel, 1, 1, 1, 1, GridBagConstraints.HORIZONTAL, 1, 0);
+			informationPanel.add(fileDescriptorsLabel);
 		}
+		informationPanel.add(uptimeLabel);
 
-		SimpleGridBagLayout layout = new SimpleGridBagLayout(this);
-		layout.addToGrid(labelHeader, 0, 0, 1, 1, GridBagConstraints.WEST);
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(labelCpuUtilization, 0, 1, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelMaxCpu, 1, 1, 1, 1, GridBagConstraints.EAST);
-		layout.setInsets(2, 5, 2, 5);
-		layout.addToGrid(containerPanel, 0, 2, 2, 1, GridBagConstraints.BOTH, 1, 1);
-		layout.setInsets(0, 5, 0, 5);
-		layout.addToGrid(labelMaxTime, 0, 3, 1, 1, GridBagConstraints.WEST);
-		layout.addToGrid(labelZero, 1, 3, 1, 1, GridBagConstraints.EAST);
-		layout.setInsets(5, 5, 5, 5);
-		layout.addToGrid(timelineGraph, 0, 4, 2, 1, GridBagConstraints.HORIZONTAL, 1, 0);
-		layout.addToGrid(realTimePanel, 0, 5, 2, 1, GridBagConstraints.WEST);
+		setLayout(new MigLayout());
+		add(labelHeader, "wrap");
+		add(labelCpuUtilization);
+		add(labelMaxCpu, "wrap");
+		add(containerPanel, "span 2, push, grow, wrap");
+		add(labelMaxTime);
+		add(labelZero, "ax right, wrap");
+		add(timelineGraph, "span 2, growx, wrap");
+		add(informationPanel, "span 2");
 
 		CpuContextMenu contextMenu = new CpuContextMenu(this, systemInformation.cpuTopList, showProcessCallback);
 		setComponentPopupMenu(contextMenu);
