@@ -267,10 +267,8 @@ public class GraphPanel extends JPanel {
 		}
 
 		drawSelectedValues(g2d, x, selectedValuesY);
-		drawSelectedValuesLabel(g2d, x, selectedValues, selectedTopLists);
+		drawSelectedValuesTooltip(g2d, x, selectedValues, selectedTopLists);
 	}
-
-
 
 	private void drawSelectedValues(Graphics2D g2d, int x, List<Integer> yCoordinates) {
 		g2d.setColor(getSelectionLineColor());
@@ -294,7 +292,7 @@ public class GraphPanel extends JPanel {
 		return graphs.get(0).graphType.color;
 	}
 
-	private void drawSelectedValuesLabel(Graphics2D g2d, int x, List<Long> selectedValues, List<TopList> selectedTopLists) {
+	private void drawSelectedValuesTooltip(Graphics2D g2d, int x, List<Long> selectedValues, List<TopList> selectedTopLists) {
 		g2d.setFont(getFont());
 		FontMetrics metrics = g2d.getFontMetrics();
 		List<String> labelLines = new ArrayList<>();
@@ -303,11 +301,12 @@ public class GraphPanel extends JPanel {
 			labelLines.add(graphs.get(i).style.tooltipPrefix + TextUtils.valueToString(selectedValues.get(i), graphs.get(i).valueType));
 		}
 
+		final int sampleLineLength = 10;
 		final int columnOffset = 10;
 		final int padding = 2;
 		final int insets = 8;
 
-		int width = computeTextWidth(labelLines, metrics) + insets * 2;
+		int width = computeTextWidth(labelLines, metrics) + insets * 3 + sampleLineLength;
 		int height = computeTextHeight(labelLines.size(), metrics) + insets;
 
 		List<String> usages = new ArrayList<>();
@@ -366,9 +365,9 @@ public class GraphPanel extends JPanel {
 		g2d.drawRoundRect(x, y, width, height, 6, 6);
 
 		// Render overall measurements
-		g2d.setColor(Color.BLACK);
 		for (int i = 0; i < labelLines.size(); i++) {
-			g2d.drawString(labelLines.get(i), x + insets, y + insets / 2 + metrics.getHeight() * (i + 1) - metrics.getDescent());
+			drawSelectedValueSampleLine(g2d, metrics, x + insets, y + insets / 2, sampleLineLength, i);
+			drawSelectedValueText(g2d, metrics, x + insets * 2 + sampleLineLength, y + insets / 2, labelLines.get(i), i);
 		}
 
 		y += labelLines.size() * metrics.getHeight() + insets / 2;
@@ -383,6 +382,24 @@ public class GraphPanel extends JPanel {
 				g2d.drawString(pids.get(i), x + insets + columnPositions[2], y + metrics.getHeight() * (i + 1) - metrics.getDescent());
 			}
 		}
+	}
+
+	private void drawSelectedValueText(Graphics2D g2d, FontMetrics metrics, int x, int y, String label, int lineIdx) {
+		g2d.setColor(Color.BLACK);
+		g2d.drawString(label, x, y + metrics.getHeight() * (lineIdx + 1) - metrics.getDescent());
+	}
+
+	private void drawSelectedValueSampleLine(Graphics2D g2d, FontMetrics metrics, int x, int y, int sampleLineLength, int lineIdx) {
+		g2d.setColor(graphs.get(lineIdx).graphType.color);
+		Stroke old = g2d.getStroke();
+		if (graphs.get(lineIdx).style.dashedLine) {
+			g2d.setStroke(new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] {3f}, 0f));
+		} else {
+			g2d.setStroke(new BasicStroke(2f));
+		}
+		int lineY = (int) (y + metrics.getHeight() * (lineIdx + 0.5));
+		g2d.drawLine(x, lineY, x + sampleLineLength, lineY);
+		g2d.setStroke(old);
 	}
 
 	private int computeTextWidth(List<String> lines, FontMetrics metrics) {
