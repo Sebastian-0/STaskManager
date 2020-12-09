@@ -80,6 +80,7 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 
 		graphSelectionPanel = new GraphSelectionPanel(this, buttons.toArray(new GraphTypeButton[0]));
 		JScrollPane selectionPanelContainer = new JScrollPane(graphSelectionPanel);
+		selectionPanelContainer.getVerticalScrollBar().setUnitIncrement(8);
 
 		add(selectionPanelContainer);
 		add(selectedPanelContainer);
