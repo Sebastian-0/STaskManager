@@ -184,7 +184,7 @@ public class GraphPanel extends JPanel {
 
 	private void drawCurvePart(Graphics2D g2d, Graph graph, boolean drawLine, int alpha) {
 		Stroke oldStroke = g2d.getStroke();
-		g2d.setStroke(graph.style.createStroke());
+		g2d.setStroke(graph.style.createStroke(1.5f));
 
 		MeasurementAverager<Long> itr = graph.measurementAverager;
 		itr.reset();
@@ -391,15 +391,11 @@ public class GraphPanel extends JPanel {
 
 	private void drawSelectedValueSampleLine(Graphics2D g2d, FontMetrics metrics, int x, int y, int sampleLineLength, int lineIdx) {
 		g2d.setColor(graphs.get(lineIdx).graphType.color);
-		Stroke old = g2d.getStroke();
-		if (graphs.get(lineIdx).style.dashedLine) {
-			g2d.setStroke(new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] {3f}, 0f));
-		} else {
-			g2d.setStroke(new BasicStroke(2f));
-		}
+		Stroke oldStroke = g2d.getStroke();
+		g2d.setStroke(graphs.get(lineIdx).style.createStroke());
 		int lineY = (int) (y + metrics.getHeight() * (lineIdx + 0.5));
 		g2d.drawLine(x, lineY, x + sampleLineLength, lineY);
-		g2d.setStroke(old);
+		g2d.setStroke(oldStroke);
 	}
 
 	private int computeTextWidth(List<String> lines, FontMetrics metrics) {
@@ -474,10 +470,14 @@ public class GraphPanel extends JPanel {
 		}
 
 		public Stroke createStroke() {
+			return createStroke(2);
+		}
+
+		public Stroke createStroke(float thickness) {
 			if (dashedLine) {
-				return new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] {3f}, 0f);
+				return new BasicStroke(thickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] {3f}, 0f);
 			} else {
-				return new BasicStroke(1.5f);
+				return new BasicStroke(thickness);
 			}
 		}
 	}

@@ -17,6 +17,7 @@ import taskmanager.data.Gpu;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
+import taskmanager.ui.performance.GraphPanel.Graph;
 import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
 import taskmanager.ui.performance.GraphPanel.Style;
 import taskmanager.ui.performance.GraphType;
@@ -99,9 +100,11 @@ public class GpuPanel extends JPanel {
 		}
 		timelineGraph = new TimelineGraphPanel(labelMaxTime);
 
+		Graph encodeGraph = new GraphBuilder(gpu.encoderUtilization, GraphType.Gpu).style(new Style(false, "E: ")).build();
+		Graph decodeGraph = new GraphBuilder(gpu.decoderUtilization, GraphType.Gpu).style(new Style(false, "D: ")).build();
 		utilizationGraph.addGraph(new GraphBuilder(gpu.utilization, GraphType.Gpu).build());
-		encodeDecodeGraph.addGraph(new GraphBuilder(gpu.encoderUtilization, GraphType.Gpu).valueType(ValueType.Percentage).style(new Style(false, "E: ")).build());
-		encodeDecodeGraph.addGraph(new GraphBuilder(gpu.decoderUtilization, GraphType.Gpu).valueType(ValueType.Percentage).style(new Style(false, "D: ")).build());
+		encodeDecodeGraph.addGraph(encodeGraph);
+		encodeDecodeGraph.addGraph(decodeGraph);
 		memoryGraph.addGraph(new GraphBuilder(gpu.usedMemory, GraphType.Gpu).valueType(ValueType.Bytes).build());
 		temperatureGraph.addGraph(new GraphBuilder(gpu.temperature, GraphType.Gpu).valueType(ValueType.Temperature).build());
 		timelineGraph.connectGraphPanels(utilizationGraph, memoryGraph, temperatureGraph);
@@ -113,11 +116,10 @@ public class GpuPanel extends JPanel {
 		timelineGraph.setMaxDatapointValue(Config.DOUBLE_TO_LONG);
 		temperatureGraph.setMaxDatapointValue(120);
 
-		// TODO Currently copy-n-paste strokes from GraphPanel! Improve this somehow!
 		utilizationPanel = new InformationItemPanel("Utilization    ", ValueType.Percentage); // Wider text here to force the label panel further to the right
 		memoryPanel = new RatioItemPanel("Memory", ValueType.Bytes, gpu.totalMemory);
-		encodePanel = new InformationItemPanel("Video encode    ", ValueType.Percentage, new BasicStroke(2), GraphType.Gpu.color);
-		decodePanel = new InformationItemPanel("Video decode    ", ValueType.Percentage, new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] {3f}, 0f), GraphType.Gpu.color);
+		encodePanel = new InformationItemPanel("Video encode    ", encodeGraph);
+		decodePanel = new InformationItemPanel("Video decode    ", decodeGraph);
 		temperaturePanel = new InformationItemPanel("Temperature", ValueType.Temperature);
 
 		JLabel labelCapacityHeader = new JLabel("Model: ");

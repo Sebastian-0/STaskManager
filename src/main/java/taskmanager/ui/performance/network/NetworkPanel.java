@@ -16,6 +16,7 @@ import taskmanager.data.Network;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
+import taskmanager.ui.performance.GraphPanel.Graph;
 import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
 import taskmanager.ui.performance.GraphPanel.Style;
 import taskmanager.ui.performance.GraphType;
@@ -60,17 +61,18 @@ public class NetworkPanel extends JPanel {
 		transferGraph = new GraphPanel();
 		timelineGraph = new TimelineGraphPanel(labelMaxTime);
 
+		Graph inGraph = new GraphBuilder(network.inRate, GraphType.Network).style(new Style(false, "R: ")).build();
+		Graph outGraph = new GraphBuilder(network.outRate, GraphType.Network).style(new Style(true, "S: ")).build();
 		transferGraph.setIsLogarithmic(true);
-		transferGraph.addGraph(new GraphBuilder(network.inRate, GraphType.Network).style(new Style(false, "R: ")).build());
-		transferGraph.addGraph(new GraphBuilder(network.outRate, GraphType.Network).style(new Style(true, "S: ")).build());
+		transferGraph.addGraph(inGraph);
+		transferGraph.addGraph(outGraph);
 		timelineGraph.connectGraphPanels(transferGraph);
 		timelineGraph.addGraph(new GraphBuilder(network.inRate, GraphType.Network).build());
 		timelineGraph.addGraph(new GraphBuilder(network.outRate, GraphType.Network).build());
 		timelineGroup.add(timelineGraph);
 
-		// TODO Currently copy-n-paste strokes from GraphPanel! Improve this somehow!
-		sendRatePanel = new InformationItemPanel("Send", ValueType.BitsPerSecond, new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[]{3f}, 0f), GraphType.Network.color);
-		receiveRatePanel = new InformationItemPanel("Receive", ValueType.BitsPerSecond, new BasicStroke(2), GraphType.Network.color);
+		sendRatePanel = new InformationItemPanel("Send", outGraph);
+		receiveRatePanel = new InformationItemPanel("Receive", inGraph);
 
 		JLabel labelNameHeader = new JLabel("Name: ");
 		nameLabel = new JLabel();

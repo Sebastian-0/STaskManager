@@ -14,6 +14,7 @@ package taskmanager.ui.performance.common;
 import net.miginfocom.swing.MigLayout;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
+import taskmanager.ui.performance.GraphPanel.Graph;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -30,11 +31,15 @@ public class InformationItemPanel extends JPanel {
 
 	protected JLabel valueLabel;
 
+	public InformationItemPanel(String header, Graph sourceGraph) {
+		this(header, sourceGraph.valueType, sourceGraph.style.createStroke(), sourceGraph.graphType.color);
+	}
+
 	public InformationItemPanel(String header, ValueType type) {
 		this(header, type, null, null);
 	}
 	
-	public InformationItemPanel(String header, ValueType type, Stroke stroke, Color color) {
+	private InformationItemPanel(String header, ValueType type, Stroke stroke, Color color) {
 		this.type = type;
 		this.stroke = stroke;
 		this.color = color;

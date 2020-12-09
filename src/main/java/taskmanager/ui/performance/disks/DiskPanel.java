@@ -18,6 +18,7 @@ import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
 import taskmanager.ui.performance.GraphPanel.DoubleToLong;
+import taskmanager.ui.performance.GraphPanel.Graph;
 import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
@@ -67,9 +68,11 @@ public class DiskPanel extends JPanel {
 		timelineGraph = new TimelineGraphPanel(labelMaxTime);
 
 		activeTimeGraph.addGraph(new GraphBuilder(new DoubleToLong(disk.activeFraction), GraphType.Disk).build());
+		Graph writeGraph = new GraphBuilder(disk.writeRate, GraphType.Disk).valueType(ValueType.BytesPerSecond).style(new Style(true, "W: ")).build();
+		Graph readGraph = new GraphBuilder(disk.readRate, GraphType.Disk).valueType(ValueType.BytesPerSecond).style(new Style(false, "R: ")).build();
 		transferGraph.setIsLogarithmic(true);
-		transferGraph.addGraph(new GraphBuilder(disk.writeRate, GraphType.Disk).valueType(ValueType.BytesPerSecond).style(new Style(true, "W: ")).build());
-		transferGraph.addGraph(new GraphBuilder(disk.readRate, GraphType.Disk).valueType(ValueType.BytesPerSecond).style(new Style(false, "R: ")).build());
+		transferGraph.addGraph(writeGraph);
+		transferGraph.addGraph(readGraph);
 		timelineGraph.connectGraphPanels(this.activeTimeGraph, transferGraph);
 		timelineGraph.addGraph(new GraphBuilder(new DoubleToLong(disk.activeFraction), GraphType.Disk).build());
 		timelineGroup.add(timelineGraph);
@@ -81,8 +84,8 @@ public class DiskPanel extends JPanel {
 		JPanel informationPanel = new JPanel();
 		activeTimePanel = new InformationItemPanel("Active time    ", ValueType.Percentage); // Wider text here to force the label panel further to the right
 		ioQueueLengthPanel = new InformationItemPanel("I/O queue length", ValueType.Raw);
-		writeTransferPanel = new InformationItemPanel("Write speed    ", ValueType.BytesPerSecond, new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] {3f}, 0f), GraphType.Disk.color);
-		readTransferPanel = new InformationItemPanel("Read speed    ", ValueType.BytesPerSecond, new BasicStroke(2), GraphType.Disk.color);
+		writeTransferPanel = new InformationItemPanel("Write speed    ", writeGraph);
+		readTransferPanel = new InformationItemPanel("Read speed    ", readGraph);
 
 		informationPanel.setLayout(new MigLayout("wrap 2"));
 		informationPanel.add(activeTimePanel);
