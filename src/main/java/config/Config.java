@@ -34,6 +34,7 @@ public class Config {
 	public static final String KEY_LAST_TAB = "lastTab";
 	public static final String KEY_LAST_PROCESS_LIST_SPLIT_RATIO = "lastProcessListSplitRatio";
 	public static final String KEY_LAST_PERFORMANCE_PANEL_SPLIT_LOCATION = "lastPerformancePanelSplitLocation";
+	public static final String KEY_LAST_PERFORMANCE_PANEL_GRAPH = "lastPerformancePanelGraph";
 
 	public static final String KEY_LAST_COLUMN_ORDER = "lastColumnOrder";
 	public static final String KEY_LAST_COLUMN_WIDTHS = "lastColumnWidths";

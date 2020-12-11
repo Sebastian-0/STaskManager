@@ -85,7 +85,7 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 		add(selectionPanelContainer);
 		add(selectedPanelContainer);
 
-		selectedPanelContainer.setViewportView(cpuPanel);
+		graphSelectionPanel.loadPreviousState();
 
 		int dividerLocation = Config.getInt(Config.KEY_LAST_PERFORMANCE_PANEL_SPLIT_LOCATION, -1);
 		if (dividerLocation != -1) {
@@ -122,11 +122,11 @@ public class PerformancePanel extends JSplitPane implements PerformanceButtonLis
 		} else if (type == GraphType.Memory) {
 			selectedPanelContainer.setViewportView(memoryPanel);
 		} else if (type == GraphType.Disk) {
-			selectedPanelContainer.setViewportView(diskPanels[index]);
+			selectedPanelContainer.setViewportView(diskPanels[Math.min(index, diskPanels.length-1)]);
 		} else if (type == GraphType.Network) {
-			selectedPanelContainer.setViewportView(networkPanels[index]);
+			selectedPanelContainer.setViewportView(networkPanels[Math.min(index, networkPanels.length-1)]);
 		} else if (type == GraphType.Gpu) {
-			selectedPanelContainer.setViewportView(gpuPanels[index]);
+			selectedPanelContainer.setViewportView(gpuPanels[Math.min(index, gpuPanels.length-1)]);
 		}
 
 		revalidate();

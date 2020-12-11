@@ -56,6 +56,15 @@ public class GraphTypeButton extends JButton {
 		add(valueLabel, "skip 1");
 	}
 
+	public void loadPreviousState(GraphType type, int index) {
+		if (getGraphType() == type && this.index == index) {
+			listener.swapTo(type, index);
+			select();
+		} else {
+			deselect();
+		}
+	}
+
 	public void setIsLogarithmic(boolean isLogarithmic) {
 		graphPanel.setIsLogarithmic(isLogarithmic);
 	}
@@ -105,7 +114,6 @@ public class GraphTypeButton extends JButton {
 	public void deselect() {
 		setBackground(Color.WHITE);
 	}
-
 
 	private ActionListener actionListener = new ActionListener() {
 		@Override
