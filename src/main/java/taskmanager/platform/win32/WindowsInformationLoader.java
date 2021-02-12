@@ -204,8 +204,10 @@ public class WindowsInformationLoader extends InformationLoader {
 				Process parent = systemInformation.getProcessById(parentId);
 				if (parent != null) {
 					process.parentUniqueId = parent.uniqueId;
+					process.parentId = parentId;
 				} else {
 					process.parentUniqueId = -1;
+					process.parentId = -1;
 				}
 
 				// TODO Verify if this works!

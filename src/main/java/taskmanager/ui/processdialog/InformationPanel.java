@@ -35,12 +35,15 @@ public class InformationPanel extends JPanel {
 		updateStatusLabelText();
 		updateDurationLabel();
 
+		// TODO Make all lines here take up equal vertical space!
 		setLayout(new MigLayout("wrap 2", "", "sg 1"));
 		add(new JLabel("PID: " + process.id));
-		add(new JLabel("Name: " + process.fileName), "gapleft 15");
+		add(new JLabel("Parent ID: " + (process.parentId != -1 ? process.parentId : "---")), "gapleft 15");
 
-		add(new JLabel("User: " + process.userName));
-		add(statusLabel, "gapleft 15");
+		add(new JLabel("Name: " + process.fileName));
+		add(new JLabel("User: " + process.userName), "gapleft 15");
+
+		add(statusLabel, "wrap");
 
 		if (process.startTimestamp > 0) {
 			add(new JLabel("Started: " + TextUtils.valueToString(process.startTimestamp, TextUtils.ValueType.Date)));

@@ -22,6 +22,7 @@ public class Process {
 	public long uniqueId;
 	public long id;
 	public long parentUniqueId;
+	public long parentId;
 	public Measurements<Long> privateWorkingSet;
 	public String fileName;
 	public String filePath;
@@ -57,6 +58,7 @@ public class Process {
 		uniqueId = other.uniqueId;
 		id = other.id;
 		parentUniqueId = other.parentUniqueId;
+		parentId = other.parentId;
 		fileName = other.fileName;
 		filePath = other.filePath;
 		commandLine = other.commandLine;
