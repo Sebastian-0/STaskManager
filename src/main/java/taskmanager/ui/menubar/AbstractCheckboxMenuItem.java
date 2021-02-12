@@ -1,7 +1,7 @@
 package taskmanager.ui.menubar;
 
 import config.Config;
-import taskmanager.ui.ApplicationCallback;
+import taskmanager.ui.callbacks.ApplicationCallback;
 
 import javax.swing.JCheckBoxMenuItem;
 

@@ -2,7 +2,7 @@ package taskmanager.ui.menubar;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import taskmanager.ui.ApplicationCallback;
+import taskmanager.ui.callbacks.ApplicationCallback;
 
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;

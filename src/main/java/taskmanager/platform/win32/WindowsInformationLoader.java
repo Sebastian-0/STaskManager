@@ -170,6 +170,8 @@ public class WindowsInformationLoader extends InformationLoader {
 			return;
 		}
 
+		createMissingProcessObjects(systemInformation, newProcesses);
+
 		for (ProcessInfo newProcess : newProcesses) {
 			newProcessIds.add(newProcess.process.uniqueProcessId);
 			Process process = systemInformation.getProcessById(newProcess.process.uniqueProcessId);
@@ -194,6 +196,18 @@ public class WindowsInformationLoader extends InformationLoader {
 					process.description = process.fileName;
 				}
 
+				// TODO Replace this code to find the parent properly using CreateToolhelp32Snapshot(),
+				//  see https://gist.github.com/mattn/253013/d47b90159cf8ffa4d92448614b748aa1d235ebe4
+				//  or https://www.codeproject.com/Articles/9893/Get-Parent-Process-PID
+				//  Also look how process hacker does this...
+				long parentId = newProcess.process.inheritedFromUniqueProcessId;
+				Process parent = systemInformation.getProcessById(parentId);
+				if (parent != null) {
+					process.parentUniqueId = parent.uniqueId;
+				} else {
+					process.parentUniqueId = -1;
+				}
+
 				// TODO Verify if this works!
 				process.startTimestamp = new FILETIME(new LARGE_INTEGER(newProcess.process.createTime.getValue())).toTime();
 			}
@@ -213,6 +227,15 @@ public class WindowsInformationLoader extends InformationLoader {
 		}
 
 		updateDeadProcesses(systemInformation, newProcessIds);
+	}
+
+	private void createMissingProcessObjects(SystemInformation systemInformation, List<ProcessInfo> newProcesses) {
+		for (ProcessInfo newProcess : newProcesses) {
+			Process process = systemInformation.getProcessById(newProcess.process.uniqueProcessId);
+			if (process == null) {
+				systemInformation.processes.add(new Process(nextProcessId++, newProcess.process.uniqueProcessId));
+			}
+		}
 	}
 
 	private Status readProcessStatus(ProcessInfo process) {

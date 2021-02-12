@@ -14,7 +14,7 @@ package taskmanager.ui.performance.common;
 import taskmanager.Measurements;
 import taskmanager.data.TopList;
 import taskmanager.ui.TextUtils.ValueType;
-import taskmanager.ui.performance.ShowProcessCallback;
+import taskmanager.ui.callbacks.ShowProcessCallback;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;

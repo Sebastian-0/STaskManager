@@ -12,24 +12,20 @@
 package taskmanager.ui.details;
 
 import taskmanager.data.Process;
-import taskmanager.ui.AbstractMenuItem;
-import taskmanager.ui.callbacks.ProcessDetailsCallback;
+import taskmanager.ui.callbacks.ShowProcessCallback;
 
-public class OpenProcessDialogMenuItem extends AbstractMenuItem {
-	private final ProcessDetailsCallback callback;
+import javax.swing.JMenuItem;
+
+public class JumpToParentMenuItem extends JMenuItem {
 	private Process process;
 
-	public OpenProcessDialogMenuItem(ProcessDetailsCallback callback) {
-		super("Open process details");
-		this.callback = callback;
-	}
-
-	@Override
-	protected void doAction() {
-		callback.openDialog(process);
+	public JumpToParentMenuItem(ShowProcessCallback showProcessCallback) {
+		super("Jump to parent");
+		addActionListener(e -> showProcessCallback.showProcess(process.parentUniqueId));
 	}
 
 	public void setProcess(Process process) {
 		this.process = process;
+		setEnabled(process.parentUniqueId != -1);
 	}
 }

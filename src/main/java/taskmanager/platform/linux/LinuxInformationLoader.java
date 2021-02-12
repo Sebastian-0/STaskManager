@@ -90,14 +90,11 @@ public class LinuxInformationLoader extends InformationLoader {
 
 	private void updateProcesses(SystemInformation systemInformation) {
 		Set<Long> newProcessIds = fetchProcessIds();
+		createMissingProcessObjects(systemInformation, newProcessIds);
 
 		int totalThreadCount = 0;
 		for (Long pid : newProcessIds) {
-			Process process = findProcess(systemInformation.processes, pid);
-			if (process == null) {
-				process = new Process(nextProcessId++, pid);
-				systemInformation.processes.add(process);
-			}
+			Process process = systemInformation.getProcessById(pid);
 
 			String processPath = PROC_PATH + "/" + pid;
 			Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
@@ -134,6 +131,16 @@ public class LinuxInformationLoader extends InformationLoader {
 
 				if (stat.length > 21) {
 					process.startTimestamp = systemInformation.bootTime + Long.parseLong(stat[21]) * 1000 / LinuxOperatingSystem.getHz();
+				}
+
+				if (stat.length > 3) {
+					long parentId = Long.parseLong(stat[3]);
+					Process parent = systemInformation.getProcessById(parentId);
+					if (parent != null) {
+						process.parentUniqueId = parent.uniqueId;
+					} else {
+						process.parentUniqueId = -1;
+					}
 				}
 
 //				if (process.description.isEmpty())
@@ -174,6 +181,15 @@ public class LinuxInformationLoader extends InformationLoader {
 		}
 	}
 
+	private void createMissingProcessObjects(SystemInformation systemInformation, Set<Long> newProcessIds) {
+		for (Long pid : newProcessIds) {
+			Process process = systemInformation.getProcessById(pid);
+			if (process == null) {
+				systemInformation.processes.add(new Process(nextProcessId++, pid));
+			}
+		}
+	}
+
 	private Set<Long> fetchProcessIds() {
 		Set<Long> processIds = new HashSet<>();
 		File processDir = new File(PROC_PATH);
@@ -184,15 +200,6 @@ public class LinuxInformationLoader extends InformationLoader {
 			}
 		}
 		return processIds;
-	}
-
-	private Process findProcess(List<Process> processes, long processId) {
-		for (Process process : processes) {
-			if (process.id == processId) {
-				return process;
-			}
-		}
-		return null;
 	}
 
 	private void processFileNameAndPathFallback(Process process, String processPath, Map<String, String> status) {

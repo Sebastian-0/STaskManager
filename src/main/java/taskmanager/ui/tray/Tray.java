@@ -13,7 +13,7 @@ package taskmanager.ui.tray;
 
 import config.Config;
 import taskmanager.data.SystemInformation;
-import taskmanager.ui.ApplicationCallback;
+import taskmanager.ui.callbacks.ApplicationCallback;
 import taskmanager.ui.ColorUtils;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;

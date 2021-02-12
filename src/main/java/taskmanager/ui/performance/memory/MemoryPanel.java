@@ -23,7 +23,7 @@ import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
 import taskmanager.ui.performance.RatioItemPanel;
-import taskmanager.ui.performance.ShowProcessCallback;
+import taskmanager.ui.callbacks.ShowProcessCallback;
 import taskmanager.ui.performance.TimelineGraphPanel;
 import taskmanager.ui.performance.TimelineGroup;
 import taskmanager.ui.performance.common.InformationItemPanel;

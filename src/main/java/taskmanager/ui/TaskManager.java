@@ -13,7 +13,6 @@ package taskmanager.ui;
 
 import config.Config;
 import config.TextureStorage;
-import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import taskmanager.DataCollector;
@@ -21,11 +20,12 @@ import taskmanager.InformationUpdateCallback;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
-import taskmanager.ui.details.ProcessDetailsCallback;
+import taskmanager.ui.callbacks.ApplicationCallback;
+import taskmanager.ui.callbacks.ProcessDetailsCallback;
 import taskmanager.ui.details.ProcessPanel;
 import taskmanager.ui.menubar.MenuBar;
 import taskmanager.ui.performance.PerformancePanel;
-import taskmanager.ui.performance.ShowProcessCallback;
+import taskmanager.ui.callbacks.ShowProcessCallback;
 import taskmanager.ui.processdialog.ProcessDialog;
 import taskmanager.ui.tray.Tray;
 

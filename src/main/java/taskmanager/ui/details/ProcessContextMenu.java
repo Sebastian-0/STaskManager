@@ -12,25 +12,30 @@
 package taskmanager.ui.details;
 
 import taskmanager.data.Process;
+import taskmanager.ui.callbacks.ProcessDetailsCallback;
+import taskmanager.ui.callbacks.ShowProcessCallback;
 
 import javax.swing.JPopupMenu;
 import java.awt.Component;
 
 public class ProcessContextMenu extends JPopupMenu {
 	private final OpenProcessDialogMenuItem openDialogMenuItem;
+	private final JumpToParentMenuItem jumpToParentMenuItem;
 	private final SuspendResumeProcessMenuItem suspendMenuItem;
 	private final DeleteProcessMenuItem deleteMenuItem;
 	private final OpenFileLocationMenuItem openLocationMenuItem;
 	private final CopyToClipboardMenuItem copyToClipboardMenuItem;
 
 	public ProcessContextMenu(Component parent) {
-		openDialogMenuItem = new OpenProcessDialogMenuItem(parent);
+		openDialogMenuItem = new OpenProcessDialogMenuItem((ProcessDetailsCallback) parent);
+		jumpToParentMenuItem = new JumpToParentMenuItem((ShowProcessCallback) parent);
 		suspendMenuItem = new SuspendResumeProcessMenuItem(parent);
 		deleteMenuItem = new DeleteProcessMenuItem(parent);
 		openLocationMenuItem = new OpenFileLocationMenuItem(parent);
 		copyToClipboardMenuItem = new CopyToClipboardMenuItem(this);
 
 		add(openDialogMenuItem);
+		add(jumpToParentMenuItem);
 		addSeparator();
 		add(openLocationMenuItem);
 		add(suspendMenuItem);
@@ -41,6 +46,7 @@ public class ProcessContextMenu extends JPopupMenu {
 
 	public void setProcess(Process process) {
 		openDialogMenuItem.setProcess(process);
+		jumpToParentMenuItem.setProcess(process);
 		suspendMenuItem.setProcess(process);
 		deleteMenuItem.setProcess(process);
 		openLocationMenuItem.setProcess(process);

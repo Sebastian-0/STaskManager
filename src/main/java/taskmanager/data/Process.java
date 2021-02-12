@@ -21,6 +21,7 @@ import java.util.Comparator;
 public class Process {
 	public long uniqueId;
 	public long id;
+	public long parentUniqueId;
 	public Measurements<Long> privateWorkingSet;
 	public String fileName;
 	public String filePath;
@@ -55,6 +56,7 @@ public class Process {
 	public void copyFrom(Process other, boolean doFullCopy) {
 		uniqueId = other.uniqueId;
 		id = other.id;
+		parentUniqueId = other.parentUniqueId;
 		fileName = other.fileName;
 		filePath = other.filePath;
 		commandLine = other.commandLine;

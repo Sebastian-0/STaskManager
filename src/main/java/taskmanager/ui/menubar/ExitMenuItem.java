@@ -1,6 +1,6 @@
 package taskmanager.ui.menubar;
 
-import taskmanager.ui.ApplicationCallback;
+import taskmanager.ui.callbacks.ApplicationCallback;
 
 import javax.swing.JMenuItem;
 

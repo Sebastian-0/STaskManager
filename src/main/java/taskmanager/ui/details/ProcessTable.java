@@ -23,6 +23,7 @@ import taskmanager.ui.ColorUtils;
 import taskmanager.ui.StatusUtils;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
+import taskmanager.ui.callbacks.ProcessDetailsCallback;
 
 import javax.swing.JComponent;
 import javax.swing.JTable;

@@ -13,6 +13,7 @@ package taskmanager.ui.performance;
 
 import config.Config;
 import taskmanager.data.SystemInformation;
+import taskmanager.ui.callbacks.ShowProcessCallback;
 import taskmanager.ui.performance.cpu.CpuPanel;
 import taskmanager.ui.performance.disks.DiskPanel;
 import taskmanager.ui.performance.gpus.GpuPanel;

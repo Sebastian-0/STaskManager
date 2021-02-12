@@ -15,6 +15,7 @@ import config.Config;
 import net.miginfocom.swing.MigLayout;
 import taskmanager.data.Process;
 import taskmanager.data.SystemInformation;
+import taskmanager.ui.callbacks.ProcessDetailsCallback;
 import taskmanager.ui.details.filter.FilterAttributeComboBox;
 import taskmanager.ui.details.filter.FilterPanel;
 
