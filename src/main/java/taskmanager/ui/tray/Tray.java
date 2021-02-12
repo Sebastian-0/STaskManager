@@ -239,4 +239,8 @@ public class Tray extends TrayIcon {
 		imageGraphics.setColor(Color.DARK_GRAY);
 		imageGraphics.drawRect(0, 0, iconImage.getWidth() - 1, iconImage.getHeight() - 1);
 	}
+
+	public void dispose() {
+		popupMenuDialog.dispose();
+	}
 }

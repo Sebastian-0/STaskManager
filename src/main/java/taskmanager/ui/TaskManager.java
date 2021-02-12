@@ -246,6 +246,7 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 		}
 		dispose();
 		if (trayIcon != null) {
+			trayIcon.dispose();
 			SystemTray.getSystemTray().remove(trayIcon);
 		}
 	}
