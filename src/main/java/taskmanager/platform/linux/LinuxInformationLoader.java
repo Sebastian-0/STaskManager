@@ -96,76 +96,81 @@ public class LinuxInformationLoader extends InformationLoader {
 		for (Long pid : newProcessIds) {
 			Process process = systemInformation.getProcessById(pid);
 
-			String processPath = PROC_PATH + "/" + pid;
-			Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
-			if (status.isEmpty()) {
-				LOGGER.warn("Failed to read /proc/{}/status", process.id);
-			}
+			try {
+				String processPath = PROC_PATH + "/" + pid;
+				Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
+				if (status.isEmpty()) {
+					LOGGER.warn("Failed to read /proc/{}/status", process.id);
+				}
 
-			String[] stat = FileUtil.getStringFromFile(processPath + "/stat")
-					.replaceAll("\\(.*\\)", "(cmd)") // Take care of spaces in the process comm
-					.split("\\s+");
+				String[] stat = FileUtil.getStringFromFile(processPath + "/stat")
+						.replaceAll("\\(.*\\)", "(cmd)") // Take care of spaces in the process comm
+						.split("\\s+");
 
-			if (!process.hasReadOnce) {
-				if (!status.isEmpty()) {
-					String userId = status.getOrDefault("Uid", "-1").split("\\s+")[0];
-					process.userName = UserGroupInfo.getUser(userId);
-					process.commandLine = FileUtil.getStringFromFile(processPath + "/cmdline").replaceAll("" + (char) 0, " ").trim();
+				if (!process.hasReadOnce) {
+					if (!status.isEmpty()) {
+						String userId = status.getOrDefault("Uid", "-1").split("\\s+")[0];
+						process.userName = UserGroupInfo.getUser(userId);
+						process.commandLine = FileUtil.getStringFromFile(processPath + "/cmdline").replaceAll("" + (char) 0, " ").trim();
 
-					// Read process name and path
-					try {
-						File target = new File("/proc/" + process.id + "/exe");
-						if (target.exists()) {
-							Path absolutePath = Files.readSymbolicLink(target.toPath()).toAbsolutePath();
-							process.filePath = absolutePath.toString();
-							process.fileName = absolutePath.getFileName().toString();
+						// Read process name and path
+						try {
+							File target = new File("/proc/" + process.id + "/exe");
+							if (target.exists()) {
+								Path absolutePath = Files.readSymbolicLink(target.toPath()).toAbsolutePath();
+								process.filePath = absolutePath.toString();
+								process.fileName = absolutePath.getFileName().toString();
+							}
+						} catch (IOException e) {
+							LOGGER.warn("Failed to read /proc/{}/exe", process.id, e);
 						}
-					} catch (IOException e) {
-						LOGGER.warn("Failed to read /proc/{}/exe", process.id, e);
+
+						// Fallback for file name/path
+						if (process.fileName.isEmpty()) {
+							processFileNameAndPathFallback(process, processPath, status);
+						}
+						process.hasReadOnce = true;
 					}
 
-					// Fallback for file name/path
-					if (process.fileName.isEmpty()) {
-						processFileNameAndPathFallback(process, processPath, status);
+					if (stat.length > 21) {
+						process.startTimestamp = systemInformation.bootTime + Long.parseLong(stat[21]) * 1000 / LinuxOperatingSystem.getHz();
 					}
-					process.hasReadOnce = true;
-				}
 
-				if (stat.length > 21) {
-					process.startTimestamp = systemInformation.bootTime + Long.parseLong(stat[21]) * 1000 / LinuxOperatingSystem.getHz();
-				}
-
-				if (stat.length > 3) {
-					long parentId = Long.parseLong(stat[3]);
-					Process parent = systemInformation.getProcessById(parentId);
-					if (parent != null) {
-						process.parentUniqueId = parent.uniqueId;
-						process.parentId = parentId;
-					} else {
-						process.parentUniqueId = -1;
-						process.parentId = -1;
+					if (stat.length > 3) {
+						long parentId = Long.parseLong(stat[3]);
+						Process parent = systemInformation.getProcessById(parentId);
+						if (parent != null) {
+							process.parentUniqueId = parent.uniqueId;
+							process.parentId = parentId;
+						} else {
+							process.parentUniqueId = -1;
+							process.parentId = -1;
+						}
 					}
-				}
 
 //				if (process.description.isEmpty())
 //					process.description = process.fileName;
-			}
+				}
 
-			process.privateWorkingSet.addValue(Long.parseLong(removeUnit(status.getOrDefault("RssAnon", "0 kb"))) * 1024);
+				process.privateWorkingSet.addValue(Long.parseLong(removeUnit(status.getOrDefault("RssAnon", "0 kb"))) * 1024);
 
-			if (stat.length < 20) {
-				LOGGER.warn("Failed to read /proc/{}/stat, duplicating previous CPU-values", process.id);
-				process.cpuTime.addValue(process.cpuTime.newest());
-				process.cpuUsage.addValue(process.cpuUsage.newest());
-			} else {
-				long utime = Long.parseLong(stat[13]);
-				long stime = Long.parseLong(stat[14]);
-				// TODO Maybe use a delta of the process uptime (like LinuxOperatingSystem#getProcess():286)?
-				process.updateCpu(stime, utime, (currentCpuTime - lastCpuTime), 1); // Set cores to 1 since the total time is already divided by cores
+				if (stat.length < 20) {
+					LOGGER.warn("Failed to read /proc/{}/stat, duplicating previous CPU-values", process.id);
+					process.cpuTime.addValue(process.cpuTime.newest());
+					process.cpuUsage.addValue(process.cpuUsage.newest());
+				} else {
+					long utime = Long.parseLong(stat[13]);
+					long stime = Long.parseLong(stat[14]);
+					// TODO Maybe use a delta of the process uptime (like LinuxOperatingSystem#getProcess():286)?
+					process.updateCpu(stime, utime, (currentCpuTime - lastCpuTime), 1); // Set cores to 1 since the total time is already divided by cores
 
-				process.status = parseStatus(stat[2]);
+					process.status = parseStatus(stat[2]);
 
-				totalThreadCount += Integer.parseInt(stat[19]);
+					totalThreadCount += Integer.parseInt(stat[19]);
+				}
+			} catch (Throwable e) {
+				LOGGER.error("Exception when updating process '{}' ({})!", process.fileName, pid, e);
+				process.hasReadOnce = false; // Force full write at next update so that no data is missing
 			}
 		}
 

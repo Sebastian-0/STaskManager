@@ -175,57 +175,57 @@ public class WindowsInformationLoader extends InformationLoader {
 		for (ProcessInfo newProcess : newProcesses) {
 			newProcessIds.add(newProcess.process.uniqueProcessId);
 			Process process = systemInformation.getProcessById(newProcess.process.uniqueProcessId);
-			if (process == null) {
-				process = new Process(nextProcessId++, newProcess.process.uniqueProcessId);
-				systemInformation.processes.add(process);
+
+			try {
+				if (!process.hasReadOnce) {
+					if (process.id == 0) {
+						process.fileName = "System Idle Process";
+						process.userName = "SYSTEM";
+					} else {
+						process.fileName = newProcess.process.imageName.buffer.getWideString(0);
+					}
+
+					if (readProcessFileNameCommandLineAndUser(process)) {
+						readFileDescription(process);
+					}
+
+					if (process.description.isEmpty()) {
+						process.description = process.fileName;
+					}
+
+					// TODO Replace this code to find the parent properly using CreateToolhelp32Snapshot(),
+					//  see https://gist.github.com/mattn/253013/d47b90159cf8ffa4d92448614b748aa1d235ebe4
+					//  or https://www.codeproject.com/Articles/9893/Get-Parent-Process-PID
+					//  Also look how process hacker does this...
+					long parentId = newProcess.process.inheritedFromUniqueProcessId;
+					Process parent = systemInformation.getProcessById(parentId);
+					if (parent != null) {
+						process.parentUniqueId = parent.uniqueId;
+						process.parentId = parentId;
+					} else {
+						process.parentUniqueId = -1;
+						process.parentId = -1;
+					}
+
+					// TODO Verify if this works!
+					process.startTimestamp = new FILETIME(new LARGE_INTEGER(newProcess.process.createTime.getValue())).toTime();
+					process.hasReadOnce = true;
+				}
+
+				process.status = readProcessStatus(newProcess);
+
+				process.privateWorkingSet.addValue(newProcess.process.workingSetPrivateSize);
+
+				// For some reason we need to extract the value and then put it back inside a new LONG_INTEGER instance before using
+				// it otherwise the FILETIME becomes corrupted. Does this have something to do with the memory the NT-call returns?
+				process.updateCpu(
+						new FILETIME(new LARGE_INTEGER(newProcess.process.kernelTime.getValue())).toTime(),
+						new FILETIME(new LARGE_INTEGER(newProcess.process.userTime.getValue())).toTime(),
+						(currentCpuTime - lastCpuTime), systemInformation.logicalProcessorCount);
+			} catch (Throwable e) {
+				LOGGER.error("Exception when updating process '{}' ({})!", process.fileName, process.id, e);
+				process.hasReadOnce = false; // Force full write at next update so that no data is missing
 			}
-
-			if (!process.hasReadOnce) {
-				if (process.id == 0) {
-					process.fileName = "System Idle Process";
-					process.userName = "SYSTEM";
-				} else {
-					process.fileName = newProcess.process.imageName.buffer.getWideString(0);
-				}
-
-				if (readProcessFileNameCommandLineAndUser(process)) {
-					readFileDescription(process);
-				}
-
-				if (process.description.isEmpty()) {
-					process.description = process.fileName;
-				}
-
-				// TODO Replace this code to find the parent properly using CreateToolhelp32Snapshot(),
-				//  see https://gist.github.com/mattn/253013/d47b90159cf8ffa4d92448614b748aa1d235ebe4
-				//  or https://www.codeproject.com/Articles/9893/Get-Parent-Process-PID
-				//  Also look how process hacker does this...
-				long parentId = newProcess.process.inheritedFromUniqueProcessId;
-				Process parent = systemInformation.getProcessById(parentId);
-				if (parent != null) {
-					process.parentUniqueId = parent.uniqueId;
-					process.parentId = parentId;
-				} else {
-					process.parentUniqueId = -1;
-					process.parentId = -1;
-				}
-
-				// TODO Verify if this works!
-				process.startTimestamp = new FILETIME(new LARGE_INTEGER(newProcess.process.createTime.getValue())).toTime();
-			}
-
-			process.status = readProcessStatus(newProcess);
-
-			process.privateWorkingSet.addValue(newProcess.process.workingSetPrivateSize);
-
-			// For some reason we need to extract the value and then put it back inside a new LONG_INTEGER instance before using
-			// it otherwise the FILETIME becomes corrupted. Does this have something to do with the memory the NT-call returns?
-			process.updateCpu(
-					new FILETIME(new LARGE_INTEGER(newProcess.process.kernelTime.getValue())).toTime(),
-					new FILETIME(new LARGE_INTEGER(newProcess.process.userTime.getValue())).toTime(),
-					(currentCpuTime - lastCpuTime), systemInformation.logicalProcessorCount);
-
-			process.hasReadOnce = true;
 		}
 
 		updateDeadProcesses(systemInformation, newProcessIds);
