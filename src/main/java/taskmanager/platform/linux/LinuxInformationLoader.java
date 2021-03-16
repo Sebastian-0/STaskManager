@@ -102,7 +102,9 @@ public class LinuxInformationLoader extends InformationLoader {
 				LOGGER.warn("Failed to read /proc/{}/status", process.id);
 			}
 
-			String[] stat = FileUtil.getStringFromFile(processPath + "/stat").split("\\s+");
+			String[] stat = FileUtil.getStringFromFile(processPath + "/stat")
+					.replaceAll("\\(.*\\)", "(cmd)") // Take care of spaces in the process comm
+					.split("\\s+");
 
 			if (!process.hasReadOnce) {
 				if (!status.isEmpty()) {
