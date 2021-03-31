@@ -16,11 +16,11 @@ import com.sun.jna.ptr.IntByReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.jna.platform.mac.SystemB;
+import taskmanager.InformationLoader;
 import taskmanager.data.SystemInformation;
 import taskmanager.platform.linux.LinuxExtraInformation;
-import taskmanager.platform.linux.LinuxInformationLoader;
 
-public class OsXInformationLoader extends LinuxInformationLoader {
+public class OsXInformationLoader extends InformationLoader {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OsXInformationLoader.class);
 
 	private static final int KERN_SUCCESS = 0;
@@ -44,7 +44,7 @@ public class OsXInformationLoader extends LinuxInformationLoader {
 
 		updateMemory(systemInformation);
 //		updateTotalCpuTime();
-//		updateProcesses(systemInformation);
+		updateProcesses(systemInformation);
 	}
 
 	private void updateMemory(SystemInformation systemInformation) {
@@ -56,20 +56,17 @@ public class OsXInformationLoader extends LinuxInformationLoader {
 			systemInformation.freeMemory = (statistics.free_count + statistics.inactive_count) * systemInformation.pageSize;
 		}
 
-//		Map<String, String> memInfo = FileUtil.getKeyValueMapFromFile(PROC_PATH + "/meminfo", ":");
-//		if (memInfo.isEmpty()) {
-//			LOGGER.warn("Failed to read /proc/meminfo!");
-//		} else {
-//			// TODO Memory graph uses memory available while the composition uses memory available as defined by free
-//			//  (not the same). Find out how linux defines memory available? Is it even possible?
+		// For more OSX memory info, see: http://web.mit.edu/darwin/src/modules/xnu/osfmk/man/vm_statistics.html
 //			LinuxExtraInformation extraInformation = (LinuxExtraInformation) systemInformation.extraInformation;
-//			systemInformation.freeMemory = Long.parseLong(removeUnit(memInfo.get("MemFree"))) * 1024;
 //			extraInformation.bufferMemory = Long.parseLong(removeUnit(memInfo.get("Buffers"))) * 1024;
 //			extraInformation.cacheMemory = Long.parseLong(removeUnit(memInfo.get("Cached"))) * 1024 + Long.parseLong(removeUnit(memInfo.get("SReclaimable"))) * 1024;
 //			extraInformation.sharedMemory = Long.parseLong(removeUnit(memInfo.get("Shmem"))) * 1024;
 //
 //			extraInformation.swapSize = Long.parseLong(removeUnit(memInfo.get("SwapTotal"))) * 1024;
 //			extraInformation.swapUsed = extraInformation.swapSize - Long.parseLong(removeUnit(memInfo.get("SwapFree"))) * 1024;
-//		}
+	}
+
+	private void updateProcesses(SystemInformation systemInformation) {
+		// TODO: See in MacOperatingSystem and MacOSProcess
 	}
 }
