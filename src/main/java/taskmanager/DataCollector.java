@@ -17,9 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import taskmanager.data.SystemInformation;
 import taskmanager.platform.linux.LinuxInformationLoader;
+import taskmanager.platform.osx.OsXInformationLoader;
 import taskmanager.platform.win32.WindowsInformationLoader;
-
-import javax.swing.SwingUtilities;
 
 public class DataCollector extends Thread {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DataCollector.class);
@@ -47,6 +46,8 @@ public class DataCollector extends Thread {
 			return new WindowsInformationLoader();
 		} else if (Platform.isLinux()) {
 			return new LinuxInformationLoader();
+		} else if (Platform.isMac()) {
+			return new OsXInformationLoader();
 		} else {
 			throw new UnsupportedOperationException("You are running an unsupported operating system!");
 		}
