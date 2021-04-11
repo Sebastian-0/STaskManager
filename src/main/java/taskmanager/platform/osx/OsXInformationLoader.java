@@ -116,14 +116,15 @@ public class OsXInformationLoader extends InformationLoader {
 				systemInformation.processes.add(process);
 			}
 
+			boolean allInfoFailed = false;
 			ProcTaskAllInfo allInfo = new ProcTaskAllInfo();
 			int status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDTASKALLINFO, 0, allInfo, allInfo.size());
 			if (status < 0) {
 				LOGGER.warn("Failed to read process information for {}: {}", pid, Native.getLastError());
 				continue;
 			} else if (status != allInfo.size()) {
-				// Failed to read, possible because we don't have access
-				continue;
+				// Failed to read, possibly because we don't have access
+				allInfoFailed = true;
 			}
 
 			if (!process.hasReadOnce) {
@@ -142,25 +143,31 @@ public class OsXInformationLoader extends InformationLoader {
 					LOGGER.warn("Failed to read process path for {}: {}", pid, Native.getLastError());
 				}
 
-				Passwd passwd = SystemB.INSTANCE.getpwuid(allInfo.pbsd.pbi_uid);
-				if (passwd != null) {
-					process.userName = passwd.pw_name;
-				} else {
-					process.userName = Constants.UNKNOWN;
-				}
+				if (!allInfoFailed) {
+					Passwd passwd = SystemB.INSTANCE.getpwuid(allInfo.pbsd.pbi_uid);
+					if (passwd != null) {
+						process.userName = passwd.pw_name;
+					} else {
+						process.userName = Constants.UNKNOWN;
+					}
 
-				process.startTimestamp = allInfo.pbsd.pbi_start_tvsec * 1000L + allInfo.pbsd.pbi_start_tvusec / 1000L;
+					process.startTimestamp = allInfo.pbsd.pbi_start_tvsec * 1000L + allInfo.pbsd.pbi_start_tvusec / 1000L;
 
-				long parentId = allInfo.pbsd.pbi_ppid;
-				Process parent = systemInformation.getProcessById(parentId);
-				if (parent != null) {
-					process.parentUniqueId = parent.uniqueId;
-					process.parentId = parentId;
-				} else {
-					process.parentUniqueId = -1;
-					process.parentId = -1;
+					long parentId = allInfo.pbsd.pbi_ppid;
+					Process parent = systemInformation.getProcessById(parentId);
+					if (parent != null) {
+						process.parentUniqueId = parent.uniqueId;
+						process.parentId = parentId;
+					} else {
+						process.parentUniqueId = -1;
+						process.parentId = -1;
+					}
 				}
 				process.hasReadOnce = true;
+			}
+
+			if (allInfoFailed) {
+				continue;
 			}
 
 			switch (allInfo.pbsd.pbi_status) {
