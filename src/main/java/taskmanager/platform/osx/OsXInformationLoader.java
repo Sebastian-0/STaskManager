@@ -187,8 +187,7 @@ public class OsXInformationLoader extends InformationLoader {
 
 			long stime = allInfo.ptinfo.pti_total_system;
 			long utime = allInfo.ptinfo.pti_total_user;
-
-//			process.updateCpu(stime, utime, , 1);
+			process.updateCpu(stime, utime);
 		}
 
 		updateDeadProcesses(systemInformation, newProcessIds);
