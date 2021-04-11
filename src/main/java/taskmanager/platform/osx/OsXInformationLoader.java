@@ -185,9 +185,9 @@ public class OsXInformationLoader extends InformationLoader {
 
 			process.privateWorkingSet.addValue(allInfo.ptinfo.pti_resident_size);
 
-			long stime = allInfo.ptinfo.pti_total_system;
-			long utime = allInfo.ptinfo.pti_total_user;
-			process.updateCpu(stime, utime);
+			long stime = allInfo.ptinfo.pti_total_system / 1_000_000;
+			long utime = allInfo.ptinfo.pti_total_user / 1_000_000;
+			process.updateCpu(stime, utime, systemInformation.logicalProcessorCount);
 		}
 
 		updateDeadProcesses(systemInformation, newProcessIds);

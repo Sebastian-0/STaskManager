@@ -95,12 +95,12 @@ public class Process {
 		lastUserCpu = userCpu;
 	}
 
-	public void updateCpu(long sysCpu, long userCpu) {
+	public void updateCpu(long sysCpu, long userCpu, int numCores) {
 		long uptime = System.currentTimeMillis() - startTimestamp;
 		if (previousUptime != 0 && (lastSysCpu != 0 || lastUserCpu != 0)) {
 			long newCpuTime = sysCpu - lastSysCpu + userCpu - lastUserCpu;
 			cpuTime.addValue(newCpuTime);
-			cpuUsage.addValue(Math.round(newCpuTime / (double) (uptime - previousUptime) * Config.DOUBLE_TO_LONG));
+			cpuUsage.addValue(Math.round(newCpuTime / (double) (uptime - previousUptime) / numCores * Config.DOUBLE_TO_LONG));
 		}
 		lastSysCpu = sysCpu;
 		lastUserCpu = userCpu;
