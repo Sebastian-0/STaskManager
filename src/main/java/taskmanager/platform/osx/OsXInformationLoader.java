@@ -12,6 +12,7 @@
 package taskmanager.platform.osx;
 
 import com.sun.jna.Memory;
+import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.mac.SystemB.Passwd;
 import com.sun.jna.platform.mac.SystemB.ProcTaskAllInfo;
@@ -66,7 +67,7 @@ public class OsXInformationLoader extends InformationLoader {
 		IntByReference argmax = new IntByReference();
 		int status = SystemB.INSTANCE.sysctl(mib, mib.length, argmax.getPointer(), new IntByReference(SystemB.INT_SIZE), null, 0);
 		if (status != 0) {
-			LOGGER.error("Failed to fetch maximum size of program argument list, error: " + status);
+			LOGGER.error("Failed to fetch maximum size of program argument list, error: {}", Native.getLastError());
 		} else {
 			maximumProgramArguments = argmax.getValue();
 		}
@@ -117,7 +118,7 @@ public class OsXInformationLoader extends InformationLoader {
 			ProcTaskAllInfo allInfo = new ProcTaskAllInfo();
 			int status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDTASKALLINFO, 0, allInfo, allInfo.size());
 			if (status < 0) {
-				LOGGER.warn("Failed to read process information for {}: {}", pid, status);
+				LOGGER.warn("Failed to read process information for {}: {}", pid, Native.getLastError());
 				continue;
 			} else if (status != allInfo.size()) {
 				// Failed to read, possible because we don't have access
@@ -137,7 +138,7 @@ public class OsXInformationLoader extends InformationLoader {
 
 //					String partialName = Native.toString(allInfo.pbsd.pbi_comm, StandardCharsets.UTF_8);
 				} else {
-					LOGGER.warn("Failed to read process path for {}: {}", pid, status);
+					LOGGER.warn("Failed to read process path for {}: {}", pid, Native.getLastError());
 				}
 
 				Passwd passwd = SystemB.INSTANCE.getpwuid(allInfo.pbsd.pbi_uid);
@@ -205,7 +206,7 @@ public class OsXInformationLoader extends InformationLoader {
 		IntByReference argmax = new IntByReference(maximumProgramArguments);
 		int status = SystemB.INSTANCE.sysctl(mib, mib.length, procargs, argmax, null, 0);
 		if (status != 0) {
-			LOGGER.warn("Failed to read command line for {}, error code: {}", pid, status);
+			LOGGER.warn("Failed to read command line for {}, error code: {}", pid, Native.getLastError());
 			return "";
 		}
 
