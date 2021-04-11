@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.jna.platform.mac.SystemB;
 import oshi.util.Constants;
+import oshi.util.ExecutingCommand;
 import taskmanager.InformationLoader;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
@@ -206,6 +207,12 @@ public class OsXInformationLoader extends InformationLoader {
 		IntByReference argmax = new IntByReference(maximumProgramArguments);
 		int status = SystemB.INSTANCE.sysctl(mib, mib.length, procargs, argmax, null, 0);
 		if (status != 0) {
+			// Fallback due to random failures for the previous system call, probably an OSX bug?
+			String cmdLine = ExecutingCommand.getFirstAnswer("ps -o command= -p " + pid);
+			if (!cmdLine.isEmpty()) {
+				return cmdLine;
+			}
+
 			LOGGER.warn("Failed to read command line for {}, error code: {}", pid, Native.getLastError());
 			return "";
 		}
