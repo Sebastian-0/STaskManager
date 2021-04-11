@@ -11,15 +11,22 @@
 
 package taskmanager.platform.osx;
 
+import com.sun.jna.Memory;
+import com.sun.jna.platform.mac.SystemB.Passwd;
+import com.sun.jna.platform.mac.SystemB.ProcTaskAllInfo;
 import com.sun.jna.platform.mac.SystemB.VMStatistics;
 import com.sun.jna.ptr.IntByReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.jna.platform.mac.SystemB;
+import oshi.util.Constants;
 import taskmanager.InformationLoader;
+import taskmanager.data.Process;
+import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
 import taskmanager.platform.linux.LinuxExtraInformation;
 
+import java.io.File;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -31,10 +38,7 @@ public class OsXInformationLoader extends InformationLoader {
 
 	private static final int KERN_SUCCESS = 0;
 
-	private int[] pidFetchArray = new int[MAXIMUM_NUMBER_OF_PROCESSES];
-
-	private long lastCpuTime;
-	private long currentCpuTime;
+	private final int[] pidFetchArray = new int[MAXIMUM_NUMBER_OF_PROCESSES];
 
 	private long nextProcessId;
 
@@ -51,7 +55,6 @@ public class OsXInformationLoader extends InformationLoader {
 		super.update(systemInformation);
 
 		updateMemory(systemInformation);
-//		updateTotalCpuTime();
 		updateProcesses(systemInformation);
 	}
 
@@ -80,10 +83,91 @@ public class OsXInformationLoader extends InformationLoader {
 
 		Set<Long> newProcessIds = new LinkedHashSet<>();
 		for (int i = 0; i < count; i++) {
-			if (pidFetchArray[i] == 0) {
+			long pid = pidFetchArray[i];
+			if (pid == 0) {
 				continue;
 			}
-			newProcessIds.add((long) pidFetchArray[i]);
+
+			newProcessIds.add(pid);
+			Process process = systemInformation.getProcessById(pid);
+			if (process == null) {
+				process = new Process(nextProcessId++, pid);
+				systemInformation.processes.add(process);
+			}
+
+			ProcTaskAllInfo allInfo = new ProcTaskAllInfo();
+			int status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDTASKALLINFO, 0, allInfo, allInfo.size());
+			if (status != 0) {
+				LOGGER.warn("Failed to read process information for {}: {}", pid, status);
+				continue;
+			}
+
+			if (!process.hasReadOnce) {
+				Memory pathBuffer = new Memory(SystemB.PROC_PIDPATHINFO_MAXSIZE);
+				status = SystemB.INSTANCE.proc_pidpath((int) pid, pathBuffer, (int) pathBuffer.size());
+				if (status == 0) {
+					process.filePath = pathBuffer.getString(0).trim();
+
+					String[] toks = process.filePath.split(File.pathSeparator);
+					process.fileName = toks[toks.length - 1];
+
+//					String partialName = Native.toString(allInfo.pbsd.pbi_comm, StandardCharsets.UTF_8);
+				} else {
+					LOGGER.warn("Failed to read process path for {}: {}", pid, status);
+				}
+
+//					process.commandLine = FileUtil.getStringFromFile(processPath + "/cmdline").replaceAll("" + (char) 0, " ").trim();
+
+				Passwd passwd = SystemB.INSTANCE.getpwuid(allInfo.pbsd.pbi_uid);
+				if (passwd != null) {
+					process.userName = passwd.pw_name;
+				} else {
+					process.userName = Constants.UNKNOWN;
+				}
+
+				process.startTimestamp = allInfo.pbsd.pbi_start_tvsec * 1000L + allInfo.pbsd.pbi_start_tvusec / 1000L;
+
+				long parentId = allInfo.pbsd.pbi_ppid;
+				Process parent = systemInformation.getProcessById(parentId);
+				if (parent != null) {
+					process.parentUniqueId = parent.uniqueId;
+					process.parentId = parentId;
+				} else {
+					process.parentUniqueId = -1;
+					process.parentId = -1;
+				}
+				process.hasReadOnce = true;
+			}
+
+			switch (allInfo.pbsd.pbi_status) {
+				case 1: // High prio sleep
+					process.status = Status.Sleeping;
+					break;
+				case 2: // Low prio sleep
+					process.status = Status.Waiting;
+					break;
+				case 3: // Running
+					process.status = Status.Running;
+					break;
+				case 4: // Idle
+					process.status = Status.Sleeping;
+					break;
+				case 5: // Zombie
+					process.status = Status.Zombie;
+					break;
+				case 6: // Stopped? Is that suspended?
+					process.status = Status.Suspended;
+					break;
+				default:
+					LOGGER.info("Unknown status {} for process {}", allInfo.pbsd.pbi_status, pid);
+			}
+
+			process.privateWorkingSet.addValue(allInfo.ptinfo.pti_resident_size);
+
+			long stime = allInfo.ptinfo.pti_total_system;
+			long utime = allInfo.ptinfo.pti_total_user;
+
+//			process.updateCpu(stime, utime, , 1);
 		}
 
 		updateDeadProcesses(systemInformation, newProcessIds);
