@@ -12,6 +12,7 @@
 package taskmanager.platform.osx;
 
 import com.sun.jna.Memory;
+import com.sun.jna.Pointer;
 import com.sun.jna.platform.mac.SystemB.Passwd;
 import com.sun.jna.platform.mac.SystemB.ProcTaskAllInfo;
 import com.sun.jna.platform.mac.SystemB.VMStatistics;
@@ -27,7 +28,9 @@ import taskmanager.data.SystemInformation;
 import taskmanager.platform.linux.LinuxExtraInformation;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 public class OsXInformationLoader extends InformationLoader {
@@ -38,6 +41,12 @@ public class OsXInformationLoader extends InformationLoader {
 
 	private static final int KERN_SUCCESS = 0;
 
+	private static final int CTL_KERN = 1;
+
+	private static final int KERN_ARGMAX = 8;
+	private static final int KERN_PROCARGS2 = 49;
+
+	private int maximumProgramArguments;
 	private final int[] pidFetchArray = new int[MAXIMUM_NUMBER_OF_PROCESSES];
 
 	private long nextProcessId;
@@ -48,6 +57,19 @@ public class OsXInformationLoader extends InformationLoader {
 
 		systemInformation.extraInformation = new LinuxExtraInformation();
 		systemInformation.physicalMemoryTotalInstalled = systemInformation.physicalMemoryTotal;
+
+		readMaximumProgramArguments();
+	}
+
+	private void readMaximumProgramArguments() {
+		int[] mib = { CTL_KERN, KERN_ARGMAX };
+		IntByReference argmax = new IntByReference();
+		int status = SystemB.INSTANCE.sysctl(mib, mib.length, argmax.getPointer(), new IntByReference(SystemB.INT_SIZE), null, 0);
+		if (status != 0) {
+			LOGGER.error("Failed to fetch maximum size of program argument list, error: " + status);
+		} else {
+			maximumProgramArguments = argmax.getValue();
+		}
 	}
 
 	@Override
@@ -84,9 +106,6 @@ public class OsXInformationLoader extends InformationLoader {
 		Set<Long> newProcessIds = new LinkedHashSet<>();
 		for (int i = 0; i < count; i++) {
 			long pid = pidFetchArray[i];
-			if (pid == 0) {
-				continue;
-			}
 
 			newProcessIds.add(pid);
 			Process process = systemInformation.getProcessById(pid);
@@ -106,6 +125,8 @@ public class OsXInformationLoader extends InformationLoader {
 			}
 
 			if (!process.hasReadOnce) {
+				process.commandLine = getCommandLine(pid);
+
 				Memory pathBuffer = new Memory(SystemB.PROC_PIDPATHINFO_MAXSIZE);
 				status = SystemB.INSTANCE.proc_pidpath((int) pid, pathBuffer, (int) pathBuffer.size());
 				if (status > 0) {
@@ -118,8 +139,6 @@ public class OsXInformationLoader extends InformationLoader {
 				} else {
 					LOGGER.warn("Failed to read process path for {}: {}", pid, status);
 				}
-
-//					process.commandLine = FileUtil.getStringFromFile(processPath + "/cmdline").replaceAll("" + (char) 0, " ").trim();
 
 				Passwd passwd = SystemB.INSTANCE.getpwuid(allInfo.pbsd.pbi_uid);
 				if (passwd != null) {
@@ -158,9 +177,6 @@ public class OsXInformationLoader extends InformationLoader {
 				case 5: // Zombie == Waiting for collection by parent
 					process.status = Status.Zombie;
 					break;
-//				case 10: // Low prio sleep
-//					process.status = Status.Waiting;
-//					break;
 				default:
 					LOGGER.info("Unknown status {} for process {}", allInfo.pbsd.pbi_status, pid);
 			}
@@ -176,7 +192,33 @@ public class OsXInformationLoader extends InformationLoader {
 		updateDeadProcesses(systemInformation, newProcessIds);
 
 		systemInformation.totalProcesses = newProcessIds.size();
+	}
 
-		// TODO: See in MacOperatingSystem and MacOSProcess
+	private String getCommandLine(long pid) {
+		if (pid == 0 || maximumProgramArguments == 0) {
+			return "";
+		}
+
+		Pointer procargs = new Memory(maximumProgramArguments);
+
+		int[] mib = { CTL_KERN, KERN_PROCARGS2, (int) pid };
+		IntByReference argmax = new IntByReference(maximumProgramArguments);
+		int status = SystemB.INSTANCE.sysctl(mib, mib.length, procargs, argmax, null, 0);
+		if (status != 0) {
+			LOGGER.warn("Failed to read command line for {}, error code: {}", pid, status);
+			return "";
+		}
+
+		List<String> result = new ArrayList<>();
+
+		int nargs = procargs.getInt(0);
+		int offset = SystemB.INT_SIZE;
+		while (nargs-- > 0 && offset < argmax.getValue()) {
+			String arg = procargs.getString(offset);
+			result.add(arg);
+			offset += arg.length() + 1;
+		}
+
+		return String.join(" ", result);
 	}
 }
