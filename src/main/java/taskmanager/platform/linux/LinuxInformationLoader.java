@@ -25,7 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -200,7 +200,7 @@ public class LinuxInformationLoader extends InformationLoader {
 	}
 
 	private Set<Long> fetchProcessIds() {
-		Set<Long> processIds = new HashSet<>();
+		Set<Long> processIds = new LinkedHashSet<>();
 		File processDir = new File(PROC_PATH);
 		File[] files = processDir.listFiles(f -> f.isDirectory() && f.getName().matches("[0-9]+"));
 		if (files != null) {

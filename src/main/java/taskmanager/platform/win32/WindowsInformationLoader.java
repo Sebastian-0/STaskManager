@@ -54,7 +54,7 @@ import taskmanager.platform.win32.dll.VersionExt.LANGANDCODEPAGE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -164,7 +164,7 @@ public class WindowsInformationLoader extends InformationLoader {
 
 	private void updateProcesses(SystemInformation systemInformation) {
 		List<ProcessInfo> newProcesses = fetchProcessList();
-		Set<Long> newProcessIds = new HashSet<>();
+		Set<Long> newProcessIds = new LinkedHashSet<>();
 
 		if (newProcesses.isEmpty()) {
 			return;
