@@ -97,18 +97,21 @@ public class OsXInformationLoader extends InformationLoader {
 
 			ProcTaskAllInfo allInfo = new ProcTaskAllInfo();
 			int status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDTASKALLINFO, 0, allInfo, allInfo.size());
-			if (status != 0) {
+			if (status < 0) {
 				LOGGER.warn("Failed to read process information for {}: {}", pid, status);
+				continue;
+			} else if (status != allInfo.size()) {
+				// Failed to read, possible because we don't have access
 				continue;
 			}
 
 			if (!process.hasReadOnce) {
 				Memory pathBuffer = new Memory(SystemB.PROC_PIDPATHINFO_MAXSIZE);
 				status = SystemB.INSTANCE.proc_pidpath((int) pid, pathBuffer, (int) pathBuffer.size());
-				if (status == 0) {
+				if (status > 0) {
 					process.filePath = pathBuffer.getString(0).trim();
 
-					String[] toks = process.filePath.split(File.pathSeparator);
+					String[] toks = process.filePath.split(File.separator);
 					process.fileName = toks[toks.length - 1];
 
 //					String partialName = Native.toString(allInfo.pbsd.pbi_comm, StandardCharsets.UTF_8);
@@ -140,24 +143,24 @@ public class OsXInformationLoader extends InformationLoader {
 			}
 
 			switch (allInfo.pbsd.pbi_status) {
-				case 1: // High prio sleep
-					process.status = Status.Sleeping;
-					break;
-				case 2: // Low prio sleep
-					process.status = Status.Waiting;
-					break;
-				case 3: // Running
+				case 1: // Idle == newly created
 					process.status = Status.Running;
 					break;
-				case 4: // Idle
+				case 2: // Running
+					process.status = Status.Running;
+					break;
+				case 3: // Sleeping on an address
 					process.status = Status.Sleeping;
 					break;
-				case 5: // Zombie
-					process.status = Status.Zombie;
-					break;
-				case 6: // Stopped? Is that suspended?
+				case 4: // Stopped/Suspended?
 					process.status = Status.Suspended;
 					break;
+				case 5: // Zombie == Waiting for collection by parent
+					process.status = Status.Zombie;
+					break;
+//				case 10: // Low prio sleep
+//					process.status = Status.Waiting;
+//					break;
 				default:
 					LOGGER.info("Unknown status {} for process {}", allInfo.pbsd.pbi_status, pid);
 			}
