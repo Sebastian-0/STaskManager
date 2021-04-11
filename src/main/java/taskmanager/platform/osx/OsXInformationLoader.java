@@ -39,8 +39,10 @@ public class OsXInformationLoader extends InformationLoader {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OsXInformationLoader.class);
 
 	// TODO: Replace max size with double fetch instead? First get amount of pids and then get the list
+	//  Can also get maximum amount from sysctl with KERN_MAXPROC
 	private static final int MAXIMUM_NUMBER_OF_PROCESSES = 10_000;
 
+	// Error codes at: https://opensource.apple.com/source/xnu/xnu-201/bsd/sys/errno.h.auto.html
 	private static final int KERN_SUCCESS = 0;
 
 	private static final int CTL_KERN = 1;
@@ -115,6 +117,10 @@ public class OsXInformationLoader extends InformationLoader {
 				process = new Process(nextProcessId++, pid);
 				systemInformation.processes.add(process);
 			}
+
+			// TODO: Try getting process info with sysctl and KERN_PROC + pid (alt. + KERN_PROC_ALL)
+			//  See docs for returned struct kinfo_proc: https://opensource.apple.com/source/xnu/xnu-344/bsd/sys/sysctl.h
+			//  and extern_proc: https://opensource.apple.com/source/xnu/xnu-201/bsd/sys/proc.h
 
 			boolean allInfoFailed = false;
 			ProcTaskAllInfo allInfo = new ProcTaskAllInfo();
@@ -200,6 +206,8 @@ public class OsXInformationLoader extends InformationLoader {
 		updateDeadProcesses(systemInformation, newProcessIds);
 
 		systemInformation.totalProcesses = newProcessIds.size();
+
+		// TODO: Read max file descriptors using sysctl and KERN_MAXFILES
 	}
 
 	private String getCommandLine(long pid) {
