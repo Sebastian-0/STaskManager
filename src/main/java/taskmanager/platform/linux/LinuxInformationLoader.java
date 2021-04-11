@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,9 +33,6 @@ public class LinuxInformationLoader extends InformationLoader {
 	private static final Logger LOGGER = LoggerFactory.getLogger(LinuxInformationLoader.class);
 
 	private static final String PROC_PATH = "/proc";
-
-	private long lastCpuTime;
-	private long currentCpuTime;
 
 	private long nextProcessId;
 
@@ -53,7 +49,6 @@ public class LinuxInformationLoader extends InformationLoader {
 		super.update(systemInformation);
 
 		updateMemory(systemInformation);
-		updateTotalCpuTime();
 		updateProcesses(systemInformation);
 	}
 
@@ -73,19 +68,6 @@ public class LinuxInformationLoader extends InformationLoader {
 			extraInformation.swapSize = Long.parseLong(removeUnit(memInfo.get("SwapTotal"))) * 1024;
 			extraInformation.swapUsed = extraInformation.swapSize - Long.parseLong(removeUnit(memInfo.get("SwapFree"))) * 1024;
 		}
-	}
-
-	private void updateTotalCpuTime() {
-		lastCpuTime = currentCpuTime;
-
-		List<String> lines = FileUtil.readFile(PROC_PATH + "/stat");
-		String[] tokens = lines.get(0).split("\\s+");
-		long time = 0;
-		for (int i = 1; i < tokens.length; i++) {
-			time += Long.parseLong(tokens[i]);
-		}
-
-		currentCpuTime = time;
 	}
 
 	private void updateProcesses(SystemInformation systemInformation) {
@@ -159,10 +141,9 @@ public class LinuxInformationLoader extends InformationLoader {
 					process.cpuTime.addValue(process.cpuTime.newest());
 					process.cpuUsage.addValue(process.cpuUsage.newest());
 				} else {
-					long utime = Long.parseLong(stat[13]);
-					long stime = Long.parseLong(stat[14]);
-					// TODO Maybe use a delta of the process uptime (like LinuxOperatingSystem#getProcess():286)?
-					process.updateCpu(stime, utime, (currentCpuTime - lastCpuTime), 1); // Set cores to 1 since the total time is already divided by cores
+					long utime = Long.parseLong(stat[13]) * 1000 / LinuxOperatingSystem.getHz();
+					long stime = Long.parseLong(stat[14]) * 1000 / LinuxOperatingSystem.getHz();
+					process.updateCpu(stime, utime, systemInformation.logicalProcessorCount);
 
 					process.status = parseStatus(stat[2]);
 
