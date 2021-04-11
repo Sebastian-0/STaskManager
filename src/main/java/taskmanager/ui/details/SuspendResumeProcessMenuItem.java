@@ -41,7 +41,7 @@ public class SuspendResumeProcessMenuItem extends AbstractMenuItem {
 			boolean succeeded;
 			if (Platform.isWindows()) {
 				succeeded = (process.status == Status.Suspended) ? WindowsProcess.resume(process.id) : WindowsProcess.suspend(process.id);
-			} else if (Platform.isLinux()) {
+			} else if (Platform.isLinux() || Platform.isMac()) {
 				succeeded = (process.status == Status.Suspended) ? LinuxProcess.resume(process.id) : LinuxProcess.suspend(process.id);
 			} else {
 				throw new UnsupportedOperationException("You are running an unsupported operating system!");

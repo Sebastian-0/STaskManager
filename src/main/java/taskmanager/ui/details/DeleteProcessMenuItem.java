@@ -34,10 +34,10 @@ public class DeleteProcessMenuItem extends AbstractMenuItem {
 	protected void doAction() {
 		int result = JOptionPane.showConfirmDialog(parent, "<html>Do you want to end \"" + process.fileName + "\"?<br> All unsaved data in the process will be lost.</html>", "Killing process", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 		if (result == JOptionPane.YES_OPTION) {
-			boolean succeeded = false;
+			boolean succeeded;
 			if (Platform.isWindows()) {
 				succeeded = WindowsProcess.kill(process.id);
-			} else if (Platform.isLinux()) {
+			} else if (Platform.isLinux() || Platform.isMac()) {
 				succeeded = LinuxProcess.kill(process.id);
 			} else {
 				throw new UnsupportedOperationException("You are running an unsupported operating system!");
