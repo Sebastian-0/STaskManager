@@ -11,10 +11,7 @@
 
 package taskmanager.platform.osx;
 
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 import com.sun.jna.platform.mac.SystemB.Passwd;
 import com.sun.jna.platform.mac.SystemB.ProcTaskAllInfo;
@@ -33,10 +30,8 @@ import taskmanager.data.SystemInformation;
 import taskmanager.platform.linux.LinuxExtraInformation;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.sql.Struct;
+import java.util.*;
 
 public class OsXInformationLoader extends InformationLoader {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OsXInformationLoader.class);
@@ -129,9 +124,20 @@ public class OsXInformationLoader extends InformationLoader {
 
 			KInfoProc infoProc = new KInfoProc();
 			Pointer mem = new Memory(infoProc.size());
-			int st = SystemB.INSTANCE.sysctl(mib, mib.length, mem, new IntByReference(infoProc.size()), null, 0);
+
+			IntByReference ref = new IntByReference(infoProc.size());
+			int st = SystemB.INSTANCE.sysctl(mib, mib.length, mem, ref, null, 0);
 			if (st != 0) {
 				System.out.println("ERROR: " + Native.getLastError());
+			} else {
+				System.out.println(ref.getValue() + " vs . " + infoProc.size());
+//				String nums = mem.dump(0, 736);
+				byte[] nums = mem.getByteArray(0, 648);
+//				System.out.println("nums: " + nums);
+				System.out.println("nums: " + Arrays.toString(nums));
+				KInfoProc proc = Structure.newInstance(KInfoProc.class, mem);
+				proc.read();
+				System.out.println("PID: " + proc.kp_proc.p_forw + " " + proc.kp_proc.p_flag + " " + proc.kp_proc.p_stat + " " + proc.kp_proc.p_pid + " vs. " + pid);
 			}
 
 
@@ -261,6 +267,10 @@ public class OsXInformationLoader extends InformationLoader {
 	public static class KInfoProc extends Structure {
 		public ExternProc kp_proc;
 		public EProc kp_eproc;
+
+//		public KInfoProc() {
+//			super(Structure.ALIGN_NONE);
+//		}
 	}
 
 	@FieldOrder({"e_paddr", "e_sess", "e_pcred", "e_ucred", "e_vm", "e_ppid", "e_pgid", "e_jobc", "e_tdev", "e_tpgid",
@@ -277,14 +287,18 @@ public class OsXInformationLoader extends InformationLoader {
 		public int     e_tdev;			/* controlling tty dev */
 		public int     e_tpgid;		/* tty process group id */
 		public Pointer e_tsess;	/* tty session pointer */
-		public char[]  e_wmesg = new char[7+1];	/* wchan message */ // 7 = WMESGLEN
+		public byte[]  e_wmesg = new byte[7+1];	/* wchan message */ // 7 = WMESGLEN
 		public int    e_xsize;		/* text size */
 		public short  e_xrssize;		/* text rss */
 		public short  e_xccount;		/* text references */
 		public short  e_xswrss;
 		public long   e_flag;
-		public char[] e_login = new char[12];	/* short setlogin() name */ // 12 = COMAPT_MAXLOGNAME
-		public long[] e_spare = new long[4];
+		public byte[] e_login = new byte[12];	/* short setlogin() name */ // 12 = COMAPT_MAXLOGNAME
+		public long[] e_spare = new long[4]; // Maybe NativeLong?
+
+//		public EProc() {
+//			super(Structure.ALIGN_NONE);
+//		}
 	}
 
 	@FieldOrder({"p_forw", "p_back", "p_vmspace", "p_sigacts", "p_flag", "p_stat", "p_pid", "p_oppid", "p_dupfd",
@@ -303,10 +317,10 @@ public class OsXInformationLoader extends InformationLoader {
 		public int p_oppid;
 		public int p_dupfd;
 		// Mach related
-		public String user_stack; // Or pointer
+		public Pointer user_stack; // Or String
 		public Pointer exit_thread; // Or pointer
 		public int p_debugger;
-		public byte sigwait;
+		public boolean sigwait; // was byte
 		// Scheduling
 		public int p_estcpu;	 /* Time averaged value of p_cpticks. */
 		public int p_cpticks;	 /* Ticks of cpu time. */
@@ -317,9 +331,9 @@ public class OsXInformationLoader extends InformationLoader {
 		public int p_slptime;	 /* Time since last blocked. */
 		public ITimerVal p_realtimer;	/* Alarm timer. */
 		public Timeval p_rtime;	/* Real time. */
-		public long p_uticks;		/* Statclock hits in user mode. */
-		public long p_sticks;		/* Statclock hits in system mode. */
-		public long p_iticks;		/* Statclock hits processing intr. */
+		public long p_uticks;		/* Statclock hits in user mode. */    // NativeLong?
+		public long p_sticks;		/* Statclock hits in system mode. */  // NativeLong?
+		public long p_iticks;		/* Statclock hits processing intr. */ // NativeLong?
 		public int p_traceflag;		/* Kernel trace points. */
 		public Pointer p_tracep;	/* Trace to vnode. */
 		public int p_siglist;		/* Signals arrived but not delivered. */
@@ -337,35 +351,51 @@ public class OsXInformationLoader extends InformationLoader {
 		public short p_xstat;	/* Exit status for wait; also stop signal. */
 		public short p_acflag;	/* Accounting flags. */
 		public Pointer p_ru;	/* Exit information. XXX */
+
+//		public ExternProc() {
+//			super(Structure.ALIGN_NONE);
+//		}
 	}
 
 	@FieldOrder({"it_interval", "it_value"})
 	public static class ITimerVal extends Structure {
 		public Timeval it_interval;
 		public Timeval it_value;
+
+//		public ITimerVal() {
+//			super(Structure.ALIGN_NONE);
+//		}
 	}
 
 	@FieldOrder({"vm_refcnt", "vm_shm", "vm_rssize", "vm_swrss", "vm_tsize", "vm_dsize", "vm_ssize", "vm_taddr",
 			"vm_daddr", "vm_maxsaddr"})
 	public static class VMSpace extends Structure { // Strings -> Pointer?
 		public int vm_refcnt;	/* number of references */
-		public String vm_shm;		/* SYS5 shared memory private data XXX */
+		public Pointer vm_shm;		/* SYS5 shared memory private data XXX */ // or String
 		public int vm_rssize; 	/* current resident set size in pages */
 		public int vm_swrss;	/* resident set size before last swap */
 		public int vm_tsize;	/* text size (pages) XXX */
 		public int vm_dsize;	/* data size (pages) XXX */
 		public int vm_ssize;	/* stack size (pages) */
-		public String vm_taddr;	/* user virtual address of text XXX */
-		public String vm_daddr;	/* user virtual address of data XXX */
-		public String vm_maxsaddr;	/* user VA at max stack growth */
+		public Pointer vm_taddr;	/* user virtual address of text XXX */ // or String
+		public Pointer vm_daddr;	/* user virtual address of data XXX */ // or String
+		public Pointer vm_maxsaddr;	/* user VA at max stack growth */ // or String
+
+//		public VMSpace() {
+//			super(Structure.ALIGN_NONE);
+//		}
 	}
 
 	@FieldOrder({"cr_ref", "cr_uid", "cr_ngroups", "cr_groups"})
 	public static class UCred extends Structure {
-		public long cr_ref;			/* reference count */
+		public long cr_ref;			/* reference count */ // Or NativeLong?
 		public int  cr_uid;			/* effective user id */
 		public short cr_ngroups;		/* number of groups */
 		public int[] cr_groups = new int[16];	/* groups */ // NGROUPS = NGROUPS_MAX = 16
+
+//		public UCred() {
+//			super(Structure.ALIGN_NONE);
+//		}
 	}
 
 	@FieldOrder({"pc_lock", "pc_ucred", "p_ruid", "p_svuid", "p_rgid", "p_svgid", "p_refcnt"})
@@ -377,6 +407,10 @@ public class OsXInformationLoader extends InformationLoader {
 		public int p_rgid;			/* Real group id. */
 		public int p_svgid;		/* Saved effective group id. */
 		public int p_refcnt;		/* Number of references. */
+
+//		public PCred() {
+//			super(Structure.ALIGN_NONE);
+//		}
 	}
 
 	@FieldOrder({"lk_interlock", "lk_flags", "lk_sharecount", "lk_waitcount", "lk_exclusivecount", "lk_prio",
@@ -392,5 +426,9 @@ public class OsXInformationLoader extends InformationLoader {
 		public int lk_timo;		/* maximum sleep time (for tsleep) */
 		public int lk_lockholder;		/* pid of exclusive lock holder */
 		public Pointer lk_lockthread;		/* thread which acquired excl lock */
+
+//		public LockBsd() {
+//			super(Structure.ALIGN_NONE);
+//		}
 	}
 }
