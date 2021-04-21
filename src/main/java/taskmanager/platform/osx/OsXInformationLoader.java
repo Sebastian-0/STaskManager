@@ -105,9 +105,16 @@ public class OsXInformationLoader extends InformationLoader {
 		int count = SystemB.INSTANCE.proc_listpids(SystemB.PROC_ALL_PIDS, 0, pidFetchArray,
 				pidFetchArray.length * SystemB.INT_SIZE) / SystemB.INT_SIZE;
 
+//		int targetPid = 364;
+		int targetPid = 6764;
+
 		Set<Long> newProcessIds = new LinkedHashSet<>();
 		for (int i = 0; i < count; i++) {
 			long pid = pidFetchArray[i];
+
+			if (targetPid > 0 && targetPid != pid) {
+				continue;
+			}
 
 			newProcessIds.add(pid);
 			Process process = systemInformation.getProcessById(pid);
@@ -132,12 +139,20 @@ public class OsXInformationLoader extends InformationLoader {
 			} else {
 				System.out.println(ref.getValue() + " vs . " + infoProc.size());
 //				String nums = mem.dump(0, 736);
-				byte[] nums = mem.getByteArray(0, 648);
+//				byte[] nums = mem.getByteArray(0, 648);
 //				System.out.println("nums: " + nums);
-				System.out.println("nums: " + Arrays.toString(nums));
+//				System.out.println("nums: " + Arrays.toString(nums));
+
 				KInfoProc proc = Structure.newInstance(KInfoProc.class, mem);
 				proc.read();
-				System.out.println("PID: " + proc.kp_proc.p_forw + " " + proc.kp_proc.p_flag + " " + proc.kp_proc.p_stat + " " + proc.kp_proc.p_pid + " vs. " + pid);
+				if (targetPid < 0 || proc.kp_proc.p_pid == targetPid) {
+//					byte[] nums = mem.getByteArray(0, 648);
+//					System.out.println("nums: " + Arrays.toString(nums));
+					System.out.println(mem.dump(0, 648));
+					System.out.println();
+					System.out.println();
+					System.out.println("PID: " + new String(proc.kp_eproc.e_login) + " " + proc.kp_eproc.e_pcred.p_svuid + " (" + proc.kp_proc.p_sigmask + " " + proc.kp_proc.p_sigignore + " " + proc.kp_proc.p_sigcatch + ") " + proc.kp_eproc.e_ppid + " " + proc.kp_proc.p_stat + " " + proc.kp_proc.p_pid + " vs. " + pid);
+				}
 			}
 
 
@@ -179,6 +194,7 @@ public class OsXInformationLoader extends InformationLoader {
 					process.startTimestamp = allInfo.pbsd.pbi_start_tvsec * 1000L + allInfo.pbsd.pbi_start_tvusec / 1000L;
 
 					long parentId = allInfo.pbsd.pbi_ppid;
+					System.out.println("Parent: " + parentId);
 					Process parent = systemInformation.getProcessById(parentId);
 					if (parent != null) {
 						process.parentUniqueId = parent.uniqueId;
@@ -294,7 +310,7 @@ public class OsXInformationLoader extends InformationLoader {
 		public short  e_xswrss;
 		public long   e_flag;
 		public byte[] e_login = new byte[12];	/* short setlogin() name */ // 12 = COMAPT_MAXLOGNAME
-		public long[] e_spare = new long[4]; // Maybe NativeLong?
+		public long[] e_spare = new long[4]; // only 5 out of these bytes are written for some reason
 
 //		public EProc() {
 //			super(Structure.ALIGN_NONE);
@@ -393,9 +409,9 @@ public class OsXInformationLoader extends InformationLoader {
 		public short cr_ngroups;		/* number of groups */
 		public int[] cr_groups = new int[16];	/* groups */ // NGROUPS = NGROUPS_MAX = 16
 
-//		public UCred() {
-//			super(Structure.ALIGN_NONE);
-//		}
+		public UCred() {
+			super(Structure.ALIGN_NONE);
+		}
 	}
 
 	@FieldOrder({"pc_lock", "pc_ucred", "p_ruid", "p_svuid", "p_rgid", "p_svgid", "p_refcnt"})
@@ -408,15 +424,15 @@ public class OsXInformationLoader extends InformationLoader {
 		public int p_svgid;		/* Saved effective group id. */
 		public int p_refcnt;		/* Number of references. */
 
-//		public PCred() {
-//			super(Structure.ALIGN_NONE);
-//		}
+		public PCred() {
+			super(Structure.ALIGN_NONE);
+		}
 	}
 
 	@FieldOrder({"lk_interlock", "lk_flags", "lk_sharecount", "lk_waitcount", "lk_exclusivecount", "lk_prio",
 			"lk_wmesg", "lk_timo", "lk_lockholder", "lk_lockthread"})
 	public static class LockBsd extends Structure {
-		public int[] lk_interlock = new int[9];		/* lock on remaining fields */ // 10 for PPC else 9
+		public int[] lk_interlock = new int[9 - 2];		/* lock on remaining fields */ // 10 for PPC else 9
 		public int lk_flags;		/* see below */
 		public int lk_sharecount;		/* # of accepted shared locks */
 		public int lk_waitcount;		/* # of processes sleeping for lock */
