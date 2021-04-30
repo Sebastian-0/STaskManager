@@ -43,6 +43,8 @@ public class OsXInformationLoader extends InformationLoader {
 	//  Can also get maximum amount from sysctl with KERN_MAXPROC
 	private static final int MAXIMUM_NUMBER_OF_PROCESSES = 10_000;
 
+	private final Set<Long> processesWithFailedKInfoProc = new LinkedHashSet<>();
+
 	private int maximumProgramArguments;
 	private final int[] pidFetchArray = new int[MAXIMUM_NUMBER_OF_PROCESSES];
 
@@ -75,6 +77,8 @@ public class OsXInformationLoader extends InformationLoader {
 
 		updateMemory(systemInformation);
 		updateProcesses(systemInformation);
+
+		// TODO: Read max file descriptors using sysctl and KERN_MAXFILES
 	}
 
 	private void updateMemory(SystemInformation systemInformation) {
@@ -100,67 +104,82 @@ public class OsXInformationLoader extends InformationLoader {
 		int count = SystemB.INSTANCE.proc_listpids(SystemB.PROC_ALL_PIDS, 0, pidFetchArray,
 				pidFetchArray.length * SystemB.INT_SIZE) / SystemB.INT_SIZE;
 
+		createMissingProcessObjects(systemInformation, count);
+
+		int totalThreadCount = 0;
 		Set<Long> newProcessIds = new LinkedHashSet<>();
 		for (int i = 0; i < count; i++) {
 			long pid = pidFetchArray[i];
-
 			newProcessIds.add(pid);
 			Process process = systemInformation.getProcessById(pid);
-			if (process == null) {
-				process = new Process(nextProcessId++, pid);
-				systemInformation.processes.add(process);
-			}
 
-			boolean allInfoFailed = false;
 			ProcTaskAllInfo allInfo = new ProcTaskAllInfo();
 			int status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDTASKALLINFO, 0, allInfo, allInfo.size());
 			if (status < 0) {
 				LOGGER.warn("Failed to read process information for {}: {}", pid, Native.getLastError());
-				allInfoFailed = true;
+				allInfo = null;
 			} else if (status != allInfo.size()) {
 				// Failed to read, possibly because we don't have access
-				allInfoFailed = true;
+				allInfo = null;
 			}
 
 			if (!process.hasReadOnce) {
-				initialProcessSetup(systemInformation, process, allInfoFailed ? null : allInfo);
+				initialProcessSetup(systemInformation, process, allInfo);
 				process.hasReadOnce = true;
 			}
 
-			if (!allInfoFailed) {
-				switch (allInfo.pbsd.pbi_status) {
-					case 1: // Idle == newly created
-						process.status = Status.Running;
-						break;
-					case 2: // Running
-						process.status = Status.Running;
-						break;
-					case 3: // Sleeping on an address
-						process.status = Status.Sleeping;
-						break;
-					case 4: // Stopped/Suspended?
-						process.status = Status.Suspended;
-						break;
-					case 5: // Zombie == Waiting for collection by parent
-						process.status = Status.Zombie;
-						break;
-					default:
-						LOGGER.info("Unknown status {} for process {}", allInfo.pbsd.pbi_status, pid);
-				}
+			int processStatus = -1;
+			if (allInfo != null) {
+				totalThreadCount += allInfo.ptinfo.pti_threadnum;
+				processStatus = allInfo.pbsd.pbi_status;
 
 				process.privateWorkingSet.addValue(allInfo.ptinfo.pti_resident_size);
 
 				long stime = allInfo.ptinfo.pti_total_system / 1_000_000;
 				long utime = allInfo.ptinfo.pti_total_user / 1_000_000;
 				process.updateCpu(stime, utime, systemInformation.logicalProcessorCount);
+			} else {
+				KInfoProc kInfoProc = readKInfoProc(process);
+				if (kInfoProc != null) {
+					processStatus = kInfoProc.kp_proc.p_stat;
+				}
+			}
+
+			switch (processStatus) {
+				case 1: // Idle == newly created
+					process.status = Status.Running;
+					break;
+				case 2: // Running
+					process.status = Status.Running;
+					break;
+				case 3: // Sleeping on an address
+					process.status = Status.Sleeping;
+					break;
+				case 4: // Stopped/Suspended?
+					process.status = Status.Suspended;
+					break;
+				case 5: // Zombie == Waiting for collection by parent
+					process.status = Status.Zombie;
+					break;
+				default:
+					LOGGER.info("Unknown status {} for process {}", allInfo.pbsd.pbi_status, pid);
 			}
 		}
 
 		updateDeadProcesses(systemInformation, newProcessIds);
 
 		systemInformation.totalProcesses = newProcessIds.size();
+		systemInformation.totalThreads = newProcessIds.size();
+	}
 
-		// TODO: Read max file descriptors using sysctl and KERN_MAXFILES
+	private void createMissingProcessObjects(SystemInformation systemInformation, int count) {
+		for (int i = 0; i < count; i++) {
+			long pid = pidFetchArray[i];
+			Process process = systemInformation.getProcessById(pid);
+			if (process == null) {
+				systemInformation.processes.add(new Process(nextProcessId++, pid));
+			}
+		}
 	}
 
 	private void initialProcessSetup(SystemInformation systemInformation, Process process, ProcTaskAllInfo allInfo) {
@@ -186,24 +205,12 @@ public class OsXInformationLoader extends InformationLoader {
 			userId = allInfo.pbsd.pbi_uid;
 			process.startTimestamp = allInfo.pbsd.pbi_start_tvsec * 1000L + allInfo.pbsd.pbi_start_tvusec / 1000L;
 		} else {
-			// Try reading KInfoProc as a fallback, see struct docs:
-			// - kinfo_proc: https://opensource.apple.com/source/xnu/xnu-344/bsd/sys/sysctl.h
-			// - extern_proc: https://opensource.apple.com/source/xnu/xnu-201/bsd/sys/proc.h
-			int[] mib = { SystemB.CTL_KERN, SystemB.KERN_PROC, SystemB.KERN_PROC_PID, (int) process.id };
-
-			KInfoProc infoProc = new KInfoProc();
-			Pointer mem = new Memory(infoProc.size());
-
-			IntByReference ref = new IntByReference(infoProc.size());
-			int st = SystemB.INSTANCE.sysctl(mib, mib.length, mem, ref, null, 0);
-			if (st != 0 || ref.getValue() != infoProc.size()) {
-				LOGGER.error("Failed to read KERN_PROC_PID: {}", Native.getLastError());
-			} else {
-				KInfoProc proc = Structure.newInstance(KInfoProc.class, mem);
-				proc.read();
-				parentId = proc.kp_eproc.e_ppid;
-				userId = proc.kp_eproc.e_pcred.p_ruid;
-				process.startTimestamp = proc.kp_proc.p_starttime.tv_sec.longValue() * 1000L + proc.kp_proc.p_starttime.tv_usec / 1000L;
+			// Try reading KInfoProc as a fallback
+			KInfoProc kInfoProc = readKInfoProc(process);
+			if (kInfoProc != null) {
+				parentId = kInfoProc.kp_eproc.e_ppid;
+				userId = kInfoProc.kp_eproc.e_pcred.p_ruid;
+				process.startTimestamp = kInfoProc.kp_proc.p_starttime.tv_sec.longValue() * 1000L + kInfoProc.kp_proc.p_starttime.tv_usec / 1000L;
 			}
 		}
 
@@ -224,6 +231,31 @@ public class OsXInformationLoader extends InformationLoader {
 			process.parentUniqueId = -1;
 			process.parentId = -1;
 		}
+	}
+
+	private KInfoProc readKInfoProc(Process process) {
+		if (processesWithFailedKInfoProc.contains(process.uniqueId)) {
+			return null;
+		}
+		// For struct docs see:
+		// - kinfo_proc: https://opensource.apple.com/source/xnu/xnu-344/bsd/sys/sysctl.h
+		// - extern_proc: https://opensource.apple.com/source/xnu/xnu-201/bsd/sys/proc.h
+
+		int[] mib = { SystemB.CTL_KERN, SystemB.KERN_PROC, SystemB.KERN_PROC_PID, (int) process.id };
+
+		KInfoProc infoProc = new KInfoProc();
+		Pointer mem = new Memory(infoProc.size());
+
+		IntByReference ref = new IntByReference(infoProc.size());
+		int st = SystemB.INSTANCE.sysctl(mib, mib.length, mem, ref, null, 0);
+		if (st != 0 || ref.getValue() != infoProc.size()) {
+			LOGGER.error("Failed to read KInfoProc: {}", Native.getLastError());
+			processesWithFailedKInfoProc.add(process.uniqueId);
+			return null;
+		}
+		KInfoProc proc = Structure.newInstance(KInfoProc.class, mem);
+		proc.read();
+		return proc;
 	}
 
 	private String getCommandLine(long pid) {

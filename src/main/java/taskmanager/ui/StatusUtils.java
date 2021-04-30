@@ -18,8 +18,10 @@ public class StatusUtils { // TODO Create an enum that mirrors the one in the da
 				return "Suspended";
 			case Dead:
 				return "Dead";
+			case Unknown:
+				return "Unknown";
 		}
-		return "Unknown";
+		return "Invalid";
 	}
 
 	public static String letter(Status status) {
@@ -35,8 +37,10 @@ public class StatusUtils { // TODO Create an enum that mirrors the one in the da
 				return "S";
 			case Dead:
 				return "D";
+			case Unknown:
+				return "U";
 		}
-		return "U";
+		return "I";
 	}
 
 	public static Color color(Status status) {
@@ -52,6 +56,8 @@ public class StatusUtils { // TODO Create an enum that mirrors the one in the da
 				return new Color(134, 140, 112);
 			case Dead:
 				return new Color(180, 0, 0);
+			case Unknown:
+				return new Color(255, 106, 0);
 		}
 		return Color.WHITE;
 	}
