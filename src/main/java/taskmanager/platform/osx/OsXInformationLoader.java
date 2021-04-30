@@ -239,6 +239,7 @@ public class OsXInformationLoader extends InformationLoader {
 				process.startTimestamp = kInfoProc.kp_proc.p_starttime.tv_sec.longValue() * 1000L + kInfoProc.kp_proc.p_starttime.tv_usec / 1000L;
 			}
 			// TODO Further improve by using libtop source? https://opensource.apple.com/source/top/top-73/libtop.c
+			//  Otherwise specify somehow that the process wont get memory/cpu set (replace with --- in the UI?)
 		}
 
 		if (userId != -1) {
