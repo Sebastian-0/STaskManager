@@ -119,10 +119,9 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public short  e_xrssize;		/* text rss */
 		public short  e_xccount;		/* text references */
 		public short  e_xswrss;
-		public long    e_flag;
+		public int    e_flag;
 		public byte[] e_login = new byte[12];	/* short setlogin() name */ // 12 = COMAPT_MAXLOGNAME
-		//		public long[] e_spare = new long[4]; // Only 5 out of these bytes are written for some reason, therefore
-		public byte[] e_spare = new byte[5]; // use byte-array instead
+		public int[] e_spare = new int[4];
 	}
 
 	@FieldOrder({"pc_lock", "pc_ucred", "p_ruid", "p_svuid", "p_rgid", "p_svgid", "p_refcnt"})
@@ -134,22 +133,14 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public int p_rgid;			/* Real group id. */
 		public int p_svgid;		/* Saved effective group id. */
 		public int p_refcnt;		/* Number of references. */
-
-		public PCred() {
-			super(Structure.ALIGN_NONE); // Alignment change needed here to make data stay in sync (a bug?)
-		}
 	}
 
 	@FieldOrder({"cr_ref", "cr_uid", "cr_ngroups", "cr_groups"})
 	class UCred extends Structure {
-		public long cr_ref;			/* reference count */ // Or NativeLong?
+		public int cr_ref;			/* reference count */
 		public int  cr_uid;			/* effective user id */
 		public short cr_ngroups;		/* number of groups */
 		public int[] cr_groups = new int[16];	/* groups */ // NGROUPS = NGROUPS_MAX = 16
-
-		public UCred() {
-			super(Structure.ALIGN_NONE); // Alignment change needed here to make data stay in sync (a bug?)
-		}
 	}
 
 	@FieldOrder({"vm_refcnt", "vm_shm", "vm_rssize", "vm_swrss", "vm_tsize", "vm_dsize", "vm_ssize", "vm_taddr",
