@@ -178,6 +178,9 @@ public class OsXInformationLoader extends InformationLoader {
 				case 5: // Zombie == Waiting for collection by parent
 					process.status = Status.Zombie;
 					break;
+				case -1: // Failed to read status
+					process.status = Status.Unknown;
+					break;
 				default:
 					LOGGER.info("Unknown status {} for process {}", processStatus, pid);
 			}
