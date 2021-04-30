@@ -16,6 +16,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
+@SuppressWarnings("unused")
 public interface SystemB extends oshi.jna.platform.mac.SystemB {
 	SystemB INSTANCE = Native.load("System", SystemB.class);
 
@@ -34,35 +35,6 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 	class KInfoProc extends Structure {
 		public ExternProc kp_proc;
 		public EProc kp_eproc;
-
-//		public KInfoProc() {
-//			super(Structure.ALIGN_NONE);
-//		}
-	}
-
-	@FieldOrder({"e_paddr", "e_sess", "e_pcred", "e_ucred", "e_vm", "e_ppid", "e_pgid", "e_jobc", "e_tdev", "e_tpgid",
-			"e_tsess", "e_wmesg", "e_xsize", "e_xrssize", "e_xccount", "e_xswrss", "e_flag", "e_login", "e_spare"})
-	class EProc extends Structure {
-		public Pointer e_paddr;		/* address of proc */
-		public Pointer e_sess;	/* session pointer */
-		public PCred e_pcred;		/* process credentials */
-		public UCred e_ucred;		/* current credentials */
-		public VMSpace e_vm;		/* address space */
-		public int e_ppid;			/* parent process id */
-		public int e_pgid;			/* process group id */
-		public short   e_jobc;			/* job control counter */
-		public int     e_tdev;			/* controlling tty dev */
-		public int     e_tpgid;		/* tty process group id */
-		public Pointer e_tsess;	/* tty session pointer */
-		public byte[]  e_wmesg = new byte[7+1];	/* wchan message */ // 7 = WMESGLEN
-		public int    e_xsize;		/* text size */
-		public short  e_xrssize;		/* text rss */
-		public short  e_xccount;		/* text references */
-		public short  e_xswrss;
-		public long   e_flag;
-		public byte[] e_login = new byte[12];	/* short setlogin() name */ // 12 = COMAPT_MAXLOGNAME
-//		public long[] e_spare = new long[4]; // Only 5 out of these bytes are written for some reason, therefore
-		public byte[] e_spare = new byte[5]; // use byte-array instead
 	}
 
 	@FieldOrder({"p_starttime", "p_vmspace", "p_sigacts", "p_flag", "p_stat", "p_pid", "p_oppid", "p_dupfd",
@@ -122,31 +94,29 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public Timeval it_value;
 	}
 
-	@FieldOrder({"vm_refcnt", "vm_shm", "vm_rssize", "vm_swrss", "vm_tsize", "vm_dsize", "vm_ssize", "vm_taddr",
-			"vm_daddr", "vm_maxsaddr"})
-	class VMSpace extends Structure { // Strings -> Pointer?
-		public int vm_refcnt;	/* number of references */
-		public Pointer vm_shm;		/* SYS5 shared memory private data XXX */ // or String
-		public int vm_rssize; 	/* current resident set size in pages */
-		public int vm_swrss;	/* resident set size before last swap */
-		public int vm_tsize;	/* text size (pages) XXX */
-		public int vm_dsize;	/* data size (pages) XXX */
-		public int vm_ssize;	/* stack size (pages) */
-		public Pointer vm_taddr;	/* user virtual address of text XXX */ // or String
-		public Pointer vm_daddr;	/* user virtual address of data XXX */ // or String
-		public Pointer vm_maxsaddr;	/* user VA at max stack growth */ // or String
-	}
-
-	@FieldOrder({"cr_ref", "cr_uid", "cr_ngroups", "cr_groups"})
-	class UCred extends Structure {
-		public long cr_ref;			/* reference count */ // Or NativeLong?
-		public int  cr_uid;			/* effective user id */
-		public short cr_ngroups;		/* number of groups */
-		public int[] cr_groups = new int[16];	/* groups */ // NGROUPS = NGROUPS_MAX = 16
-
-		public UCred() {
-			super(Structure.ALIGN_NONE); // Alignment change needed here to make data stay in sync (a bug?)
-		}
+	@FieldOrder({"e_paddr", "e_sess", "e_pcred", "e_ucred", "e_vm", "e_ppid", "e_pgid", "e_jobc", "e_tdev", "e_tpgid",
+			"e_tsess", "e_wmesg", "e_xsize", "e_xrssize", "e_xccount", "e_xswrss", "e_flag", "e_login", "e_spare"})
+	class EProc extends Structure {
+		public Pointer e_paddr;		/* address of proc */
+		public Pointer e_sess;	/* session pointer */
+		public PCred e_pcred;		/* process credentials */
+		public UCred e_ucred;		/* current credentials */
+		public VMSpace e_vm;		/* address space */
+		public int e_ppid;			/* parent process id */
+		public int e_pgid;			/* process group id */
+		public short   e_jobc;			/* job control counter */
+		public int     e_tdev;			/* controlling tty dev */
+		public int     e_tpgid;		/* tty process group id */
+		public Pointer e_tsess;	/* tty session pointer */
+		public byte[]  e_wmesg = new byte[7+1];	/* wchan message */ // 7 = WMESGLEN
+		public int    e_xsize;		/* text size */
+		public short  e_xrssize;		/* text rss */
+		public short  e_xccount;		/* text references */
+		public short  e_xswrss;
+		public long   e_flag;
+		public byte[] e_login = new byte[12];	/* short setlogin() name */ // 12 = COMAPT_MAXLOGNAME
+		//		public long[] e_spare = new long[4]; // Only 5 out of these bytes are written for some reason, therefore
+		public byte[] e_spare = new byte[5]; // use byte-array instead
 	}
 
 	@FieldOrder({"pc_lock", "pc_ucred", "p_ruid", "p_svuid", "p_rgid", "p_svgid", "p_refcnt"})
@@ -162,6 +132,33 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public PCred() {
 			super(Structure.ALIGN_NONE); // Alignment change needed here to make data stay in sync (a bug?)
 		}
+	}
+
+	@FieldOrder({"cr_ref", "cr_uid", "cr_ngroups", "cr_groups"})
+	class UCred extends Structure {
+		public long cr_ref;			/* reference count */ // Or NativeLong?
+		public int  cr_uid;			/* effective user id */
+		public short cr_ngroups;		/* number of groups */
+		public int[] cr_groups = new int[16];	/* groups */ // NGROUPS = NGROUPS_MAX = 16
+
+		public UCred() {
+			super(Structure.ALIGN_NONE); // Alignment change needed here to make data stay in sync (a bug?)
+		}
+	}
+
+	@FieldOrder({"vm_refcnt", "vm_shm", "vm_rssize", "vm_swrss", "vm_tsize", "vm_dsize", "vm_ssize", "vm_taddr",
+			"vm_daddr", "vm_maxsaddr"})
+	class VMSpace extends Structure { // Strings -> Pointer?
+		public int vm_refcnt;	/* number of references */
+		public Pointer vm_shm;		/* SYS5 shared memory private data XXX */ // or String
+		public int vm_rssize; 	/* current resident set size in pages */
+		public int vm_swrss;	/* resident set size before last swap */
+		public int vm_tsize;	/* text size (pages) XXX */
+		public int vm_dsize;	/* data size (pages) XXX */
+		public int vm_ssize;	/* stack size (pages) */
+		public Pointer vm_taddr;	/* user virtual address of text XXX */ // or String
+		public Pointer vm_daddr;	/* user virtual address of data XXX */ // or String
+		public Pointer vm_maxsaddr;	/* user VA at max stack growth */ // or String
 	}
 
 	@FieldOrder({"lk_interlock", "lk_flags", "lk_sharecount", "lk_waitcount", "lk_exclusivecount", "lk_prio",
