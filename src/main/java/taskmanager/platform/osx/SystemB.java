@@ -65,14 +65,13 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public byte[] e_spare = new byte[5]; // use byte-array instead
 	}
 
-	@FieldOrder({"p_forw", "p_back", "p_vmspace", "p_sigacts", "p_flag", "p_stat", "p_pid", "p_oppid", "p_dupfd",
+	@FieldOrder({"p_starttime", "p_vmspace", "p_sigacts", "p_flag", "p_stat", "p_pid", "p_oppid", "p_dupfd",
 			"user_stack", "exit_thread", "p_debugger", "sigwait", "p_estcpu", "p_cpticks", "p_pctcpu", "p_wchan",
 			"p_wmesg", "p_swtime", "p_slptime", "p_realtimer", "p_rtime", "p_uticks", "p_sticks", "p_iticks",
 			"p_traceflag", "p_tracep", "p_siglist", "p_textvp", "p_holdcnt", "p_sigmask", "p_sigignore", "p_sigcatch",
 			"p_priority", "p_usrpri", "p_nice", "p_comm", "p_pgrp", "p_addr", "p_xstat", "p_acflag", "p_ru"})
 	class ExternProc extends Structure {
-		public Pointer p_forw;
-		public Pointer p_back;
+		public Timeval p_starttime;
 		public Pointer p_vmspace;
 		public Pointer p_sigacts;
 		public int p_flag;

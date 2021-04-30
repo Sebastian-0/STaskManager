@@ -182,11 +182,9 @@ public class OsXInformationLoader extends InformationLoader {
 		long parentId = -1;
 		int userId = -1;
 		if (allInfo != null) {
-			userId = allInfo.pbsd.pbi_uid;
-
-			process.startTimestamp = allInfo.pbsd.pbi_start_tvsec * 1000L + allInfo.pbsd.pbi_start_tvusec / 1000L;
-
 			parentId = allInfo.pbsd.pbi_ppid;
+			userId = allInfo.pbsd.pbi_uid;
+			process.startTimestamp = allInfo.pbsd.pbi_start_tvsec * 1000L + allInfo.pbsd.pbi_start_tvusec / 1000L;
 		} else {
 			// Try reading KInfoProc as a fallback, see struct docs:
 			// - kinfo_proc: https://opensource.apple.com/source/xnu/xnu-344/bsd/sys/sysctl.h
@@ -205,8 +203,7 @@ public class OsXInformationLoader extends InformationLoader {
 				proc.read();
 				parentId = proc.kp_eproc.e_ppid;
 				userId = proc.kp_eproc.e_pcred.p_ruid;
-
-				System.out.println(proc.kp_proc.p_rtime.tv_usec);
+				process.startTimestamp = proc.kp_proc.p_starttime.tv_sec.longValue() * 1000L + proc.kp_proc.p_starttime.tv_usec / 1000L;
 			}
 		}
 
