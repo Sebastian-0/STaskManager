@@ -200,19 +200,24 @@ public class OsXInformationLoader extends InformationLoader {
 	}
 
 	private void initialProcessSetup(SystemInformation systemInformation, Process process, ProcTaskAllInfo allInfo) {
-		process.commandLine = getCommandLine(process.id);
+		if (process.id == 0) {
+			process.fileName = "kernel_task";
+			process.commandLine = "";
+		} else {
+			process.commandLine = getCommandLine(process.id);
 
-		Memory pathBuffer = new Memory(SystemB.PROC_PIDPATHINFO_MAXSIZE);
-		int status = SystemB.INSTANCE.proc_pidpath((int) process.id, pathBuffer, (int) pathBuffer.size());
-		if (status > 0) {
-			process.filePath = pathBuffer.getString(0).trim();
+			Memory pathBuffer = new Memory(SystemB.PROC_PIDPATHINFO_MAXSIZE);
+			int status = SystemB.INSTANCE.proc_pidpath((int) process.id, pathBuffer, (int) pathBuffer.size());
+			if (status > 0) {
+				process.filePath = pathBuffer.getString(0).trim();
 
-			String[] toks = process.filePath.split(File.separator);
-			process.fileName = toks[toks.length - 1];
+				String[] toks = process.filePath.split(File.separator);
+				process.fileName = toks[toks.length - 1];
 
 //					String partialName = Native.toString(allInfo.pbsd.pbi_comm, StandardCharsets.UTF_8);
-		} else {
-			LOGGER.warn("Failed to read process path for {}: {}", process.id, Native.getLastError());
+			} else {
+				LOGGER.warn("Failed to read process path for {}: {}", process.id, Native.getLastError());
+			}
 		}
 
 		long parentId = -1;
