@@ -24,12 +24,18 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 	int KERN_SUCCESS = 0;
 
 	int CTL_KERN = 1;
+	int CTL_VM = 2;
 
+	// CTL_KERN options
 	int KERN_ARGMAX = 8;
 	int KERN_PROC = 14;
 	int KERN_PROCARGS2 = 49;
 
+	// KERN_PROC options
 	int KERN_PROC_PID = 1;
+
+	// CTL_VM options
+	int VM_SWAPUSAGE = 5;
 
 	@FieldOrder({"kp_proc", "kp_eproc"})
 	class KInfoProc extends Structure {

@@ -15,6 +15,7 @@ import net.miginfocom.swing.MigLayout;
 import taskmanager.Measurements;
 import taskmanager.data.SystemInformation;
 import taskmanager.platform.linux.LinuxExtraInformation;
+import taskmanager.platform.osx.OsXExtraInformation;
 import taskmanager.platform.win32.WindowsExtraInformation;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
@@ -107,6 +108,8 @@ public class MemoryPanel extends JPanel {
 		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
 			informationPanel.add(sharedPanel);
 			informationPanel.add(swapPanel);
+		} else if (systemInformation.extraInformation instanceof OsXExtraInformation) {
+			informationPanel.add(swapPanel);
 		}
 
 		setLayout(new MigLayout());
@@ -156,6 +159,10 @@ public class MemoryPanel extends JPanel {
 		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
 			LinuxExtraInformation extraInformation = (LinuxExtraInformation) systemInformation.extraInformation;
 			sharedPanel.updateValue(extraInformation.sharedMemory);
+			swapPanel.setMaximum(extraInformation.swapSize);
+			swapPanel.updateValue(extraInformation.swapUsed);
+		} else if (systemInformation.extraInformation instanceof OsXExtraInformation) {
+			OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
 			swapPanel.setMaximum(extraInformation.swapSize);
 			swapPanel.updateValue(extraInformation.swapUsed);
 		}

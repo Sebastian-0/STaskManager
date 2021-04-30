@@ -18,6 +18,7 @@ import com.sun.jna.Structure;
 import com.sun.jna.platform.mac.SystemB.Passwd;
 import com.sun.jna.platform.mac.SystemB.ProcTaskAllInfo;
 import com.sun.jna.platform.mac.SystemB.VMStatistics;
+import com.sun.jna.platform.mac.SystemB.XswUsage;
 import com.sun.jna.ptr.IntByReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +28,6 @@ import taskmanager.InformationLoader;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
-import taskmanager.platform.linux.LinuxExtraInformation;
 import taskmanager.platform.osx.SystemB.KInfoProc;
 
 import java.io.File;
@@ -54,7 +54,7 @@ public class OsXInformationLoader extends InformationLoader {
 	public void init(SystemInformation systemInformation) {
 		super.init(systemInformation);
 
-		systemInformation.extraInformation = new LinuxExtraInformation();
+		systemInformation.extraInformation = new OsXExtraInformation();
 		systemInformation.physicalMemoryTotalInstalled = systemInformation.physicalMemoryTotal;
 
 		readMaximumProgramArguments();
@@ -91,13 +91,30 @@ public class OsXInformationLoader extends InformationLoader {
 		}
 
 		// For more OSX memory info, see: http://web.mit.edu/darwin/src/modules/xnu/osfmk/man/vm_statistics.html
-//			LinuxExtraInformation extraInformation = (LinuxExtraInformation) systemInformation.extraInformation;
+			OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
 //			extraInformation.bufferMemory = Long.parseLong(removeUnit(memInfo.get("Buffers"))) * 1024;
 //			extraInformation.cacheMemory = Long.parseLong(removeUnit(memInfo.get("Cached"))) * 1024 + Long.parseLong(removeUnit(memInfo.get("SReclaimable"))) * 1024;
 //			extraInformation.sharedMemory = Long.parseLong(removeUnit(memInfo.get("Shmem"))) * 1024;
-//
-//			extraInformation.swapSize = Long.parseLong(removeUnit(memInfo.get("SwapTotal"))) * 1024;
-//			extraInformation.swapUsed = extraInformation.swapSize - Long.parseLong(removeUnit(memInfo.get("SwapFree"))) * 1024;
+		updateSwap(extraInformation);
+	}
+
+	private void updateSwap(OsXExtraInformation extraInformation) {
+		int[] mib = { SystemB.CTL_VM, SystemB.VM_SWAPUSAGE };
+
+		XswUsage xswUsage = new XswUsage();
+		Pointer mem = new Memory(xswUsage.size());
+
+		IntByReference ref = new IntByReference(xswUsage.size());
+		int st = SystemB.INSTANCE.sysctl(mib, mib.length, mem, ref, null, 0);
+		if (st != 0 || ref.getValue() != xswUsage.size()) {
+			LOGGER.error("Failed to read XswUsage: {}", Native.getLastError());
+		} else {
+			xswUsage = Structure.newInstance(XswUsage.class, mem);
+			xswUsage.read();
+
+			extraInformation.swapSize = xswUsage.xsu_total;
+			extraInformation.swapUsed = xswUsage.xsu_used;
+		}
 	}
 
 	private void updateProcesses(SystemInformation systemInformation) {
@@ -162,14 +179,14 @@ public class OsXInformationLoader extends InformationLoader {
 					process.status = Status.Zombie;
 					break;
 				default:
-					LOGGER.info("Unknown status {} for process {}", allInfo.pbsd.pbi_status, pid);
+					LOGGER.info("Unknown status {} for process {}", processStatus, pid);
 			}
 		}
 
 		updateDeadProcesses(systemInformation, newProcessIds);
 
 		systemInformation.totalProcesses = newProcessIds.size();
-		systemInformation.totalThreads = newProcessIds.size();
+		systemInformation.totalThreads = totalThreadCount; // TODO Currently excludes the threads of all root processes...
 	}
 
 	private void createMissingProcessObjects(SystemInformation systemInformation, int count) {
@@ -212,6 +229,7 @@ public class OsXInformationLoader extends InformationLoader {
 				userId = kInfoProc.kp_eproc.e_pcred.p_ruid;
 				process.startTimestamp = kInfoProc.kp_proc.p_starttime.tv_sec.longValue() * 1000L + kInfoProc.kp_proc.p_starttime.tv_usec / 1000L;
 			}
+			// TODO Further improve by using libtop source? https://opensource.apple.com/source/top/top-73/libtop.c
 		}
 
 		if (userId != -1) {
@@ -243,19 +261,19 @@ public class OsXInformationLoader extends InformationLoader {
 
 		int[] mib = { SystemB.CTL_KERN, SystemB.KERN_PROC, SystemB.KERN_PROC_PID, (int) process.id };
 
-		KInfoProc infoProc = new KInfoProc();
-		Pointer mem = new Memory(infoProc.size());
+		KInfoProc kInfoProc = new KInfoProc();
+		Pointer mem = new Memory(kInfoProc.size());
 
-		IntByReference ref = new IntByReference(infoProc.size());
+		IntByReference ref = new IntByReference(kInfoProc.size());
 		int st = SystemB.INSTANCE.sysctl(mib, mib.length, mem, ref, null, 0);
-		if (st != 0 || ref.getValue() != infoProc.size()) {
+		if (st != 0 || ref.getValue() != kInfoProc.size()) {
 			LOGGER.error("Failed to read KInfoProc: {}", Native.getLastError());
 			processesWithFailedKInfoProc.add(process.uniqueId);
 			return null;
 		}
-		KInfoProc proc = Structure.newInstance(KInfoProc.class, mem);
-		proc.read();
-		return proc;
+		kInfoProc = Structure.newInstance(KInfoProc.class, mem);
+		kInfoProc.read();
+		return kInfoProc;
 	}
 
 	private String getCommandLine(long pid) {
