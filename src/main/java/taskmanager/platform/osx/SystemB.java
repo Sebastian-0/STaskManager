@@ -119,7 +119,7 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public short  e_xrssize;		/* text rss */
 		public short  e_xccount;		/* text references */
 		public short  e_xswrss;
-		public long   e_flag;
+		public long    e_flag;
 		public byte[] e_login = new byte[12];	/* short setlogin() name */ // 12 = COMAPT_MAXLOGNAME
 		//		public long[] e_spare = new long[4]; // Only 5 out of these bytes are written for some reason, therefore
 		public byte[] e_spare = new byte[5]; // use byte-array instead
@@ -127,7 +127,7 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 
 	@FieldOrder({"pc_lock", "pc_ucred", "p_ruid", "p_svuid", "p_rgid", "p_svgid", "p_refcnt"})
 	class PCred extends Structure {
-		public LockBsd pc_lock;
+		public byte[] pc_lock = new byte[72];
 		public Pointer pc_ucred;	/* Current credentials. */
 		public int p_ruid;			/* Real user id. */
 		public int p_svuid;		/* Saved effective user id. */
@@ -165,20 +165,5 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public Pointer vm_taddr;	/* user virtual address of text XXX */ // or String
 		public Pointer vm_daddr;	/* user virtual address of data XXX */ // or String
 		public Pointer vm_maxsaddr;	/* user VA at max stack growth */ // or String
-	}
-
-	@FieldOrder({"lk_interlock", "lk_flags", "lk_sharecount", "lk_waitcount", "lk_exclusivecount", "lk_prio",
-			"lk_wmesg", "lk_timo", "lk_lockholder", "lk_lockthread"})
-	class LockBsd extends Structure {
-		public int[] lk_interlock = new int[9 - 2];		/* lock on remaining fields */ // 10 for PPC else 9
-		public int lk_flags;		/* see below */
-		public int lk_sharecount;		/* # of accepted shared locks */
-		public int lk_waitcount;		/* # of processes sleeping for lock */
-		public short lk_exclusivecount;	/* # of recursive exclusive locks */
-		public short lk_prio;		/* priority at which to sleep */
-		public String lk_wmesg;		/* resource sleeping (for tsleep) */
-		public int lk_timo;		/* maximum sleep time (for tsleep) */
-		public int lk_lockholder;		/* pid of exclusive lock holder */
-		public Pointer lk_lockthread;		/* thread which acquired excl lock */
 	}
 }
