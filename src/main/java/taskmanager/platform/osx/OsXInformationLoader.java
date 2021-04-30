@@ -218,6 +218,7 @@ public class OsXInformationLoader extends InformationLoader {
 				process.fileName = toks[toks.length - 1];
 
 //					String partialName = Native.toString(allInfo.pbsd.pbi_comm, StandardCharsets.UTF_8);
+				// TODO Better path fetching?
 			} else {
 				LOGGER.warn("Failed to read process path for {}: {}", process.id, Native.getLastError());
 			}
@@ -263,9 +264,6 @@ public class OsXInformationLoader extends InformationLoader {
 		if (processesWithFailedKInfoProc.contains(process.uniqueId)) {
 			return null;
 		}
-		// For struct docs see:
-		// - kinfo_proc: https://opensource.apple.com/source/xnu/xnu-344/bsd/sys/sysctl.h
-		// - extern_proc: https://opensource.apple.com/source/xnu/xnu-201/bsd/sys/proc.h
 
 		int[] mib = { SystemB.CTL_KERN, SystemB.KERN_PROC, SystemB.KERN_PROC_PID, (int) process.id };
 
