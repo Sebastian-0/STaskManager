@@ -96,10 +96,6 @@ public class OsXInformationLoader extends InformationLoader {
 //			extraInformation.swapUsed = extraInformation.swapSize - Long.parseLong(removeUnit(memInfo.get("SwapFree"))) * 1024;
 	}
 
-
-	//		int targetPid = 364;
-	int targetPid = 6764;
-
 	private void updateProcesses(SystemInformation systemInformation) {
 		int count = SystemB.INSTANCE.proc_listpids(SystemB.PROC_ALL_PIDS, 0, pidFetchArray,
 				pidFetchArray.length * SystemB.INT_SIZE) / SystemB.INT_SIZE;
@@ -107,10 +103,6 @@ public class OsXInformationLoader extends InformationLoader {
 		Set<Long> newProcessIds = new LinkedHashSet<>();
 		for (int i = 0; i < count; i++) {
 			long pid = pidFetchArray[i];
-
-			if (targetPid > 0 && targetPid != pid) {
-				continue;
-			}
 
 			newProcessIds.add(pid);
 			Process process = systemInformation.getProcessById(pid);
@@ -187,29 +179,18 @@ public class OsXInformationLoader extends InformationLoader {
 			LOGGER.warn("Failed to read process path for {}: {}", process.id, Native.getLastError());
 		}
 
+		long parentId = -1;
+		int userId = -1;
 		if (allInfo != null) {
-			Passwd passwd = SystemB.INSTANCE.getpwuid(allInfo.pbsd.pbi_uid);
-			if (passwd != null) {
-				process.userName = passwd.pw_name;
-			} else {
-				process.userName = Constants.UNKNOWN;
-			}
+			userId = allInfo.pbsd.pbi_uid;
 
 			process.startTimestamp = allInfo.pbsd.pbi_start_tvsec * 1000L + allInfo.pbsd.pbi_start_tvusec / 1000L;
 
-			long parentId = allInfo.pbsd.pbi_ppid;
-			Process parent = systemInformation.getProcessById(parentId);
-			if (parent != null) {
-				process.parentUniqueId = parent.uniqueId;
-				process.parentId = parentId;
-			} else {
-				process.parentUniqueId = -1;
-				process.parentId = -1;
-			}
+			parentId = allInfo.pbsd.pbi_ppid;
 		} else {
-			// TODO: Try getting process info with sysctl and KERN_PROC + pid (alt. + KERN_PROC_ALL)
-			//  See docs for returned struct kinfo_proc: https://opensource.apple.com/source/xnu/xnu-344/bsd/sys/sysctl.h
-			//  and extern_proc: https://opensource.apple.com/source/xnu/xnu-201/bsd/sys/proc.h
+			// Try reading KInfoProc as a fallback, see struct docs:
+			// - kinfo_proc: https://opensource.apple.com/source/xnu/xnu-344/bsd/sys/sysctl.h
+			// - extern_proc: https://opensource.apple.com/source/xnu/xnu-201/bsd/sys/proc.h
 			int[] mib = { SystemB.CTL_KERN, SystemB.KERN_PROC, SystemB.KERN_PROC_PID, (int) process.id };
 
 			KInfoProc infoProc = new KInfoProc();
@@ -217,29 +198,34 @@ public class OsXInformationLoader extends InformationLoader {
 
 			IntByReference ref = new IntByReference(infoProc.size());
 			int st = SystemB.INSTANCE.sysctl(mib, mib.length, mem, ref, null, 0);
-			if (st != 0) {
-				System.out.println("ERROR: " + Native.getLastError());
+			if (st != 0 || ref.getValue() != infoProc.size()) {
+				LOGGER.error("Failed to read KERN_PROC_PID: {}", Native.getLastError());
 			} else {
-				System.out.println(ref.getValue() + " vs . " + infoProc.size());
-//				String nums = mem.dump(0, 736);
-//				byte[] nums = mem.getByteArray(0, 648);
-//				System.out.println("nums: " + nums);
-//				System.out.println("nums: " + Arrays.toString(nums));
 				KInfoProc proc = Structure.newInstance(KInfoProc.class, mem);
 				proc.read();
-				if (targetPid < 0 || proc.kp_proc.p_pid == targetPid) {
-//					byte[] nums = mem.getByteArray(0, 648);
-//					System.out.println("nums: " + Arrays.toString(nums));
-					System.out.println(mem.dump(0, 648));
-					System.out.println();
-					System.out.println();
-					System.out.println("PID: " + new String(proc.kp_eproc.e_login) + " " + proc.kp_eproc.e_pcred.p_svuid +
-							" (" + proc.kp_proc.p_sigmask + " " + proc.kp_proc.p_sigignore + " " + proc.kp_proc.p_sigcatch + ") " +
-							proc.kp_eproc.e_ppid + " " + proc.kp_proc.p_stat + " " + proc.kp_proc.p_pid + " vs. " + process.id);
-				}
+				parentId = proc.kp_eproc.e_ppid;
+				userId = proc.kp_eproc.e_pcred.p_ruid;
 
-				System.out.println("PID: " + proc.kp_proc.p_forw + " " + proc.kp_proc.p_flag + " " + proc.kp_proc.p_stat + " " + proc.kp_proc.p_pid + " vs. " + process.id);
+				System.out.println(proc.kp_proc.p_rtime.tv_usec);
 			}
+		}
+
+		if (userId != -1) {
+			Passwd passwd = SystemB.INSTANCE.getpwuid(userId);
+			if (passwd != null) {
+				process.userName = passwd.pw_name;
+			} else {
+				process.userName = Constants.UNKNOWN;
+			}
+		}
+
+		Process parent = systemInformation.getProcessById(parentId);
+		if (parent != null) {
+			process.parentUniqueId = parent.uniqueId;
+			process.parentId = parentId;
+		} else {
+			process.parentUniqueId = -1;
+			process.parentId = -1;
 		}
 	}
 

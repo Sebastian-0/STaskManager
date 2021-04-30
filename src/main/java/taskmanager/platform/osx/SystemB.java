@@ -61,11 +61,8 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public short  e_xswrss;
 		public long   e_flag;
 		public byte[] e_login = new byte[12];	/* short setlogin() name */ // 12 = COMAPT_MAXLOGNAME
-		public long[] e_spare = new long[4]; // only 5 out of these bytes are written for some reason
-
-//		public EProc() {
-//			super(Structure.ALIGN_NONE);
-//		}
+//		public long[] e_spare = new long[4]; // Only 5 out of these bytes are written for some reason, therefore
+		public byte[] e_spare = new byte[5]; // use byte-array instead
 	}
 
 	@FieldOrder({"p_forw", "p_back", "p_vmspace", "p_sigacts", "p_flag", "p_stat", "p_pid", "p_oppid", "p_dupfd",
@@ -118,20 +115,12 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public short p_xstat;	/* Exit status for wait; also stop signal. */
 		public short p_acflag;	/* Accounting flags. */
 		public Pointer p_ru;	/* Exit information. XXX */
-
-//		public ExternProc() {
-//			super(Structure.ALIGN_NONE);
-//		}
 	}
 
 	@FieldOrder({"it_interval", "it_value"})
 	class ITimerVal extends Structure {
 		public Timeval it_interval;
 		public Timeval it_value;
-
-//		public ITimerVal() {
-//			super(Structure.ALIGN_NONE);
-//		}
 	}
 
 	@FieldOrder({"vm_refcnt", "vm_shm", "vm_rssize", "vm_swrss", "vm_tsize", "vm_dsize", "vm_ssize", "vm_taddr",
@@ -147,10 +136,6 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public Pointer vm_taddr;	/* user virtual address of text XXX */ // or String
 		public Pointer vm_daddr;	/* user virtual address of data XXX */ // or String
 		public Pointer vm_maxsaddr;	/* user VA at max stack growth */ // or String
-
-//		public VMSpace() {
-//			super(Structure.ALIGN_NONE);
-//		}
 	}
 
 	@FieldOrder({"cr_ref", "cr_uid", "cr_ngroups", "cr_groups"})
@@ -161,7 +146,7 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public int[] cr_groups = new int[16];	/* groups */ // NGROUPS = NGROUPS_MAX = 16
 
 		public UCred() {
-			super(Structure.ALIGN_NONE);
+			super(Structure.ALIGN_NONE); // Alignment change needed here to make data stay in sync (a bug?)
 		}
 	}
 
@@ -176,7 +161,7 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public int p_refcnt;		/* Number of references. */
 
 		public PCred() {
-			super(Structure.ALIGN_NONE);
+			super(Structure.ALIGN_NONE); // Alignment change needed here to make data stay in sync (a bug?)
 		}
 	}
 
@@ -193,9 +178,5 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public int lk_timo;		/* maximum sleep time (for tsleep) */
 		public int lk_lockholder;		/* pid of exclusive lock holder */
 		public Pointer lk_lockthread;		/* thread which acquired excl lock */
-
-//		public LockBsd() {
-//			super(Structure.ALIGN_NONE);
-//		}
 	}
 }
