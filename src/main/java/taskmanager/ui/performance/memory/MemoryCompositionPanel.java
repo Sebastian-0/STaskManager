@@ -13,6 +13,8 @@ package taskmanager.ui.performance.memory;
 
 import taskmanager.data.SystemInformation;
 import taskmanager.platform.linux.LinuxExtraInformation;
+import taskmanager.platform.osx.OsXExtraInformation;
+import taskmanager.platform.osx.OsXInformationLoader;
 import taskmanager.platform.win32.WindowsExtraInformation;
 import taskmanager.ui.ColorUtils;
 import taskmanager.ui.performance.GraphType;
@@ -51,6 +53,13 @@ public class MemoryCompositionPanel extends JPanel {
 					new Section(color(50), convertLinebreaks("Standby ({0} MB)\nMemory that contains cached data\n and code that is not actively used")),
 					new Section(color(0), convertLinebreaks("Free ({0} MB)\nMemory that is not currently in use\n and will be repurposed when\n processes, drivers or the operating\n system needs more memory"))};
 		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
+			sections = new Section[]{new Section(color(180), convertLinebreaks("Reserved ({0} MB)\nReserved memory for the BIOS and\n kernel")),
+					new Section(color(130), convertLinebreaks("In use ({0} MB)\nMemory used by privately by processes,\n drivers and the operating system")),
+					new Section(color(90), convertLinebreaks("Buffers ({0} MB)\nMemory used by kernel file buffers,\n can be partially reclaimed when needed")),
+					new Section(color(50), convertLinebreaks("Cached ({0} MB)\nMemory used by the page cache and\n slabs, can be partially reclaimed when \nneeded")),
+					new Section(color(0), convertLinebreaks("Free ({0} MB)\nMemory that is not currently in use\n and will be repurposed when\n processes, drivers or the operating\n system needs more memory"))};
+		} else if (systemInformation.extraInformation instanceof OsXExtraInformation) {
+			// TODO Add real memory distribution here!
 			sections = new Section[]{new Section(color(180), convertLinebreaks("Reserved ({0} MB)\nReserved memory for the BIOS and\n kernel")),
 					new Section(color(130), convertLinebreaks("In use ({0} MB)\nMemory used by privately by processes,\n drivers and the operating system")),
 					new Section(color(90), convertLinebreaks("Buffers ({0} MB)\nMemory used by kernel file buffers,\n can be partially reclaimed when needed")),
