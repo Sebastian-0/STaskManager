@@ -23,6 +23,8 @@ import javax.swing.border.LineBorder;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
@@ -80,6 +82,11 @@ public class MemoryCompositionPanel extends JPanel {
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
+
+		// Enable anti-aliasing to combat LineBorder bug in OSX (right border is missing...) Maybe the bug is related to
+		// a specific version/distribution of java?
+		Graphics2D g2d = (Graphics2D) g;
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		float pos = 0;
 		int lastDrawEnd = 0;
