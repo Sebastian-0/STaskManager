@@ -89,6 +89,11 @@ public class OsXInformationLoader extends InformationLoader {
 				new IntByReference(statistics.size() / SystemB.INT_SIZE)) != SystemB.KERN_SUCCESS) {
 			LOGGER.warn("Failed to read VMStatistics!");
 		} else {
+			// Note:
+			// - wired + active + inactive + free does not sum up to total memory, not completely sure why but
+			//     it seems that "stolen pages" might have something to do with it: https://stackoverflow.com/a/43300124
+			// - Compressed memory is a part of inactive
+			// - File cache is not the same as the swap file, it's other file bound caches of memory
 			extraInformation.wiredMemory = statistics.wire_count * systemInformation.pageSize;
 			extraInformation.activeMemory = statistics.active_count * systemInformation.pageSize;
 			extraInformation.inactiveMemory = statistics.inactive_count * systemInformation.pageSize;
