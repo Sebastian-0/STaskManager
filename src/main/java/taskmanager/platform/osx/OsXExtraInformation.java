@@ -21,6 +21,8 @@ public class OsXExtraInformation implements ExtraInformation<OsXExtraInformation
 	public long activeMemory;
 	public long inactiveMemory;
 
+	public long fileCache;  // This is not the same as the swap file, it's other caches
+	public long compressedMemory;
 	public long swapSize;
 	public long swapUsed;
 
@@ -41,6 +43,8 @@ public class OsXExtraInformation implements ExtraInformation<OsXExtraInformation
 		activeMemory = other.activeMemory;
 		inactiveMemory = other.inactiveMemory;
 
+		fileCache = other.fileCache;
+		compressedMemory = other.compressedMemory;
 		swapSize = other.swapSize;
 		swapUsed = other.swapUsed;
 	}

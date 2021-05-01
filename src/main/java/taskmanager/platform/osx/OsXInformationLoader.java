@@ -17,7 +17,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.platform.mac.SystemB.Passwd;
 import com.sun.jna.platform.mac.SystemB.ProcTaskAllInfo;
-import com.sun.jna.platform.mac.SystemB.VMStatistics;
+import com.sun.jna.platform.mac.SystemB.VMStatistics64;
 import com.sun.jna.platform.mac.SystemB.XswUsage;
 import com.sun.jna.ptr.IntByReference;
 import org.slf4j.Logger;
@@ -84,8 +84,8 @@ public class OsXInformationLoader extends InformationLoader {
 	private void updateMemory(SystemInformation systemInformation) {
 		OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
 
-		VMStatistics statistics = new VMStatistics();
-		if (SystemB.INSTANCE.host_statistics(SystemB.INSTANCE.mach_host_self(), SystemB.HOST_VM_INFO, statistics,
+		VMStatistics64 statistics = new VMStatistics64();
+		if (SystemB.INSTANCE.host_statistics64(SystemB.INSTANCE.mach_host_self(), SystemB.HOST_VM_INFO64, statistics,
 				new IntByReference(statistics.size() / SystemB.INT_SIZE)) != SystemB.KERN_SUCCESS) {
 			LOGGER.warn("Failed to read VMStatistics!");
 		} else {
@@ -93,6 +93,8 @@ public class OsXInformationLoader extends InformationLoader {
 			extraInformation.activeMemory = statistics.active_count * systemInformation.pageSize;
 			extraInformation.inactiveMemory = statistics.inactive_count * systemInformation.pageSize;
 			systemInformation.freeMemory = statistics.free_count * systemInformation.pageSize;
+			extraInformation.compressedMemory = statistics.compressor_page_count * systemInformation.pageSize;
+			extraInformation.fileCache = statistics.external_page_count * systemInformation.pageSize;
 		}
 		
 		updateSwap(extraInformation);
