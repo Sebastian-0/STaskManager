@@ -47,6 +47,7 @@ public class Config {
 	public static final String KEY_LAST_DEAD_SELECTION_INVERTED = "lastDeadSelectionInverted";
 
 	public static final String KEY_USE_DEBUG_MODE = "useDebugMode";
+	public static final String KEY_USE_SYSTEM_LOOK_AND_FEEL = "useSystemLookAndFeel";
 
 	public static final String KEY_DEAD_PROCESS_KEEP_TIME = "deadProcessKeepTime";
 	public static final String KEY_SHOW_DEAD_PROCESSES = "showDeadProcesses";
@@ -127,6 +128,7 @@ public class Config {
 
 	private static void generateDefaultValues() {
 		PROPERTIES.put(KEY_USE_DEBUG_MODE, "false");
+		PROPERTIES.put(KEY_USE_SYSTEM_LOOK_AND_FEEL, "false");
 		PROPERTIES.put(KEY_DEAD_PROCESS_KEEP_TIME, "1800");
 		PROPERTIES.put(KEY_SHOW_DEAD_PROCESSES, "true");
 		PROPERTIES.put(KEY_LAST_SELECTION_INVERTED, "false");

@@ -22,10 +22,10 @@ import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
 import taskmanager.ui.callbacks.ApplicationCallback;
 import taskmanager.ui.callbacks.ProcessDetailsCallback;
+import taskmanager.ui.callbacks.ShowProcessCallback;
 import taskmanager.ui.details.ProcessPanel;
 import taskmanager.ui.menubar.MenuBar;
 import taskmanager.ui.performance.PerformancePanel;
-import taskmanager.ui.callbacks.ShowProcessCallback;
 import taskmanager.ui.processdialog.ProcessDialog;
 import taskmanager.ui.tray.Tray;
 
@@ -34,6 +34,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import java.awt.AWTException;
 import java.awt.Dimension;
 import java.awt.Image;
@@ -340,14 +342,18 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 	};
 
 
-	public static void main(String[] args) throws InvocationTargetException, InterruptedException {
-//		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//		UIManager.put("Panel.background", Color.white);
-
-		LOGGER.info("Running with PID: {}", ProcessHandle.current().pid());
-
+	public static void main(String[] args) throws InvocationTargetException, InterruptedException, ClassNotFoundException,
+			UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
 		System.setProperty("awt.useSystemAAFontSettings","on");
 		System.setProperty("swing.aatext", "true");
+
+		if (Config.getBoolean(Config.KEY_USE_SYSTEM_LOOK_AND_FEEL)) {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} else {
+			UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+		}
+
+		LOGGER.info("Running with PID: {}", ProcessHandle.current().pid());
 
 		ToolTipManager.sharedInstance().setDismissDelay(8000);
 
