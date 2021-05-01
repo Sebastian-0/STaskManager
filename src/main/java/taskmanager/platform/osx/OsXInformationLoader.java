@@ -82,19 +82,19 @@ public class OsXInformationLoader extends InformationLoader {
 	}
 
 	private void updateMemory(SystemInformation systemInformation) {
+		OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
+
 		VMStatistics statistics = new VMStatistics();
 		if (SystemB.INSTANCE.host_statistics(SystemB.INSTANCE.mach_host_self(), SystemB.HOST_VM_INFO, statistics,
 				new IntByReference(statistics.size() / SystemB.INT_SIZE)) != SystemB.KERN_SUCCESS) {
-			LOGGER.warn("Failed to read memory information!");
+			LOGGER.warn("Failed to read VMStatistics!");
 		} else {
-			systemInformation.freeMemory = (statistics.free_count + statistics.inactive_count) * systemInformation.pageSize;
+			extraInformation.wiredMemory = statistics.wire_count * systemInformation.pageSize;
+			extraInformation.activeMemory = statistics.active_count * systemInformation.pageSize;
+			extraInformation.inactiveMemory = statistics.inactive_count * systemInformation.pageSize;
+			systemInformation.freeMemory = statistics.free_count * systemInformation.pageSize;
 		}
-
-		// For more OSX memory info, see: http://web.mit.edu/darwin/src/modules/xnu/osfmk/man/vm_statistics.html
-			OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
-//			extraInformation.bufferMemory = Long.parseLong(removeUnit(memInfo.get("Buffers"))) * 1024;
-//			extraInformation.cacheMemory = Long.parseLong(removeUnit(memInfo.get("Cached"))) * 1024 + Long.parseLong(removeUnit(memInfo.get("SReclaimable"))) * 1024;
-//			extraInformation.sharedMemory = Long.parseLong(removeUnit(memInfo.get("Shmem"))) * 1024;
+		
 		updateSwap(extraInformation);
 	}
 

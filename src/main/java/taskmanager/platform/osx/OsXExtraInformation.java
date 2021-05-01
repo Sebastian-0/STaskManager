@@ -17,9 +17,9 @@ public class OsXExtraInformation implements ExtraInformation<OsXExtraInformation
 	public long openFileDescriptors;
 	public long openFileDescriptorsLimit;
 
-	public long bufferMemory; // TODO replace these fields with proper memory fields or remove them?
-	public long cacheMemory;
-	public long sharedMemory;
+	public long wiredMemory;
+	public long activeMemory;
+	public long inactiveMemory;
 
 	public long swapSize;
 	public long swapUsed;
@@ -37,9 +37,9 @@ public class OsXExtraInformation implements ExtraInformation<OsXExtraInformation
 		openFileDescriptors = other.openFileDescriptors;
 		openFileDescriptorsLimit = other.openFileDescriptorsLimit;
 
-		bufferMemory = other.bufferMemory;
-		cacheMemory = other.cacheMemory;
-		sharedMemory = other.sharedMemory;
+		wiredMemory = other.wiredMemory;
+		activeMemory = other.activeMemory;
+		inactiveMemory = other.inactiveMemory;
 
 		swapSize = other.swapSize;
 		swapUsed = other.swapUsed;
