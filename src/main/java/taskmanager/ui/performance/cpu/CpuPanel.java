@@ -16,6 +16,7 @@ import net.miginfocom.swing.MigLayout;
 import taskmanager.Measurements;
 import taskmanager.data.SystemInformation;
 import taskmanager.platform.linux.LinuxExtraInformation;
+import taskmanager.platform.osx.OsXExtraInformation;
 import taskmanager.platform.win32.WindowsExtraInformation;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
@@ -50,7 +51,7 @@ public class CpuPanel extends JPanel {
 	// Windows specific
 	private final InformationItemPanel handlesLabel;
 
-	// Linux specific
+	// Linux & Mac specific
 	private final RatioItemPanel fileDescriptorsLabel;
 
 	private GraphTypeButton connectedButton;
@@ -94,7 +95,8 @@ public class CpuPanel extends JPanel {
 		informationPanel.add(threadsLabel);
 		if (systemInformation.extraInformation instanceof WindowsExtraInformation) {
 			informationPanel.add(handlesLabel);
-		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
+		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation ||
+				systemInformation.extraInformation instanceof OsXExtraInformation) {
 			informationPanel.add(fileDescriptorsLabel);
 		}
 		informationPanel.add(uptimeLabel);
@@ -140,6 +142,10 @@ public class CpuPanel extends JPanel {
 			handlesLabel.updateValue(extraInformation.handles);
 		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
 			LinuxExtraInformation extraInformation = (LinuxExtraInformation) systemInformation.extraInformation;
+			fileDescriptorsLabel.setMaximum(extraInformation.openFileDescriptorsLimit);
+			fileDescriptorsLabel.updateValue(extraInformation.openFileDescriptors);
+		} else if (systemInformation.extraInformation instanceof OsXExtraInformation) {
+			OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
 			fileDescriptorsLabel.setMaximum(extraInformation.openFileDescriptorsLimit);
 			fileDescriptorsLabel.updateValue(extraInformation.openFileDescriptors);
 		}

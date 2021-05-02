@@ -79,6 +79,19 @@ public class OsXInformationLoader extends InformationLoader {
 		updateProcesses(systemInformation);
 
 		// TODO: Read max file descriptors using sysctl and KERN_MAXFILES
+		OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
+
+		int[] mib = { SystemB.CTL_KERN, SystemB.KERN_MAXFILES };
+
+		IntByReference max = new IntByReference();
+
+		IntByReference ref = new IntByReference(SystemB.INT_SIZE);
+		int st = SystemB.INSTANCE.sysctl(mib, mib.length, max.getPointer(), ref, null, 0);
+		if (st != 0) {
+			LOGGER.error("Failed to read KERN_MAXFILES: {}", Native.getLastError());
+		} else {
+			extraInformation.openFileDescriptorsLimit = max.getValue();
+		}
 	}
 
 	private void updateMemory(SystemInformation systemInformation) {

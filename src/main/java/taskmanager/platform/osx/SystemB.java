@@ -27,6 +27,7 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 	int CTL_VM = 2;
 
 	// CTL_KERN options
+	int KERN_MAXFILES = 7;
 	int KERN_ARGMAX = 8;
 	int KERN_PROC = 14;
 	int KERN_PROCARGS2 = 49;
