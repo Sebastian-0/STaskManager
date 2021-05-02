@@ -22,12 +22,14 @@ import com.sun.jna.platform.mac.SystemB.XswUsage;
 import com.sun.jna.ptr.IntByReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import oshi.jna.platform.mac.SystemB.ProcFdInfo;
 import oshi.util.Constants;
 import oshi.util.ExecutingCommand;
 import taskmanager.InformationLoader;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
+import taskmanager.platform.osx.SystemB.ProcFDInfoList;
 import taskmanager.platform.osx.SystemB.KInfoProc;
 
 import java.io.File;
@@ -138,17 +140,20 @@ public class OsXInformationLoader extends InformationLoader {
 	}
 
 	private void updateProcesses(SystemInformation systemInformation) {
-		int count = SystemB.INSTANCE.proc_listpids(SystemB.PROC_ALL_PIDS, 0, pidFetchArray,
+		int totalProcessesCount = SystemB.INSTANCE.proc_listpids(SystemB.PROC_ALL_PIDS, 0, pidFetchArray,
 				pidFetchArray.length * SystemB.INT_SIZE) / SystemB.INT_SIZE;
 
-		createMissingProcessObjects(systemInformation, count);
+		createMissingProcessObjects(systemInformation, totalProcessesCount);
 
 		int totalThreadCount = 0;
+		int totalFileDescriptorsCount = 0;
 		Set<Long> newProcessIds = new LinkedHashSet<>();
-		for (int i = 0; i < count; i++) {
+		for (int i = 0; i < totalProcessesCount; i++) {
 			long pid = pidFetchArray[i];
 			newProcessIds.add(pid);
 			Process process = systemInformation.getProcessById(pid);
+
+//			SystemB.INSTANCE.mach_task_self();
 
 			ProcTaskAllInfo allInfo = new ProcTaskAllInfo();
 			int status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDTASKALLINFO, 0, allInfo, allInfo.size());
@@ -158,6 +163,23 @@ public class OsXInformationLoader extends InformationLoader {
 			} else if (status != allInfo.size()) {
 				// Failed to read, possibly because we don't have access
 				allInfo = null;
+			}
+
+			ProcFdInfo fdInfo = new ProcFdInfo();
+			status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDLISTFDS, 0, null, 0);
+			if (status < 0 ) {
+				LOGGER.warn("Failed to read process fd list for {}: {}", pid, Native.getLastError());
+			} else if (status != 0) {
+				int fds = status / fdInfo.size();
+
+				ProcFDInfoList fdList = new ProcFDInfoList(fds);
+				status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDLISTFDS, 0, fdList, fdList.size());
+				if (status < 0 ) {
+					LOGGER.warn("Failed to read process fd list (2) for {}: {}", pid, Native.getLastError());
+				} else if (status != 0) {
+					fds = status / fdInfo.size();
+					totalFileDescriptorsCount += fds;
+				}
 			}
 
 			if (!process.hasReadOnce) {
@@ -210,6 +232,9 @@ public class OsXInformationLoader extends InformationLoader {
 
 		systemInformation.totalProcesses = newProcessIds.size();
 		systemInformation.totalThreads = totalThreadCount; // TODO Currently excludes the threads of all root processes...
+
+		OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
+		extraInformation.openFileDescriptors = totalFileDescriptorsCount; // TODO Currently excludes the fds of all root processes...
 	}
 
 	private void createMissingProcessObjects(SystemInformation systemInformation, int count) {

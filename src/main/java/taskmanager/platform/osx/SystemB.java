@@ -165,4 +165,13 @@ public interface SystemB extends oshi.jna.platform.mac.SystemB {
 		public Pointer vm_daddr;	/* user virtual address of data XXX */
 		public Pointer vm_maxsaddr;	/* user VA at max stack growth */
 	}
+
+	@FieldOrder({"info"})
+	class ProcFDInfoList extends Structure {
+		public ProcFdInfo[] info;
+
+		public ProcFDInfoList(int size) {
+			info = new ProcFdInfo[size];
+		}
+	}
 }
