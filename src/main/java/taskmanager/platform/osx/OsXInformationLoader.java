@@ -14,7 +14,6 @@ package taskmanager.platform.osx;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.platform.mac.SystemB.Passwd;
 import com.sun.jna.platform.mac.SystemB.ProcTaskAllInfo;
 import com.sun.jna.platform.mac.SystemB.VMStatistics64;
@@ -29,26 +28,25 @@ import taskmanager.InformationLoader;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
-import taskmanager.platform.osx.SystemB.ProcFDInfoList;
 import taskmanager.platform.osx.SystemB.KInfoProc;
+import taskmanager.platform.osx.SystemB.ProcFDInfoList;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class OsXInformationLoader extends InformationLoader {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OsXInformationLoader.class);
 
-	// TODO: Replace max size with double fetch instead? First get amount of pids and then get the list
-	//  Can also get maximum amount from sysctl with KERN_MAXPROC
-	private static final int MAXIMUM_NUMBER_OF_PROCESSES = 10_000;
+	private final Cache cache = new Cache();
 
 	private final Set<Long> processesWithFailedKInfoProc = new LinkedHashSet<>();
 
-	private int maximumProgramArguments;
-	private final int[] pidFetchArray = new int[MAXIMUM_NUMBER_OF_PROCESSES];
+	private int maximumProgramArgumentsSize;
 
 	private long nextProcessId;
 
@@ -64,12 +62,12 @@ public class OsXInformationLoader extends InformationLoader {
 
 	private void readMaximumProgramArguments() {
 		int[] mib = { SystemB.CTL_KERN, SystemB.KERN_ARGMAX };
-		IntByReference argmax = new IntByReference();
-		int status = SystemB.INSTANCE.sysctl(mib, mib.length, argmax.getPointer(), new IntByReference(SystemB.INT_SIZE), null, 0);
+		IntByReference argmax = cache.intByReference(0);
+		int status = SystemB.INSTANCE.sysctl(mib, mib.length, argmax.getPointer(), cache.intByReference(SystemB.INT_SIZE), null, 0);
 		if (status != 0) {
 			LOGGER.error("Failed to fetch maximum size of program argument list, error: {}", Native.getLastError());
 		} else {
-			maximumProgramArguments = argmax.getValue();
+			maximumProgramArgumentsSize = argmax.getValue();
 		}
 	}
 
@@ -85,23 +83,23 @@ public class OsXInformationLoader extends InformationLoader {
 
 		int[] mib = { SystemB.CTL_KERN, SystemB.KERN_MAXFILES };
 
-		IntByReference max = new IntByReference();
+		IntByReference maxFds = cache.intByReference(0);
 
-		IntByReference ref = new IntByReference(SystemB.INT_SIZE);
-		int st = SystemB.INSTANCE.sysctl(mib, mib.length, max.getPointer(), ref, null, 0);
+		IntByReference ref = cache.intByReference(SystemB.INT_SIZE);
+		int st = SystemB.INSTANCE.sysctl(mib, mib.length, maxFds.getPointer(), ref, null, 0);
 		if (st != 0) {
 			LOGGER.error("Failed to read KERN_MAXFILES: {}", Native.getLastError());
 		} else {
-			extraInformation.openFileDescriptorsLimit = max.getValue();
+			extraInformation.openFileDescriptorsLimit = maxFds.getValue();
 		}
 	}
 
 	private void updateMemory(SystemInformation systemInformation) {
 		OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
 
-		VMStatistics64 statistics = new VMStatistics64();
+		VMStatistics64 statistics = cache.vmStatistics64;
 		if (SystemB.INSTANCE.host_statistics64(SystemB.INSTANCE.mach_host_self(), SystemB.HOST_VM_INFO64, statistics,
-				new IntByReference(statistics.size() / SystemB.INT_SIZE)) != SystemB.KERN_SUCCESS) {
+				cache.intByReference(statistics.size() / SystemB.INT_SIZE)) != SystemB.KERN_SUCCESS) {
 			LOGGER.warn("Failed to read VMStatistics!");
 		} else {
 			// Note:
@@ -123,15 +121,13 @@ public class OsXInformationLoader extends InformationLoader {
 	private void updateSwap(OsXExtraInformation extraInformation) {
 		int[] mib = { SystemB.CTL_VM, SystemB.VM_SWAPUSAGE };
 
-		XswUsage xswUsage = new XswUsage();
-		Pointer mem = new Memory(xswUsage.size());
+		XswUsage xswUsage = cache.xswUsage;
 
-		IntByReference ref = new IntByReference(xswUsage.size());
-		int st = SystemB.INSTANCE.sysctl(mib, mib.length, mem, ref, null, 0);
+		IntByReference ref = cache.intByReference(xswUsage.size());
+		int st = SystemB.INSTANCE.sysctl(mib, mib.length, xswUsage.getPointer(), ref, null, 0);
 		if (st != 0 || ref.getValue() != xswUsage.size()) {
 			LOGGER.error("Failed to read XswUsage: {}", Native.getLastError());
 		} else {
-			xswUsage = Structure.newInstance(XswUsage.class, mem);
 			xswUsage.read();
 
 			extraInformation.swapSize = xswUsage.xsu_total;
@@ -140,8 +136,8 @@ public class OsXInformationLoader extends InformationLoader {
 	}
 
 	private void updateProcesses(SystemInformation systemInformation) {
-		int totalProcessesCount = SystemB.INSTANCE.proc_listpids(SystemB.PROC_ALL_PIDS, 0, pidFetchArray,
-				pidFetchArray.length * SystemB.INT_SIZE) / SystemB.INT_SIZE;
+		int totalProcessesCount = SystemB.INSTANCE.proc_listpids(SystemB.PROC_ALL_PIDS, 0, cache.pidFetchArray,
+				cache.pidFetchArray.length * SystemB.INT_SIZE) / SystemB.INT_SIZE;
 
 		createMissingProcessObjects(systemInformation, totalProcessesCount);
 
@@ -149,13 +145,11 @@ public class OsXInformationLoader extends InformationLoader {
 		int totalFileDescriptorsCount = 0;
 		Set<Long> newProcessIds = new LinkedHashSet<>();
 		for (int i = 0; i < totalProcessesCount; i++) {
-			long pid = pidFetchArray[i];
+			long pid = cache.pidFetchArray[i];
 			newProcessIds.add(pid);
 			Process process = systemInformation.getProcessById(pid);
 
-//			SystemB.INSTANCE.mach_task_self();
-
-			ProcTaskAllInfo allInfo = new ProcTaskAllInfo();
+			ProcTaskAllInfo allInfo = cache.procTaskAllInfo;
 			int status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDTASKALLINFO, 0, allInfo, allInfo.size());
 			if (status < 0) {
 				LOGGER.warn("Failed to read process information for {}: {}", pid, Native.getLastError());
@@ -165,14 +159,14 @@ public class OsXInformationLoader extends InformationLoader {
 				allInfo = null;
 			}
 
-			ProcFdInfo fdInfo = new ProcFdInfo();
+			ProcFdInfo fdInfo = cache.procFdInfo;
 			status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDLISTFDS, 0, null, 0);
 			if (status < 0 ) {
 				LOGGER.warn("Failed to read process fd list for {}: {}", pid, Native.getLastError());
 			} else if (status != 0) {
 				int fds = status / fdInfo.size();
 
-				ProcFDInfoList fdList = new ProcFDInfoList(fds);
+				ProcFDInfoList fdList = cache.procFDInfoList(fds);
 				status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDLISTFDS, 0, fdList, fdList.size());
 				if (status < 0 ) {
 					LOGGER.warn("Failed to read process fd list (2) for {}: {}", pid, Native.getLastError());
@@ -239,7 +233,7 @@ public class OsXInformationLoader extends InformationLoader {
 
 	private void createMissingProcessObjects(SystemInformation systemInformation, int count) {
 		for (int i = 0; i < count; i++) {
-			long pid = pidFetchArray[i];
+			long pid = cache.pidFetchArray[i];
 			Process process = systemInformation.getProcessById(pid);
 			if (process == null) {
 				systemInformation.processes.add(new Process(nextProcessId++, pid));
@@ -254,7 +248,7 @@ public class OsXInformationLoader extends InformationLoader {
 		} else {
 			process.commandLine = getCommandLine(process.id);
 
-			Memory pathBuffer = new Memory(SystemB.PROC_PIDPATHINFO_MAXSIZE);
+			Memory pathBuffer = cache.memory(SystemB.PROC_PIDPATHINFO_MAXSIZE);
 			int status = SystemB.INSTANCE.proc_pidpath((int) process.id, pathBuffer, (int) pathBuffer.size());
 			if (status > 0) {
 				process.filePath = pathBuffer.getString(0).trim();
@@ -313,30 +307,28 @@ public class OsXInformationLoader extends InformationLoader {
 
 		int[] mib = { SystemB.CTL_KERN, SystemB.KERN_PROC, SystemB.KERN_PROC_PID, (int) process.id };
 
-		KInfoProc kInfoProc = new KInfoProc();
-		Pointer mem = new Memory(kInfoProc.size());
+		KInfoProc kInfoProc = cache.kInfoProc;
 
-		IntByReference ref = new IntByReference(kInfoProc.size());
-		int st = SystemB.INSTANCE.sysctl(mib, mib.length, mem, ref, null, 0);
-		if (st != 0 || ref.getValue() != kInfoProc.size()) {
+		IntByReference size = cache.intByReference(kInfoProc.size());
+		int status = SystemB.INSTANCE.sysctl(mib, mib.length, kInfoProc.getPointer(), size, null, 0);
+		if (status != 0 || size.getValue() != kInfoProc.size()) {
 			LOGGER.error("Failed to read KInfoProc: {}", Native.getLastError());
 			processesWithFailedKInfoProc.add(process.uniqueId);
 			return null;
 		}
-		kInfoProc = Structure.newInstance(KInfoProc.class, mem);
 		kInfoProc.read();
 		return kInfoProc;
 	}
 
 	private String getCommandLine(long pid) {
-		if (pid == 0 || maximumProgramArguments == 0) {
+		if (pid == 0 || maximumProgramArgumentsSize == 0) {
 			return "";
 		}
 
-		Pointer procargs = new Memory(maximumProgramArguments);
+		Pointer procargs = cache.memory(maximumProgramArgumentsSize);
 
 		int[] mib = { SystemB.CTL_KERN, SystemB.KERN_PROCARGS2, (int) pid };
-		IntByReference argmax = new IntByReference(maximumProgramArguments);
+		IntByReference argmax = cache.intByReference(maximumProgramArgumentsSize);
 		int status = SystemB.INSTANCE.sysctl(mib, mib.length, procargs, argmax, null, 0);
 		if (status != 0) {
 			// Fallback due to random failures for the previous system call, probably an OSX bug?
@@ -360,5 +352,49 @@ public class OsXInformationLoader extends InformationLoader {
 		}
 
 		return String.join(" ", result);
+	}
+
+	private static class Cache {
+		// TODO: Replace max size with double fetch instead? First get amount of pids and then get the list
+		//  Can also get maximum amount from sysctl with KERN_MAXPROC
+		private static final int MAXIMUM_NUMBER_OF_PROCESSES = 10_000;
+
+		// Processes
+		int[] pidFetchArray = new int[MAXIMUM_NUMBER_OF_PROCESSES];
+		ProcTaskAllInfo procTaskAllInfo = new ProcTaskAllInfo();
+		ProcFdInfo procFdInfo = new ProcFdInfo();
+		Map<Integer, ProcFDInfoList> procFDInfos = new HashMap<>();
+		KInfoProc kInfoProc = new KInfoProc();
+
+		// Memory
+		VMStatistics64 vmStatistics64 = new VMStatistics64();
+		XswUsage xswUsage = new XswUsage();
+
+		// General stuff
+		IntByReference[] intByReference = new IntByReference[10];
+		int intByReferenceIdx;
+
+		Map<Integer, Memory> memories = new HashMap<>();
+
+		public Cache() {
+			for (int i = 0; i < intByReference.length; i++) {
+				intByReference[i] = new IntByReference();
+			}
+		}
+
+		public IntByReference intByReference(int value) {
+			IntByReference result = intByReference[intByReferenceIdx];
+			result.setValue(value);
+			intByReferenceIdx = (intByReferenceIdx + 1) % intByReference.length;
+			return result;
+		}
+
+		public Memory memory(int size) {
+			return memories.computeIfAbsent(size, Memory::new);
+		}
+
+		public ProcFDInfoList procFDInfoList(int size) {
+			return procFDInfos.computeIfAbsent(size, ProcFDInfoList::new);
+		}
 	}
 }
