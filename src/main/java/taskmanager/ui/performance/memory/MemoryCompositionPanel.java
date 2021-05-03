@@ -16,6 +16,7 @@ import taskmanager.platform.linux.LinuxExtraInformation;
 import taskmanager.platform.osx.OsXExtraInformation;
 import taskmanager.platform.win32.WindowsExtraInformation;
 import taskmanager.ui.ColorUtils;
+import taskmanager.ui.TextUtils;
 import taskmanager.ui.performance.GraphType;
 
 import javax.swing.JPanel;
@@ -48,23 +49,29 @@ public class MemoryCompositionPanel extends JPanel {
 			});
 
 		if (systemInformation.extraInformation instanceof WindowsExtraInformation) {
-			sections = new Section[]{new Section(color(180), convertLinebreaks("Reserved ({0} MB)\nReserved memory for the BIOS and\n some drivers")),
-					new Section(color(130), convertLinebreaks("In use ({0} MB)\nMemory used by processes, drivers\n and the operating system")),
-					new Section(color(90), convertLinebreaks("Modified ({0} MB)\nMemory whose content must be written\n to disk before being used for another\n purpose")),
-					new Section(color(50), convertLinebreaks("Standby ({0} MB)\nMemory that contains cached data\n and code that is not actively used")),
-					new Section(color(0), convertLinebreaks("Free ({0} MB)\nMemory that is not currently in use\n and will be repurposed when\n processes, drivers or the operating\n system needs more memory"))};
+			sections = new Section[] {
+					new Section(color(180), TextUtils.convertLineBreaksToHtml("Reserved ({0} MB)\nReserved memory for the BIOS and\n some drivers")),
+					new Section(color(130), TextUtils.convertLineBreaksToHtml("In use ({0} MB)\nMemory used by processes, drivers\n and the operating system")),
+					new Section(color(90), TextUtils.convertLineBreaksToHtml("Modified ({0} MB)\nMemory whose content must be written\n to disk before being used for another\n purpose")),
+					new Section(color(50), TextUtils.convertLineBreaksToHtml("Standby ({0} MB)\nMemory that contains cached data\n and code that is not actively used")),
+					new Section(color(0), TextUtils.convertLineBreaksToHtml("Free ({0} MB)\nMemory that is not currently in use\n and will be repurposed when\n processes, drivers or the operating\n system needs more memory"))
+			};
 		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
-			sections = new Section[]{new Section(color(180), convertLinebreaks("Reserved ({0} MB)\nReserved memory for the BIOS and\n kernel")),
-					new Section(color(130), convertLinebreaks("In use ({0} MB)\nMemory used by privately by processes,\n drivers and the operating system")),
-					new Section(color(90), convertLinebreaks("Buffers ({0} MB)\nMemory used by kernel file buffers,\n can be partially reclaimed when needed")),
-					new Section(color(50), convertLinebreaks("Cached ({0} MB)\nMemory used by the page cache and\n slabs, can be partially reclaimed when \nneeded")),
-					new Section(color(0), convertLinebreaks("Free ({0} MB)\nMemory that is not currently in use\n and will be repurposed when\n processes, drivers or the operating\n system needs more memory"))};
+			sections = new Section[] {
+					new Section(color(180), TextUtils.convertLineBreaksToHtml("Reserved ({0} MB)\nReserved memory for the BIOS and\n kernel")),
+					new Section(color(130), TextUtils.convertLineBreaksToHtml("In use ({0} MB)\nMemory used by privately by processes,\n drivers and the operating system")),
+					new Section(color(90), TextUtils.convertLineBreaksToHtml("Buffers ({0} MB)\nMemory used by kernel file buffers,\n can be partially reclaimed when needed")),
+					new Section(color(50), TextUtils.convertLineBreaksToHtml("Cached ({0} MB)\nMemory used by the page cache and\n slabs, can be partially reclaimed when \nneeded")),
+					new Section(color(0), TextUtils.convertLineBreaksToHtml("Free ({0} MB)\nMemory that is not currently in use\n and will be repurposed when\n processes, drivers or the operating\n system needs more memory"))
+			};
 		} else if (systemInformation.extraInformation instanceof OsXExtraInformation) {
-			sections = new Section[]{new Section(color(180), convertLinebreaks("Reserved ({0} MB)\nReserved memory for the BIOS and\n kernel")),
-					new Section(color(130), convertLinebreaks("Wired ({0} MB)\nMemory used by the kernel and the\n operating system, cannot be paged out")),
-					new Section(color(90), convertLinebreaks("Active ({0} MB)\nMemory used by currently running\n applications")),
-					new Section(color(50), convertLinebreaks("Inactive ({0} MB)\nMemory that is no longer used or has\n not been accessed in a long time")),
-					new Section(color(0), convertLinebreaks("Free ({0} MB)\nMemory that is not currently in use\n and will be repurposed when\n processes, drivers or the operating\n system needs more memory"))};
+			sections = new Section[] {
+					new Section(color(180), TextUtils.convertLineBreaksToHtml("Reserved ({0} MB)\nReserved memory for the BIOS and\n kernel")),
+					new Section(color(130), TextUtils.convertLineBreaksToHtml("Wired ({0} MB)\nMemory used by the kernel and the\n operating system, cannot be paged out")),
+					new Section(color(90), TextUtils.convertLineBreaksToHtml("Active ({0} MB)\nMemory used by currently running\n applications")),
+					new Section(color(50), TextUtils.convertLineBreaksToHtml("Inactive ({0} MB)\nMemory that is no longer used or has\n not been accessed in a long time")),
+					new Section(color(0), TextUtils.convertLineBreaksToHtml("Free ({0} MB)\nMemory that is not currently in use\n and will be repurposed when\n processes, drivers or the operating\n system needs more memory"))
+			};
 		} else {
 			throw new UnsupportedOperationException("You are running an unsupported operating system!");
 		}
@@ -73,10 +80,6 @@ public class MemoryCompositionPanel extends JPanel {
 	private Color color(int alpha) {
 		Color c = GraphType.Memory.color;
 		return ColorUtils.blend(c, Color.WHITE, alpha/255f);
-	}
-
-	private String convertLinebreaks(String input) {
-		return "<html>" + input.replaceAll("\n", "<br>") + "</html>";
 	}
 
 	@Override

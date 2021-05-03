@@ -18,6 +18,7 @@ import taskmanager.data.SystemInformation;
 import taskmanager.platform.linux.LinuxExtraInformation;
 import taskmanager.platform.osx.OsXExtraInformation;
 import taskmanager.platform.win32.WindowsExtraInformation;
+import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
 import taskmanager.ui.performance.GraphPanel;
 import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
@@ -148,6 +149,8 @@ public class CpuPanel extends JPanel {
 			OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
 			fileDescriptorsLabel.setMaximum(extraInformation.openFileDescriptorsLimit);
 			fileDescriptorsLabel.updateValue(extraInformation.openFileDescriptors);
+			fileDescriptorsLabel.setToolTipText(TextUtils.convertLineBreaksToHtml("This only counts the file descriptors of\n the active user's processes (OSX only)."));
+			fileDescriptorsLabel.setToolTipText(TextUtils.convertLineBreaksToHtml("This only counts the threads of the active\n user's processes (OSX only)."));
 		}
 	}
 

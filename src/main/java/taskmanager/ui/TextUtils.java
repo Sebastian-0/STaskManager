@@ -160,4 +160,9 @@ public class TextUtils {
 
 		return "...";
 	}
+
+
+	public static String convertLineBreaksToHtml(String input) {
+		return "<html>" + input.replaceAll("\n", "<br>") + "</html>";
+	}
 }

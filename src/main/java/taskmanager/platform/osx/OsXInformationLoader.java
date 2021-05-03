@@ -66,6 +66,7 @@ public class OsXInformationLoader extends InformationLoader {
 		int status = SystemB.INSTANCE.sysctl(mib, mib.length, argmax.getPointer(), cache.intByReference(SystemB.INT_SIZE), null, 0);
 		if (status != 0) {
 			LOGGER.error("Failed to fetch maximum size of program argument list, error: {}", Native.getLastError());
+			maximumProgramArgumentsSize = 16; // Use some random default, maybe a bad idea?
 		} else {
 			maximumProgramArgumentsSize = argmax.getValue();
 		}
@@ -77,21 +78,7 @@ public class OsXInformationLoader extends InformationLoader {
 
 		updateMemory(systemInformation);
 		updateProcesses(systemInformation);
-
-		// TODO: Read max file descriptors using sysctl and KERN_MAXFILES
-		OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
-
-		int[] mib = { SystemB.CTL_KERN, SystemB.KERN_MAXFILES };
-
-		IntByReference maxFds = cache.intByReference(0);
-
-		IntByReference ref = cache.intByReference(SystemB.INT_SIZE);
-		int st = SystemB.INSTANCE.sysctl(mib, mib.length, maxFds.getPointer(), ref, null, 0);
-		if (st != 0) {
-			LOGGER.error("Failed to read KERN_MAXFILES: {}", Native.getLastError());
-		} else {
-			extraInformation.openFileDescriptorsLimit = maxFds.getValue();
-		}
+		updateMaxOpenFiles(systemInformation);
 	}
 
 	private void updateMemory(SystemInformation systemInformation) {
@@ -100,7 +87,7 @@ public class OsXInformationLoader extends InformationLoader {
 		VMStatistics64 statistics = cache.vmStatistics64;
 		if (SystemB.INSTANCE.host_statistics64(SystemB.INSTANCE.mach_host_self(), SystemB.HOST_VM_INFO64, statistics,
 				cache.intByReference(statistics.size() / SystemB.INT_SIZE)) != SystemB.KERN_SUCCESS) {
-			LOGGER.warn("Failed to read VMStatistics!");
+			LOGGER.warn("Failed to read memory statistics: {}", Native.getLastError());
 		} else {
 			// Note:
 			// - wired + active + inactive + free does not sum up to total memory, not completely sure why but
@@ -114,7 +101,7 @@ public class OsXInformationLoader extends InformationLoader {
 			extraInformation.compressedMemory = statistics.compressor_page_count * systemInformation.pageSize;
 			extraInformation.fileCache = statistics.external_page_count * systemInformation.pageSize;
 		}
-		
+
 		updateSwap(extraInformation);
 	}
 
@@ -126,7 +113,7 @@ public class OsXInformationLoader extends InformationLoader {
 		IntByReference ref = cache.intByReference(xswUsage.size());
 		int st = SystemB.INSTANCE.sysctl(mib, mib.length, xswUsage.getPointer(), ref, null, 0);
 		if (st != 0 || ref.getValue() != xswUsage.size()) {
-			LOGGER.error("Failed to read XswUsage: {}", Native.getLastError());
+			LOGGER.error("Failed to read swap statistics: {}", Native.getLastError());
 		} else {
 			xswUsage.read();
 
@@ -149,27 +136,27 @@ public class OsXInformationLoader extends InformationLoader {
 			newProcessIds.add(pid);
 			Process process = systemInformation.getProcessById(pid);
 
-			ProcTaskAllInfo allInfo = cache.procTaskAllInfo;
-			int status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDTASKALLINFO, 0, allInfo, allInfo.size());
+			ProcTaskAllInfo taskAllInfo = cache.procTaskAllInfo;
+			int status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDTASKALLINFO, 0, taskAllInfo, taskAllInfo.size());
 			if (status < 0) {
-				LOGGER.warn("Failed to read process information for {}: {}", pid, Native.getLastError());
-				allInfo = null;
-			} else if (status != allInfo.size()) {
+				LOGGER.warn("Failed to read process information for process {}: {}", pid, Native.getLastError());
+				taskAllInfo = null;
+			} else if (status != taskAllInfo.size()) {
 				// Failed to read, possibly because we don't have access
-				allInfo = null;
+				taskAllInfo = null;
 			}
 
 			ProcFdInfo fdInfo = cache.procFdInfo;
 			status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDLISTFDS, 0, null, 0);
 			if (status < 0 ) {
-				LOGGER.warn("Failed to read process fd list for {}: {}", pid, Native.getLastError());
+				LOGGER.warn("Failed to read fd list size for process {}: {}", pid, Native.getLastError());
 			} else if (status != 0) {
 				int fds = status / fdInfo.size();
 
 				ProcFDInfoList fdList = cache.procFDInfoList(fds);
 				status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDLISTFDS, 0, fdList, fdList.size());
 				if (status < 0 ) {
-					LOGGER.warn("Failed to read process fd list (2) for {}: {}", pid, Native.getLastError());
+					LOGGER.warn("Failed to read fd list for process {}: {}", pid, Native.getLastError());
 				} else if (status != 0) {
 					fds = status / fdInfo.size();
 					totalFileDescriptorsCount += fds;
@@ -177,20 +164,20 @@ public class OsXInformationLoader extends InformationLoader {
 			}
 
 			if (!process.hasReadOnce) {
-				initialProcessSetup(systemInformation, process, allInfo);
+				initialProcessSetup(systemInformation, process, taskAllInfo);
 				process.hasReadOnce = true;
 			}
 
 			int processStatus = -1;
-			if (allInfo != null) {
-				totalThreadCount += allInfo.ptinfo.pti_threadnum;
-				processStatus = allInfo.pbsd.pbi_status;
+			if (taskAllInfo != null) {
+				totalThreadCount += taskAllInfo.ptinfo.pti_threadnum;
+				processStatus = taskAllInfo.pbsd.pbi_status;
 
-				process.privateWorkingSet.addValue(allInfo.ptinfo.pti_resident_size);
+				process.privateWorkingSet.addValue(taskAllInfo.ptinfo.pti_resident_size);
 
-				long stime = allInfo.ptinfo.pti_total_system / 1_000_000;
-				long utime = allInfo.ptinfo.pti_total_user / 1_000_000;
-				process.updateCpu(stime, utime, systemInformation.logicalProcessorCount);
+				long sTime = taskAllInfo.ptinfo.pti_total_system / 1_000_000;
+				long uTime = taskAllInfo.ptinfo.pti_total_user / 1_000_000;
+				process.updateCpu(sTime, uTime, systemInformation.logicalProcessorCount);
 			} else {
 				KInfoProc kInfoProc = readKInfoProc(process);
 				if (kInfoProc != null) {
@@ -200,8 +187,6 @@ public class OsXInformationLoader extends InformationLoader {
 
 			switch (processStatus) {
 				case 1: // Idle == newly created
-					process.status = Status.Running;
-					break;
 				case 2: // Running
 					process.status = Status.Running;
 					break;
@@ -218,17 +203,18 @@ public class OsXInformationLoader extends InformationLoader {
 					process.status = Status.Unknown;
 					break;
 				default:
-					LOGGER.info("Unknown status {} for process {}", processStatus, pid);
+					LOGGER.warn("Unknown status {} for process {}", processStatus, pid);
+					break;
 			}
 		}
 
 		updateDeadProcesses(systemInformation, newProcessIds);
 
 		systemInformation.totalProcesses = newProcessIds.size();
-		systemInformation.totalThreads = totalThreadCount; // TODO Currently excludes the threads of all root processes...
+		systemInformation.totalThreads = totalThreadCount; // Currently only includes the threads of the current user (unless root?)
 
 		OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
-		extraInformation.openFileDescriptors = totalFileDescriptorsCount; // TODO Currently excludes the fds of all root processes...
+		extraInformation.openFileDescriptors = totalFileDescriptorsCount; // Currently only includes the fds of the current user (unless root?)
 	}
 
 	private void createMissingProcessObjects(SystemInformation systemInformation, int count) {
@@ -277,8 +263,7 @@ public class OsXInformationLoader extends InformationLoader {
 				userId = kInfoProc.kp_eproc.e_pcred.p_ruid;
 				process.startTimestamp = kInfoProc.kp_proc.p_starttime.tv_sec.longValue() * 1000L + kInfoProc.kp_proc.p_starttime.tv_usec / 1000L;
 			}
-			// TODO Further improve by using libtop source? https://opensource.apple.com/source/top/top-73/libtop.c
-			//  Otherwise specify somehow that the process wont get memory/cpu set (replace with --- in the UI?)
+			process.missingCpuAndMemoryMetrics = true;
 		}
 
 		if (userId != -1) {
@@ -312,7 +297,7 @@ public class OsXInformationLoader extends InformationLoader {
 		IntByReference size = cache.intByReference(kInfoProc.size());
 		int status = SystemB.INSTANCE.sysctl(mib, mib.length, kInfoProc.getPointer(), size, null, 0);
 		if (status != 0 || size.getValue() != kInfoProc.size()) {
-			LOGGER.error("Failed to read KInfoProc: {}", Native.getLastError());
+			LOGGER.error("Failed to read process information fallback for process {}: {}", process.id, Native.getLastError());
 			processesWithFailedKInfoProc.add(process.uniqueId);
 			return null;
 		}
@@ -325,11 +310,11 @@ public class OsXInformationLoader extends InformationLoader {
 			return "";
 		}
 
-		Pointer procargs = cache.memory(maximumProgramArgumentsSize);
+		Pointer procArgs = cache.memory(maximumProgramArgumentsSize);
 
 		int[] mib = { SystemB.CTL_KERN, SystemB.KERN_PROCARGS2, (int) pid };
 		IntByReference argmax = cache.intByReference(maximumProgramArgumentsSize);
-		int status = SystemB.INSTANCE.sysctl(mib, mib.length, procargs, argmax, null, 0);
+		int status = SystemB.INSTANCE.sysctl(mib, mib.length, procArgs, argmax, null, 0);
 		if (status != 0) {
 			// Fallback due to random failures for the previous system call, probably an OSX bug?
 			String cmdLine = ExecutingCommand.getFirstAnswer("ps -o command= -p " + pid);
@@ -337,21 +322,34 @@ public class OsXInformationLoader extends InformationLoader {
 				return cmdLine;
 			}
 
-			LOGGER.warn("Failed to read command line for {}, error code: {}", pid, Native.getLastError());
+			LOGGER.warn("Failed to read command line for process {}: {}", pid, Native.getLastError());
 			return "";
 		}
 
 		List<String> result = new ArrayList<>();
-
-		int nargs = procargs.getInt(0);
+		int nArguments = procArgs.getInt(0);
 		int offset = SystemB.INT_SIZE;
-		while (nargs-- > 0 && offset < argmax.getValue()) {
-			String arg = procargs.getString(offset);
-			result.add(arg);
-			offset += arg.length() + 1;
+		while (nArguments-- > 0 && offset < argmax.getValue()) {
+			String argument = procArgs.getString(offset);
+			result.add(argument);
+			offset += argument.length() + 1;
 		}
-
 		return String.join(" ", result);
+	}
+
+	private void updateMaxOpenFiles(SystemInformation systemInformation) {
+		int[] mib = { SystemB.CTL_KERN, SystemB.KERN_MAXFILES };
+
+		IntByReference maxFds = cache.intByReference(0);
+
+		IntByReference ref = cache.intByReference(SystemB.INT_SIZE);
+		int st = SystemB.INSTANCE.sysctl(mib, mib.length, maxFds.getPointer(), ref, null, 0);
+		if (st != 0) {
+			LOGGER.warn("Failed to read maximum amount of open files allowed: {}", Native.getLastError());
+		} else {
+			OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
+			extraInformation.openFileDescriptorsLimit = maxFds.getValue();
+		}
 	}
 
 	private static class Cache {
@@ -370,10 +368,9 @@ public class OsXInformationLoader extends InformationLoader {
 		VMStatistics64 vmStatistics64 = new VMStatistics64();
 		XswUsage xswUsage = new XswUsage();
 
-		// General stuff
+		// Shared
 		IntByReference[] intByReference = new IntByReference[10];
 		int intByReferenceIdx;
-
 		Map<Integer, Memory> memories = new HashMap<>();
 
 		public Cache() {

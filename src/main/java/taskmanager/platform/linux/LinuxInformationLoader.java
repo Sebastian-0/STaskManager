@@ -77,7 +77,6 @@ public class LinuxInformationLoader extends InformationLoader {
 		int totalThreadCount = 0;
 		for (Long pid : newProcessIds) {
 			Process process = systemInformation.getProcessById(pid);
-
 			try {
 				String processPath = PROC_PATH + "/" + pid;
 				Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");

@@ -35,6 +35,8 @@ public class Process {
 	public long startTimestamp;
 	public long deathTimestamp;
 
+	/** This happens for OSX where we can't get metrics for processes owned by other users */
+	public boolean missingCpuAndMemoryMetrics;
 	public boolean hasReadOnce;
 
 	private long lastSysCpu;
@@ -79,6 +81,7 @@ public class Process {
 			cpuTime.copyDelta(other.cpuTime);
 		}
 
+		missingCpuAndMemoryMetrics = other.missingCpuAndMemoryMetrics;
 		hasReadOnce = other.hasReadOnce;
 
 		lastSysCpu = other.lastSysCpu;
