@@ -10,7 +10,7 @@ Extra functionality includes:
 * Read/write speed graphs are logarithmic to make them easier to interpret
 
 ## Supported platforms
-Currently the task manager supports Windows and Linux. Support for Mac OS X should be easy but I don't have machine to test on currently.
+Currently the task manager supports Windows, Linux (distros with procfs) and Mac OS.
 
 ## Building
 This project is built using Gradle, running `gradle build` will generate a zip containing the program in the `build` folder.
