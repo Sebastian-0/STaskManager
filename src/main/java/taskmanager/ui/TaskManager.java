@@ -332,11 +332,13 @@ public class TaskManager extends JFrame implements InformationUpdateCallback, Pr
 	private final ComponentAdapter componentListener = new ComponentAdapter() {
 		@Override
 		public void componentResized(ComponentEvent e) {
-			if ((getExtendedState() & MAXIMIZED_HORIZ) == 0) {
-				Config.put(Config.KEY_LAST_WINDOW_WIDTH, "" + getWidth());
-			}
-			if ((getExtendedState() & MAXIMIZED_VERT) == 0) {
-				Config.put(Config.KEY_LAST_WINDOW_HEIGHT, "" + getHeight());
+			if (isVisible()) {
+				if ((getExtendedState() & MAXIMIZED_HORIZ) == 0) {
+					Config.put(Config.KEY_LAST_WINDOW_WIDTH, "" + getWidth());
+				}
+				if ((getExtendedState() & MAXIMIZED_VERT) == 0) {
+					Config.put(Config.KEY_LAST_WINDOW_HEIGHT, "" + getHeight());
+				}
 			}
 		}
 	};

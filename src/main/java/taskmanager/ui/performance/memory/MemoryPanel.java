@@ -15,6 +15,7 @@ import net.miginfocom.swing.MigLayout;
 import taskmanager.Measurements;
 import taskmanager.data.SystemInformation;
 import taskmanager.platform.linux.LinuxExtraInformation;
+import taskmanager.platform.osx.OsXExtraInformation;
 import taskmanager.platform.win32.WindowsExtraInformation;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
@@ -52,7 +53,11 @@ public class MemoryPanel extends JPanel {
 
 	// Linux specific
 	private final InformationItemPanel sharedPanel;
-	private final RatioItemPanel swapPanel;
+	private final RatioItemPanel swapPanel; // Also used for OSX
+
+	// Mac specific
+	private final InformationItemPanel fileCachePanel;
+	private final InformationItemPanel compressedPanel;
 
 	private GraphTypeButton connectedButton;
 
@@ -87,6 +92,8 @@ public class MemoryPanel extends JPanel {
 		nonpagedPoolPanel = new InformationItemPanel("Non-paged pool", ValueType.Bytes);
 		sharedPanel = new InformationItemPanel("Shared memory", ValueType.Bytes);
 		swapPanel = new RatioItemPanel("Swap", ValueType.Bytes);
+		fileCachePanel = new InformationItemPanel("Cached files", ValueType.Bytes);
+		compressedPanel = new InformationItemPanel("Compressed memory", ValueType.Bytes);
 
 		Font dataFont = inUsePanel.getFont().deriveFont(Font.BOLD, inUsePanel.getFont().getSize() + 3f);
 		inUsePanel.setFont(dataFont);
@@ -106,6 +113,10 @@ public class MemoryPanel extends JPanel {
 			informationPanel.add(nonpagedPoolPanel);
 		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
 			informationPanel.add(sharedPanel);
+			informationPanel.add(swapPanel);
+		} else if (systemInformation.extraInformation instanceof OsXExtraInformation) {
+			informationPanel.add(fileCachePanel);
+			informationPanel.add(compressedPanel);
 			informationPanel.add(swapPanel);
 		}
 
@@ -156,6 +167,12 @@ public class MemoryPanel extends JPanel {
 		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
 			LinuxExtraInformation extraInformation = (LinuxExtraInformation) systemInformation.extraInformation;
 			sharedPanel.updateValue(extraInformation.sharedMemory);
+			swapPanel.setMaximum(extraInformation.swapSize);
+			swapPanel.updateValue(extraInformation.swapUsed);
+		} else if (systemInformation.extraInformation instanceof OsXExtraInformation) {
+			OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
+			fileCachePanel.updateValue(extraInformation.fileCache);
+			compressedPanel.updateValue(extraInformation.compressedMemory);
 			swapPanel.setMaximum(extraInformation.swapSize);
 			swapPanel.updateValue(extraInformation.swapUsed);
 		}

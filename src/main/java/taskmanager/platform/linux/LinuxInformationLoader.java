@@ -20,13 +20,13 @@ import taskmanager.InformationLoader;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
+import taskmanager.platform.common.FileNameUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,9 +34,6 @@ public class LinuxInformationLoader extends InformationLoader {
 	private static final Logger LOGGER = LoggerFactory.getLogger(LinuxInformationLoader.class);
 
 	private static final String PROC_PATH = "/proc";
-
-	private long lastCpuTime;
-	private long currentCpuTime;
 
 	private long nextProcessId;
 
@@ -53,7 +50,6 @@ public class LinuxInformationLoader extends InformationLoader {
 		super.update(systemInformation);
 
 		updateMemory(systemInformation);
-		updateTotalCpuTime();
 		updateProcesses(systemInformation);
 	}
 
@@ -75,19 +71,6 @@ public class LinuxInformationLoader extends InformationLoader {
 		}
 	}
 
-	private void updateTotalCpuTime() {
-		lastCpuTime = currentCpuTime;
-
-		List<String> lines = FileUtil.readFile(PROC_PATH + "/stat");
-		String[] tokens = lines.get(0).split("\\s+");
-		long time = 0;
-		for (int i = 1; i < tokens.length; i++) {
-			time += Long.parseLong(tokens[i]);
-		}
-
-		currentCpuTime = time;
-	}
-
 	private void updateProcesses(SystemInformation systemInformation) {
 		Set<Long> newProcessIds = fetchProcessIds();
 		createMissingProcessObjects(systemInformation, newProcessIds);
@@ -95,7 +78,6 @@ public class LinuxInformationLoader extends InformationLoader {
 		int totalThreadCount = 0;
 		for (Long pid : newProcessIds) {
 			Process process = systemInformation.getProcessById(pid);
-
 			try {
 				String processPath = PROC_PATH + "/" + pid;
 				Map<String, String> status = FileUtil.getKeyValueMapFromFile(processPath + "/status", ":");
@@ -127,7 +109,11 @@ public class LinuxInformationLoader extends InformationLoader {
 
 						// Fallback for file name/path
 						if (process.fileName.isEmpty()) {
-							processFileNameAndPathFallback(process, processPath, status);
+							String partialName = FileUtil.getStringFromFile(processPath + "/comm");
+							partialName = partialName.isEmpty() ? status.getOrDefault("Name", "") : partialName;
+							if (!FileNameUtil.setProcessPathAndNameFromCommandLine(process, partialName)) {
+								LOGGER.warn("Process {}: Found no partial name in /proc/{}/[comm, status, cmdline], did the process die too quickly?", process.id, process.id);
+							}
 						}
 						process.hasReadOnce = true;
 					}
@@ -159,10 +145,9 @@ public class LinuxInformationLoader extends InformationLoader {
 					process.cpuTime.addValue(process.cpuTime.newest());
 					process.cpuUsage.addValue(process.cpuUsage.newest());
 				} else {
-					long utime = Long.parseLong(stat[13]);
-					long stime = Long.parseLong(stat[14]);
-					// TODO Maybe use a delta of the process uptime (like LinuxOperatingSystem#getProcess():286)?
-					process.updateCpu(stime, utime, (currentCpuTime - lastCpuTime), 1); // Set cores to 1 since the total time is already divided by cores
+					long utime = Long.parseLong(stat[13]) * 1000 / LinuxOperatingSystem.getHz();
+					long stime = Long.parseLong(stat[14]) * 1000 / LinuxOperatingSystem.getHz();
+					process.updateCpu(stime, utime, systemInformation.logicalProcessorCount);
 
 					process.status = parseStatus(stat[2]);
 
@@ -200,7 +185,7 @@ public class LinuxInformationLoader extends InformationLoader {
 	}
 
 	private Set<Long> fetchProcessIds() {
-		Set<Long> processIds = new HashSet<>();
+		Set<Long> processIds = new LinkedHashSet<>();
 		File processDir = new File(PROC_PATH);
 		File[] files = processDir.listFiles(f -> f.isDirectory() && f.getName().matches("[0-9]+"));
 		if (files != null) {
@@ -209,56 +194,6 @@ public class LinuxInformationLoader extends InformationLoader {
 			}
 		}
 		return processIds;
-	}
-
-	private void processFileNameAndPathFallback(Process process, String processPath, Map<String, String> status) {
-		String partialName = FileUtil.getStringFromFile(processPath + "/comm");
-		partialName = partialName.isEmpty() ? status.getOrDefault("Name", "") : partialName;
-		if (partialName.isEmpty() && process.commandLine.isEmpty()) {
-			LOGGER.warn("Process {}: Found no partial name in /proc/{}/[comm, status, cmdline], did the process die too quickly?", process.id, process.id);
-			return;
-		}
-
-		// First, see if the partial name is in the command line, in that case extract it and try to extract the path
-		int start = process.commandLine.indexOf(partialName);
-		if (start != -1) {
-			int startSpace = process.commandLine.lastIndexOf(' ', start);
-			int endSpace = process.commandLine.indexOf(' ', start + partialName.length());
-			endSpace = (endSpace == -1) ? process.commandLine.length() : endSpace;
-
-			start = process.commandLine.lastIndexOf(partialName, endSpace);
-			partialName = process.commandLine.substring(start, endSpace);
-			if (partialName.endsWith(":")) {
-				partialName = partialName.substring(0, partialName.length() - 1);
-			}
-			process.fileName = partialName;
-
-			String filePath = process.commandLine.substring(startSpace + 1, endSpace);
-			File file = new File(filePath);
-			if (file.exists()) {
-				process.filePath = filePath;
-			}
-			return;
-		}
-
-		// Secondly if the partial name isn't in the command line, just take the first binary in the path
-		int space = process.commandLine.indexOf(' ');
-		if (space == -1) {
-			space = process.commandLine.length();
-		}
-		if (space > 0) {
-			int separator = process.commandLine.lastIndexOf(File.separator, space);
-			process.fileName = process.commandLine.substring(separator + 1, space);
-			String filePath = process.commandLine.substring(0, space);
-			File file = new File(filePath);
-			if (file.exists()) {
-				process.filePath = filePath;
-			}
-			return;
-		}
-
-		// Lastly, with no command line this is the best we can do (first 15 chars)
-		process.fileName = partialName;
 	}
 
 	private String removeUnit(String value) {

@@ -317,7 +317,7 @@ public class ProcessTable extends JTable {
 						System.currentTimeMillis() - process.deathTimestamp,
 						ValueType.Time));
 				trySetColor(Columns.DeathTime, i, selectColorDeath(System.currentTimeMillis() - process.deathTimestamp));
-				if (showDeadProcesses) {
+				if (showDeadProcesses || process.missingCpuAndMemoryMetrics) {
 					trySetData(Columns.Cpu, i, "--.- %");
 					trySetColor(Columns.Cpu, i, selectColorCpu(0));
 					trySetData(Columns.PrivateWorkingSet, i, "--- --- K");

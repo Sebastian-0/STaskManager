@@ -35,10 +35,13 @@ public class Process {
 	public long startTimestamp;
 	public long deathTimestamp;
 
+	/** This happens for OSX where we can't get metrics for processes owned by other users */
+	public boolean missingCpuAndMemoryMetrics;
 	public boolean hasReadOnce;
 
 	private long lastSysCpu;
 	private long lastUserCpu;
+	private long previousUptime;
 
 	public Process(long uniqueId, long id) {
 		this.uniqueId = uniqueId;
@@ -78,6 +81,7 @@ public class Process {
 			cpuTime.copyDelta(other.cpuTime);
 		}
 
+		missingCpuAndMemoryMetrics = other.missingCpuAndMemoryMetrics;
 		hasReadOnce = other.hasReadOnce;
 
 		lastSysCpu = other.lastSysCpu;
@@ -92,6 +96,19 @@ public class Process {
 		}
 		lastSysCpu = sysCpu;
 		lastUserCpu = userCpu;
+	}
+
+	public void updateCpu(long sysCpu, long userCpu, int numCores) {
+		long uptime = System.currentTimeMillis() - startTimestamp;
+		if (previousUptime != 0 && (lastSysCpu != 0 || lastUserCpu != 0)) {
+			long newCpuTime = sysCpu - lastSysCpu + userCpu - lastUserCpu;
+			cpuTime.addValue(newCpuTime);
+			cpuUsage.addValue(Math.round(newCpuTime / (double) (uptime - previousUptime) / numCores * Config.DOUBLE_TO_LONG));
+		}
+		lastSysCpu = sysCpu;
+		lastUserCpu = userCpu;
+
+		previousUptime = uptime;
 	}
 
 	@Override

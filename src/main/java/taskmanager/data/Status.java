@@ -17,6 +17,7 @@ public enum Status {
 	Waiting,
 	Zombie,
 	Suspended,
-	Dead;
+	Dead,
+	Unknown
 }
 
