@@ -20,6 +20,7 @@ import taskmanager.InformationLoader;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
+import taskmanager.platform.common.FileNameUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -108,7 +109,11 @@ public class LinuxInformationLoader extends InformationLoader {
 
 						// Fallback for file name/path
 						if (process.fileName.isEmpty()) {
-							processFileNameAndPathFallback(process, processPath, status);
+							String partialName = FileUtil.getStringFromFile(processPath + "/comm");
+							partialName = partialName.isEmpty() ? status.getOrDefault("Name", "") : partialName;
+							if (!FileNameUtil.setProcessPathAndNameFromCommandLine(process, partialName)) {
+								LOGGER.warn("Process {}: Found no partial name in /proc/{}/[comm, status, cmdline], did the process die too quickly?", process.id, process.id);
+							}
 						}
 						process.hasReadOnce = true;
 					}
@@ -189,56 +194,6 @@ public class LinuxInformationLoader extends InformationLoader {
 			}
 		}
 		return processIds;
-	}
-
-	private void processFileNameAndPathFallback(Process process, String processPath, Map<String, String> status) {
-		String partialName = FileUtil.getStringFromFile(processPath + "/comm");
-		partialName = partialName.isEmpty() ? status.getOrDefault("Name", "") : partialName;
-		if (partialName.isEmpty() && process.commandLine.isEmpty()) {
-			LOGGER.warn("Process {}: Found no partial name in /proc/{}/[comm, status, cmdline], did the process die too quickly?", process.id, process.id);
-			return;
-		}
-
-		// First, see if the partial name is in the command line, in that case extract it and try to extract the path
-		int start = process.commandLine.indexOf(partialName);
-		if (start != -1) {
-			int startSpace = process.commandLine.lastIndexOf(' ', start);
-			int endSpace = process.commandLine.indexOf(' ', start + partialName.length());
-			endSpace = (endSpace == -1) ? process.commandLine.length() : endSpace;
-
-			start = process.commandLine.lastIndexOf(partialName, endSpace);
-			partialName = process.commandLine.substring(start, endSpace);
-			if (partialName.endsWith(":")) {
-				partialName = partialName.substring(0, partialName.length() - 1);
-			}
-			process.fileName = partialName;
-
-			String filePath = process.commandLine.substring(startSpace + 1, endSpace);
-			File file = new File(filePath);
-			if (file.exists()) {
-				process.filePath = filePath;
-			}
-			return;
-		}
-
-		// Secondly if the partial name isn't in the command line, just take the first binary in the path
-		int space = process.commandLine.indexOf(' ');
-		if (space == -1) {
-			space = process.commandLine.length();
-		}
-		if (space > 0) {
-			int separator = process.commandLine.lastIndexOf(File.separator, space);
-			process.fileName = process.commandLine.substring(separator + 1, space);
-			String filePath = process.commandLine.substring(0, space);
-			File file = new File(filePath);
-			if (file.exists()) {
-				process.filePath = filePath;
-			}
-			return;
-		}
-
-		// Lastly, with no command line this is the best we can do (first 15 chars)
-		process.fileName = partialName;
 	}
 
 	private String removeUnit(String value) {

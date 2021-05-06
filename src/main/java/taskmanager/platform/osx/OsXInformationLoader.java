@@ -28,6 +28,7 @@ import taskmanager.InformationLoader;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
 import taskmanager.data.SystemInformation;
+import taskmanager.platform.common.FileNameUtil;
 import taskmanager.platform.osx.SystemB.KInfoProc;
 import taskmanager.platform.osx.SystemB.ProcFDInfoList;
 
@@ -146,6 +147,11 @@ public class OsXInformationLoader extends InformationLoader {
 				taskAllInfo = null;
 			}
 
+			KInfoProc kInfoProc = null;
+			if (taskAllInfo == null) { // Try reading KInfoProc as a fallback
+				kInfoProc = readKInfoProc(process);
+			}
+
 			ProcFdInfo fdInfo = cache.procFdInfo;
 			status = SystemB.INSTANCE.proc_pidinfo((int) pid, SystemB.PROC_PIDLISTFDS, 0, null, 0);
 			if (status < 0 ) {
@@ -164,7 +170,7 @@ public class OsXInformationLoader extends InformationLoader {
 			}
 
 			if (!process.hasReadOnce) {
-				initialProcessSetup(systemInformation, process, taskAllInfo);
+				initialProcessSetup(systemInformation, process, taskAllInfo, kInfoProc);
 				process.hasReadOnce = true;
 			}
 
@@ -178,11 +184,8 @@ public class OsXInformationLoader extends InformationLoader {
 				long sTime = taskAllInfo.ptinfo.pti_total_system / 1_000_000;
 				long uTime = taskAllInfo.ptinfo.pti_total_user / 1_000_000;
 				process.updateCpu(sTime, uTime, systemInformation.logicalProcessorCount);
-			} else {
-				KInfoProc kInfoProc = readKInfoProc(process);
-				if (kInfoProc != null) {
-					processStatus = kInfoProc.kp_proc.p_stat;
-				}
+			} else if (kInfoProc != null) {
+				processStatus = kInfoProc.kp_proc.p_stat;
 			}
 
 			switch (processStatus) {
@@ -227,7 +230,7 @@ public class OsXInformationLoader extends InformationLoader {
 		}
 	}
 
-	private void initialProcessSetup(SystemInformation systemInformation, Process process, ProcTaskAllInfo allInfo) {
+	private void initialProcessSetup(SystemInformation systemInformation, Process process, ProcTaskAllInfo allInfo, KInfoProc kInfoProc) {
 		if (process.id == 0) {
 			process.fileName = "kernel_task";
 			process.commandLine = "";
@@ -238,14 +241,16 @@ public class OsXInformationLoader extends InformationLoader {
 			int status = SystemB.INSTANCE.proc_pidpath((int) process.id, pathBuffer, (int) pathBuffer.size());
 			if (status > 0) {
 				process.filePath = pathBuffer.getString(0).trim();
-
-				String[] toks = process.filePath.split(File.separator);
-				process.fileName = toks[toks.length - 1];
-
-//					String partialName = Native.toString(allInfo.pbsd.pbi_comm, StandardCharsets.UTF_8);
-				// TODO Better path fetching?
+				process.fileName = new File(process.filePath).getName();
 			} else {
-				LOGGER.warn("Failed to read process path for {}: {}", process.id, Native.getLastError());
+				String partialName = allInfo != null ?
+						Native.toString(allInfo.pbsd.pbi_comm) :
+						(kInfoProc != null ?
+								Native.toString(kInfoProc.kp_proc.p_comm) :
+								"");
+				if (!FileNameUtil.setProcessPathAndNameFromCommandLine(process, partialName)) {
+					LOGGER.warn("Failed to read process path for {}: {}", process.id, Native.getLastError());
+				}
 			}
 		}
 
@@ -256,8 +261,6 @@ public class OsXInformationLoader extends InformationLoader {
 			userId = allInfo.pbsd.pbi_uid;
 			process.startTimestamp = allInfo.pbsd.pbi_start_tvsec * 1000L + allInfo.pbsd.pbi_start_tvusec / 1000L;
 		} else {
-			// Try reading KInfoProc as a fallback
-			KInfoProc kInfoProc = readKInfoProc(process);
 			if (kInfoProc != null) {
 				parentId = kInfoProc.kp_eproc.e_ppid;
 				userId = kInfoProc.kp_eproc.e_pcred.p_ruid;
