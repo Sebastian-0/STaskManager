@@ -20,13 +20,13 @@ import taskmanager.platform.osx.OsXExtraInformation;
 import taskmanager.platform.win32.WindowsExtraInformation;
 import taskmanager.ui.TextUtils;
 import taskmanager.ui.TextUtils.ValueType;
+import taskmanager.ui.callbacks.ShowProcessCallback;
 import taskmanager.ui.performance.GraphPanel;
 import taskmanager.ui.performance.GraphPanel.Graph.GraphBuilder;
 import taskmanager.ui.performance.GraphPanel.ShortToLong;
 import taskmanager.ui.performance.GraphType;
 import taskmanager.ui.performance.GraphTypeButton;
 import taskmanager.ui.performance.RatioItemPanel;
-import taskmanager.ui.callbacks.ShowProcessCallback;
 import taskmanager.ui.performance.TimelineGraphPanel;
 import taskmanager.ui.performance.TimelineGroup;
 import taskmanager.ui.performance.common.InformationItemPanel;
@@ -96,10 +96,14 @@ public class CpuPanel extends JPanel {
 		informationPanel.add(threadsLabel);
 		if (systemInformation.extraInformation instanceof WindowsExtraInformation) {
 			informationPanel.add(handlesLabel);
-		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation ||
-				systemInformation.extraInformation instanceof OsXExtraInformation) {
+		} else if (systemInformation.extraInformation instanceof LinuxExtraInformation) {
 			informationPanel.add(fileDescriptorsLabel);
+		}  else if (systemInformation.extraInformation instanceof OsXExtraInformation) {
+			informationPanel.add(fileDescriptorsLabel);
+			threadsLabel.setToolTipText(TextUtils.convertLineBreaksToHtml("This only counts the threads of the active\n user's processes (OSX only)."));
+			fileDescriptorsLabel.setToolTipText(TextUtils.convertLineBreaksToHtml("This only counts the file descriptors of\n the active user's processes (OSX only)."));
 		}
+
 		informationPanel.add(uptimeLabel);
 
 		setLayout(new MigLayout());
@@ -149,8 +153,6 @@ public class CpuPanel extends JPanel {
 			OsXExtraInformation extraInformation = (OsXExtraInformation) systemInformation.extraInformation;
 			fileDescriptorsLabel.setMaximum(extraInformation.openFileDescriptorsLimit);
 			fileDescriptorsLabel.updateValue(extraInformation.openFileDescriptors);
-			fileDescriptorsLabel.setToolTipText(TextUtils.convertLineBreaksToHtml("This only counts the file descriptors of\n the active user's processes (OSX only)."));
-			fileDescriptorsLabel.setToolTipText(TextUtils.convertLineBreaksToHtml("This only counts the threads of the active\n user's processes (OSX only)."));
 		}
 	}
 
