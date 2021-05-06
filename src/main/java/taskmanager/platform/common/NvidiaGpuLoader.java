@@ -34,8 +34,9 @@ public class NvidiaGpuLoader {
 	public void update(SystemInformation systemInformation) {
 		try {
 			doUpdate(systemInformation);
-		} catch (IllegalArgumentException e) {
+		} catch (IllegalStateException e) {
 			LOGGER.error("Failed to load NVIDIA GPU information", e);
+			// TODO For repeated fails stop trying so we don't flood the log!
 		}
 	}
 
