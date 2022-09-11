@@ -62,10 +62,12 @@ public class NvidiaGpuLoader {
 					LongByReference gpuHandle = new LongByReference();
 					check(Nvml.INSTANCE.nvmlDeviceGetHandleByIndex(i, gpuHandle));
 
-					Memory mem = new Memory(new nvmlPciInfo_t().size());
-					check(Nvml.INSTANCE.nvmlDeviceGetPciInfo(gpuHandle.getValue(), mem));
-					nvmlPciInfo_t pci = Structure.newInstance(nvmlPciInfo_t.class, mem);
-					pci.read();
+					nvmlPciInfo_t pci;
+					try (Memory mem = new Memory(new nvmlPciInfo_t().size())) {
+						check(Nvml.INSTANCE.nvmlDeviceGetPciInfo(gpuHandle.getValue(), mem));
+						pci = Structure.newInstance(nvmlPciInfo_t.class, mem);
+						pci.read();
+					}
 
 					int deviceId = pci.pciDeviceId >> 16;
 					Gpu gpu = Arrays.stream(systemInformation.gpus)
@@ -82,24 +84,26 @@ public class NvidiaGpuLoader {
 					gpu.driverVersion = driverVersion;
 
 					// Read memory usage
-					mem = new Memory(new nvmlMemory_t().size());
-					if (supported(Nvml.INSTANCE.nvmlDeviceGetMemoryInfo(gpuHandle.getValue(), mem))) {
-						nvmlMemory_t memory = Structure.newInstance(nvmlMemory_t.class, mem);
-						memory.read();
+					try (Memory mem = new Memory(new nvmlMemory_t().size())) {
+						if (supported(Nvml.INSTANCE.nvmlDeviceGetMemoryInfo(gpuHandle.getValue(), mem))) {
+							nvmlMemory_t memory = Structure.newInstance(nvmlMemory_t.class, mem);
+							memory.read();
 
-						gpu.totalMemory = memory.total;
-						gpu.usedMemory.addValue(memory.used);
-						gpu.memorySupported = true;
+							gpu.totalMemory = memory.total;
+							gpu.usedMemory.addValue(memory.used);
+							gpu.memorySupported = true;
+						}
 					}
 
 					// Read utilization
-					mem = new Memory(new nvmlUtilization_t().size());
-					if (supported(Nvml.INSTANCE.nvmlDeviceGetUtilizationRates(gpuHandle.getValue(), mem))) {
-						nvmlUtilization_t utilization = Structure.newInstance(nvmlUtilization_t.class, mem);
-						utilization.read();
+					try (Memory mem = new Memory(new nvmlUtilization_t().size())) {
+						if (supported(Nvml.INSTANCE.nvmlDeviceGetUtilizationRates(gpuHandle.getValue(), mem))) {
+							nvmlUtilization_t utilization = Structure.newInstance(nvmlUtilization_t.class, mem);
+							utilization.read();
 
-						gpu.utilization.addValue((long) (utilization.gpu * Config.DOUBLE_TO_LONG / 100));
-						gpu.utilizationSupported = true;
+							gpu.utilization.addValue((long) (utilization.gpu * Config.DOUBLE_TO_LONG / 100));
+							gpu.utilizationSupported = true;
+						}
 					}
 
 					// Read temperature

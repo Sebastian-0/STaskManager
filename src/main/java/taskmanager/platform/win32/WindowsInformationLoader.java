@@ -138,20 +138,21 @@ public class WindowsInformationLoader extends InformationLoader {
 		extraInformation.kernelPaged = performanceInfo.KernelPaged.longValue() * systemInformation.pageSize;
 		extraInformation.kernelNonPaged = performanceInfo.KernelNonpaged.longValue() * systemInformation.pageSize;
 
-		Memory memory = new Memory(new SYSTEM_MEMORY_LIST_INFORMATION().size());
-		int status = NtDllExt.INSTANCE.NtQuerySystemInformation(
-				SYSTEM_INFORMATION_CLASS.SystemMemoryListInformation.code, memory, (int) memory.size(), null);
-		if (status == NtDllExt.STATUS_SUCCESS) {
-			SYSTEM_MEMORY_LIST_INFORMATION memoryInfo = Structure.newInstance(NtDllExt.SYSTEM_MEMORY_LIST_INFORMATION.class, memory);
-			memoryInfo.read();
-			extraInformation.modifiedMemory = memoryInfo.modifiedPageCount.longValue() * systemInformation.pageSize;
-			extraInformation.standbyMemory = 0;
-			systemInformation.freeMemory = (memoryInfo.freePageCount.longValue() + memoryInfo.zeroPageCount.longValue()) * systemInformation.pageSize;
-			for (int i = 0; i < memoryInfo.pageCountByPriority.length; i++) {
-				extraInformation.standbyMemory += memoryInfo.pageCountByPriority[i].longValue() * systemInformation.pageSize;
+		try (Memory memory = new Memory(new SYSTEM_MEMORY_LIST_INFORMATION().size())) {
+			int status = NtDllExt.INSTANCE.NtQuerySystemInformation(
+					SYSTEM_INFORMATION_CLASS.SystemMemoryListInformation.code, memory, (int) memory.size(), null);
+			if (status == NtDllExt.STATUS_SUCCESS) {
+				SYSTEM_MEMORY_LIST_INFORMATION memoryInfo = Structure.newInstance(SYSTEM_MEMORY_LIST_INFORMATION.class, memory);
+				memoryInfo.read();
+				extraInformation.modifiedMemory = memoryInfo.modifiedPageCount.longValue() * systemInformation.pageSize;
+				extraInformation.standbyMemory = 0;
+				systemInformation.freeMemory = (memoryInfo.freePageCount.longValue() + memoryInfo.zeroPageCount.longValue()) * systemInformation.pageSize;
+				for (int i = 0; i < memoryInfo.pageCountByPriority.length; i++) {
+					extraInformation.standbyMemory += memoryInfo.pageCountByPriority[i].longValue() * systemInformation.pageSize;
+				}
+			} else {
+				LOGGER.error("Failed to read detailed memory information, error code: {}", Integer.toHexString(status));
 			}
-		} else {
-			LOGGER.error("Failed to read detailed memory information, error code: {}", Integer.toHexString(status));
 		}
 	}
 
@@ -267,41 +268,49 @@ public class WindowsInformationLoader extends InformationLoader {
 		}
 
 		try {
-			Memory mem = new Memory(new PROCESS_BASIC_INFORMATION().size());
-			int status = NtDllExt.INSTANCE.NtQueryInformationProcess(handle, PROCESS_INFORMATION_CLASS.ProcessBasicInformation.code, mem, (int) mem.size(), null);
-			if (status != 0) {
-				LOGGER.warn("Failed to read basic process information for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(status));
-				return false;
+			PROCESS_BASIC_INFORMATION processInfo;
+			try (Memory mem = new Memory(new PROCESS_BASIC_INFORMATION().size())) {
+				int status = NtDllExt.INSTANCE.NtQueryInformationProcess(handle, PROCESS_INFORMATION_CLASS.ProcessBasicInformation.code, mem, (int) mem.size(), null);
+				if (status != 0) {
+					LOGGER.warn("Failed to read basic process information for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(status));
+					return false;
+				}
+
+				processInfo = Structure.newInstance(NtDllExt.PROCESS_BASIC_INFORMATION.class, mem);
+				processInfo.read();
 			}
 
-			PROCESS_BASIC_INFORMATION processInfo = Structure.newInstance(NtDllExt.PROCESS_BASIC_INFORMATION.class, mem);
-			processInfo.read();
-
-			mem = new Memory(new PEB().size());
-			if (!readProcessMemory(handle, mem, processInfo.pebBaseAddress, process, PEB.class.getSimpleName())) {
-				return false;
+			PEB peb;
+			try (Memory mem = new Memory(new PEB().size())) {
+				if (!readProcessMemory(handle, mem, processInfo.pebBaseAddress, process, PEB.class.getSimpleName())) {
+					return false;
+				}
+				peb = Structure.newInstance(NtDllExt.PEB.class, mem);
+				peb.read();
 			}
-			PEB peb = Structure.newInstance(NtDllExt.PEB.class, mem);
-			peb.read();
 
-			mem = new Memory(new RTL_USER_PROCESS_PARAMETERS().size());
-			if (!readProcessMemory(handle, mem, peb.processParameters, process, RTL_USER_PROCESS_PARAMETERS.class.getSimpleName())) {
-				return false;
+			RTL_USER_PROCESS_PARAMETERS parameters;
+			try (Memory mem = new Memory(new RTL_USER_PROCESS_PARAMETERS().size())) {
+				if (!readProcessMemory(handle, mem, peb.processParameters, process, RTL_USER_PROCESS_PARAMETERS.class.getSimpleName())) {
+					return false;
+				}
+				parameters = Structure.newInstance(NtDllExt.RTL_USER_PROCESS_PARAMETERS.class, mem);
+				parameters.read();
 			}
-			RTL_USER_PROCESS_PARAMETERS parameters = Structure.newInstance(NtDllExt.RTL_USER_PROCESS_PARAMETERS.class, mem);
-			parameters.read();
 
-			mem = new Memory(parameters.imagePathName.length + 2);
-			if (!readProcessMemory(handle, mem, parameters.imagePathName.buffer, process, "image path")) {
-				return false;
+			try (Memory mem = new Memory(parameters.imagePathName.length + 2)) {
+				if (!readProcessMemory(handle, mem, parameters.imagePathName.buffer, process, "image path")) {
+					return false;
+				}
+				process.filePath = mem.getWideString(0);
 			}
-			process.filePath = mem.getWideString(0);
 
-			mem = new Memory(parameters.commandLine.length + 2);
-			if (!readProcessMemory(handle, mem, parameters.commandLine.buffer, process, "command line")) {
-				return false;
+			try (Memory mem = new Memory(parameters.commandLine.length + 2)) {
+				if (!readProcessMemory(handle, mem, parameters.commandLine.buffer, process, "command line")) {
+					return false;
+				}
+				process.commandLine = mem.getWideString(0);
 			}
-			process.commandLine = mem.getWideString(0);
 
 			HANDLEByReference tokenRef = new HANDLEByReference();
 			if (Advapi32.INSTANCE.OpenProcessToken(handle, WinNT.TOKEN_QUERY, tokenRef)) {
@@ -334,77 +343,83 @@ public class WindowsInformationLoader extends InformationLoader {
 			return false;
 		}
 
-		Memory mem = new Memory(versionInfoSize);
-		if (!Version.INSTANCE.GetFileVersionInfo(process.filePath, 0, (int) mem.size(), mem)) {
-			LOGGER.warn("Failed to read file version info for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
-			return false;
+		try (Memory mem = new Memory(versionInfoSize)) {
+			if (!Version.INSTANCE.GetFileVersionInfo(process.filePath, 0, (int) mem.size(), mem)) {
+				LOGGER.warn("Failed to read file version info for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
+				return false;
+			}
+
+			PointerByReference pointerRef = new PointerByReference();
+			if (!Version.INSTANCE.VerQueryValue(mem, "\\VarFileInfo\\Translation", pointerRef, size)) {
+				LOGGER.warn("Failed to find Translations in file version info for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
+				return false;
+			}
+
+			// TODO Read the proper language in the future (nLangs = size.getValue() / new LANGANDCODEPAGE().size())
+			LANGANDCODEPAGE language = Structure.newInstance(VersionExt.LANGANDCODEPAGE.class, pointerRef.getValue());
+			language.read();
+			String query = "\\StringFileInfo\\" + String.format("%04x%04x", language.wLanguage.intValue(), language.wCodePage.intValue()).toUpperCase() + "\\FileDescription";
+
+			if (!Version.INSTANCE.VerQueryValue(mem, query, pointerRef, size)) {
+				LOGGER.warn("Failed to find FileDescription in file version info for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
+				return false;
+			}
+
+			process.description = pointerRef.getValue().getWideString(0).trim();
 		}
-
-		PointerByReference pointerRef = new PointerByReference();
-		if (!Version.INSTANCE.VerQueryValue(mem, "\\VarFileInfo\\Translation", pointerRef, size)) {
-			LOGGER.warn("Failed to find Translations in file version info for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
-			return false;
-		}
-
-		// TODO Read the proper language in the future (nLangs = size.getValue() / new LANGANDCODEPAGE().size())
-		LANGANDCODEPAGE language = Structure.newInstance(VersionExt.LANGANDCODEPAGE.class, pointerRef.getValue());
-		language.read();
-		String query = "\\StringFileInfo\\" + String.format("%04x%04x", language.wLanguage.intValue(), language.wCodePage.intValue()).toUpperCase() + "\\FileDescription";
-
-		if (!Version.INSTANCE.VerQueryValue(mem, query, pointerRef, size)) {
-			LOGGER.warn("Failed to find FileDescription in file version info for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
-			return false;
-		}
-
-		process.description = pointerRef.getValue().getWideString(0).trim();
 
 		return true;
 	}
 
 	private List<ProcessInfo> fetchProcessList() {
-		Memory memory = new Memory(1);
-		IntByReference size = new IntByReference();
-		int status = NtDllExt.INSTANCE.NtQuerySystemInformation(SYSTEM_INFORMATION_CLASS.SystemProcessInformation.code, memory, (int) memory.size(), size);
-		if (status == NtDllExt.STATUS_BUFFER_OVERFLOW ||
-				status == NtDllExt.STATUS_BUFFER_TOO_SMALL ||
-				status == NtDllExt.STATUS_INFO_LENGTH_MISMATCH) {
-			memory = new Memory(size.getValue());
-			status = NtDllExt.INSTANCE.NtQuerySystemInformation(SYSTEM_INFORMATION_CLASS.SystemProcessInformation.code, memory, (int) memory.size(), size);
+		int memorySize;
+		try (Memory seedMemory = new Memory(1)) {
+			IntByReference size = new IntByReference();
+			int status = NtDllExt.INSTANCE.NtQuerySystemInformation(SYSTEM_INFORMATION_CLASS.SystemProcessInformation.code, seedMemory, (int) seedMemory.size(), size);
+			if (status == NtDllExt.STATUS_BUFFER_OVERFLOW ||
+					status == NtDllExt.STATUS_BUFFER_TOO_SMALL ||
+					status == NtDllExt.STATUS_INFO_LENGTH_MISMATCH) {
+				memorySize = size.getValue();
+			} else {
+				LOGGER.error("Failed to read process list size, NtQuerySystemInformation failed with error code: {}", Integer.toHexString(status));
+				return new ArrayList<>();
+			}
+		}
+
+		try (Memory memory = new Memory(memorySize)) {
+			int status = NtDllExt.INSTANCE.NtQuerySystemInformation(SYSTEM_INFORMATION_CLASS.SystemProcessInformation.code, memory, (int) memory.size(), new IntByReference());
 			if (status != 0) {
 				LOGGER.error("Failed to read process list, NtQuerySystemInformation failed with error code: {}", Integer.toHexString(status));
 				return new ArrayList<>();
 			}
-		} else {
-			LOGGER.error("Failed to read process list size, NtQuerySystemInformation failed with error code: {}", Integer.toHexString(status));
-			return new ArrayList<>();
+
+			List<ProcessInfo> processes = new ArrayList<>();
+			int offset = 0;
+			do {
+				SYSTEM_PROCESS_INFORMATION processInformation = Structure.newInstance(NtDllExt.SYSTEM_PROCESS_INFORMATION.class, memory.share(offset));
+				processInformation.read();
+
+				// Fetch thread information
+				int threadSize = new SYSTEM_THREAD_INFORMATION().size();
+				SYSTEM_THREAD_INFORMATION[] threads = new SYSTEM_THREAD_INFORMATION[processInformation.numberOfThreads];
+				for (int i = 0; i < processInformation.numberOfThreads; i++) {
+					SYSTEM_THREAD_INFORMATION thread = Structure.newInstance(SYSTEM_THREAD_INFORMATION.class,
+							memory.share(offset + processInformation.size() + i * threadSize));
+					thread.read();
+					threads[i] = thread;
+				}
+
+				processes.add(new ProcessInfo(processInformation, threads));
+
+				if (processInformation.nextEntryOffset == 0) {
+					offset = 0;
+				} else {
+					offset += processInformation.nextEntryOffset;
+				}
+			} while (offset > 0);
+
+			return processes;
 		}
-
-		List<ProcessInfo> processes = new ArrayList<>();
-		int offset = 0;
-		do {
-			SYSTEM_PROCESS_INFORMATION processInformation = Structure.newInstance(NtDllExt.SYSTEM_PROCESS_INFORMATION.class, memory.share(offset));
-			processInformation.read();
-
-			// Fetch thread information
-			int threadSize = new SYSTEM_THREAD_INFORMATION().size();
-			SYSTEM_THREAD_INFORMATION[] threads = new SYSTEM_THREAD_INFORMATION[processInformation.numberOfThreads];
-			for (int i = 0; i < processInformation.numberOfThreads; i++) {
-				SYSTEM_THREAD_INFORMATION thread = Structure.newInstance(SYSTEM_THREAD_INFORMATION.class,
-						memory.share(offset + processInformation.size() + i * threadSize));
-				thread.read();
-				threads[i] = thread;
-			}
-
-			processes.add(new ProcessInfo(processInformation, threads));
-
-			if (processInformation.nextEntryOffset == 0) {
-				offset = 0;
-			} else {
-				offset += processInformation.nextEntryOffset;
-			}
-		} while (offset > 0);
-
-		return processes;
 	}
 
 	private PERFORMANCE_INFORMATION fetchPerformanceInformation() {

@@ -13,9 +13,9 @@ package taskmanager.platform.linux;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import oshi.driver.linux.proc.UserGroupInfo;
 import oshi.software.os.linux.LinuxOperatingSystem;
 import oshi.util.FileUtil;
+import oshi.util.UserGroupInfo;
 import taskmanager.InformationLoader;
 import taskmanager.data.Process;
 import taskmanager.data.Status;
