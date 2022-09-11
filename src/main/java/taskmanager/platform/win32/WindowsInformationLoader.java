@@ -327,6 +327,7 @@ public class WindowsInformationLoader extends InformationLoader {
 		return true;
 	}
 
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 	private boolean readProcessMemory(WinNT.HANDLE handle, Memory mem, Pointer address, Process process, String targetStruct) {
 		boolean success = Kernel32.INSTANCE.ReadProcessMemory(handle, address, mem, (int) mem.size(), null);
 		if (!success) {
@@ -335,24 +336,24 @@ public class WindowsInformationLoader extends InformationLoader {
 		return success;
 	}
 
-	private boolean readFileDescription(Process process) {
+	private void readFileDescription(Process process) {
 		IntByReference size = new IntByReference();
 		int versionInfoSize = Version.INSTANCE.GetFileVersionInfoSize(process.filePath, size);
 		if (versionInfoSize == 0) {
 			LOGGER.warn("Failed to read file version info size for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
-			return false;
+			return;
 		}
 
 		try (Memory mem = new Memory(versionInfoSize)) {
 			if (!Version.INSTANCE.GetFileVersionInfo(process.filePath, 0, (int) mem.size(), mem)) {
 				LOGGER.warn("Failed to read file version info for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
-				return false;
+				return;
 			}
 
 			PointerByReference pointerRef = new PointerByReference();
 			if (!Version.INSTANCE.VerQueryValue(mem, "\\VarFileInfo\\Translation", pointerRef, size)) {
 				LOGGER.warn("Failed to find Translations in file version info for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
-				return false;
+				return;
 			}
 
 			// TODO Read the proper language in the future (nLangs = size.getValue() / new LANGANDCODEPAGE().size())
@@ -362,13 +363,11 @@ public class WindowsInformationLoader extends InformationLoader {
 
 			if (!Version.INSTANCE.VerQueryValue(mem, query, pointerRef, size)) {
 				LOGGER.warn("Failed to find FileDescription in file version info for {} ({}), error code: {}", process.fileName, process.id, Integer.toHexString(Native.getLastError()));
-				return false;
+				return;
 			}
 
 			process.description = pointerRef.getValue().getWideString(0).trim();
 		}
-
-		return true;
 	}
 
 	private List<ProcessInfo> fetchProcessList() {
@@ -400,7 +399,7 @@ public class WindowsInformationLoader extends InformationLoader {
 				processInformation.read();
 
 				// Fetch thread information
-				int threadSize = new SYSTEM_THREAD_INFORMATION().size();
+				long threadSize = new SYSTEM_THREAD_INFORMATION().size();
 				SYSTEM_THREAD_INFORMATION[] threads = new SYSTEM_THREAD_INFORMATION[processInformation.numberOfThreads];
 				for (int i = 0; i < processInformation.numberOfThreads; i++) {
 					SYSTEM_THREAD_INFORMATION thread = Structure.newInstance(SYSTEM_THREAD_INFORMATION.class,

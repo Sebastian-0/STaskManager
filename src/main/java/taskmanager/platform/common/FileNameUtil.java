@@ -16,6 +16,7 @@ import taskmanager.data.Process;
 import java.io.File;
 
 public class FileNameUtil {
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 	public static boolean setProcessPathAndNameFromCommandLine(Process process, String partialName) {
 		if (partialName.isEmpty() && process.commandLine.isEmpty()) {
 			return false;
